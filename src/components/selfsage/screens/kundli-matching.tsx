@@ -36,6 +36,19 @@ interface MatchResponse {
 
 const BLANK: PersonInput = { name: '', dob: '', tob: '', lat: 0, lng: 0, timezone: 'Asia/Kolkata', placeName: '' };
 
+interface MatchHistoryItem {
+  id: string;
+  at: number;
+  boyName: string;
+  girlName: string;
+  total: number;
+  verdict: string;
+  boy: PersonInput;
+  girl: PersonInput;
+  result: MatchResponse;
+}
+const HISTORY_KEY = 'ss-match-history-v1';
+
 export function MatchingScreen() {
   const { t } = useTranslation();
   const { chart } = useSession();
@@ -44,6 +57,48 @@ export function MatchingScreen() {
   const [result, setResult] = useState<MatchResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<MatchHistoryItem[]>([]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      if (raw) setHistory(JSON.parse(raw) as MatchHistoryItem[]);
+    } catch {
+      /* ignore corrupt history */
+    }
+  }, []);
+
+  const saveToHistory = useCallback((b: PersonInput, g: PersonInput, res: MatchResponse) => {
+    const item: MatchHistoryItem = {
+      id: `m-${Date.now()}`,
+      at: Date.now(),
+      boyName: b.name?.trim() || '—',
+      girlName: g.name?.trim() || '—',
+      total: res.match.total,
+      verdict: res.match.verdict,
+      boy: b,
+      girl: g,
+      result: res,
+    };
+    setHistory((h) => {
+      const next = [item, ...h].slice(0, 6);
+      try {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+      } catch {
+        /* storage full — skip */
+      }
+      return next;
+    });
+  }, []);
+
+  const clearHistory = useCallback(() => {
+    setHistory([]);
+    try {
+      localStorage.removeItem(HISTORY_KEY);
+    } catch {
+      /* */
+    }
+  }, []);
 
   useEffect(() => {
     if (chart) {
@@ -73,12 +128,13 @@ export function MatchingScreen() {
         body: JSON.stringify({ boy, girl }),
       });
       setResult(res);
+      saveToHistory(boy, girl, res);
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setLoading(false);
     }
-  }, [boy, girl]);
+  }, [boy, girl, saveToHistory]);
 
   return (
     <div className="space-y-5">
@@ -120,6 +176,45 @@ export function MatchingScreen() {
       <GoldButton onClick={compute} disabled={loading} className="w-full">
         {loading ? t('common.calculating') : t('match.compute')} <Icon name="handshake" size={16} />
       </GoldButton>
+
+      {history.length > 0 && (
+        <GlassCard className="p-4">
+          <div className="flex items-center justify-between mb-2.5">
+            <p className="text-t12 uppercase tracking-wider text-gold font-semibold">{t('match.history')}</p>
+            <button
+              type="button"
+              onClick={clearHistory}
+              className="text-t12 text-muted-foreground hover:text-maroon transition-colors duration-200"
+            >
+              {t('match.clearHistory')}
+            </button>
+          </div>
+          <div className="space-y-2 max-h-56 overflow-y-auto scroll-slim pr-1">
+            {history.map((h) => (
+              <button
+                key={h.id}
+                type="button"
+                onClick={() => {
+                  setBoy(h.boy);
+                  setGirl(h.girl);
+                  setResult(h.result);
+                }}
+                className="w-full flex items-center justify-between gap-3 rounded-xl border border-gold/15 bg-white/50 px-3.5 py-2.5 text-left transition-all duration-200 hover:border-gold/45 hover:bg-white/70 active:scale-[0.99]"
+              >
+                <span className="min-w-0">
+                  <span className="block text-t14 text-charcoal truncate">
+                    {h.boyName} × {h.girlName}
+                  </span>
+                  <span className="block text-t12 text-muted-foreground">{new Date(h.at).toLocaleDateString()}</span>
+                </span>
+                <span className="shrink-0 inline-flex items-center rounded-full gold-grad px-2.5 py-1 text-t12 font-bold text-charcoal">
+                  {h.total}/36
+                </span>
+              </button>
+            ))}
+          </div>
+        </GlassCard>
+      )}
 
       {loading && <PageLoader label={t('common.calculating')} />}
 

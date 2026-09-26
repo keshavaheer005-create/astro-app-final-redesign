@@ -81,7 +81,7 @@ export function NorthChart({ ascSign, planets, className }: { ascSign: number; p
         const [cx, cy] = centers[h];
         return (
           <foreignObject key={`p${h}`} x={cx - 34} y={cy - 2} width="72" height="40">
-            <div xmlns="http://www.w3.org/1999/xhtml" className="flex flex-wrap gap-0.5 justify-center content-start">
+            <div className="flex flex-wrap gap-0.5 justify-center content-start">
               {inHouse.map((p) => (
                 <PlanetTag key={p.key} p={p} hi={hi} />
               ))}
@@ -150,7 +150,7 @@ export function SouthChart({ ascSign, planets, className }: { ascSign: number; p
               {house}
             </text>
             <foreignObject x={cx - 38} y={cy - 24} width="84" height="56">
-              <div xmlns="http://www.w3.org/1999/xhtml" className="flex flex-wrap gap-0.5 justify-center content-start">
+              <div className="flex flex-wrap gap-0.5 justify-center content-start">
                 {inSign.map((p) => (
                   <PlanetTag key={p.key} p={p} hi={hi} />
                 ))}

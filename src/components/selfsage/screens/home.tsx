@@ -24,6 +24,8 @@ interface TodayPanchang {
   tithi: { index: number; name: string; nameHi: string; paksha: string; percent: number };
   nakshatra: { name: string; nameHi: string; pada: number };
   sunriseISO: string | null;
+  moonriseISO: string | null;
+  moonsetISO: string | null;
   moonSign: { name: string; nameHi: string };
 }
 
@@ -265,6 +267,18 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                   <p className="text-t12 text-muted-foreground inline-flex items-center gap-1.5">
                     <Icon name="sunrise" size={13} className="text-gold" />
                     {t('home.sunrise')}: {new Date(panchang.sunriseISO).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: chart.input.timezone })}
+                  </p>
+                )}
+                {(panchang.moonriseISO || panchang.moonsetISO) && (
+                  <p className="text-t12 text-muted-foreground inline-flex items-center gap-3 flex-wrap">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Icon name="moonrise" size={13} className="text-gold" />
+                      {t('home.moonrise')}: {panchang.moonriseISO ? new Date(panchang.moonriseISO).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: chart.input.timezone }) : '—'}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <Icon name="moonset" size={13} className="text-gold" />
+                      {t('home.moonset')}: {panchang.moonsetISO ? new Date(panchang.moonsetISO).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: chart.input.timezone }) : '—'}
+                    </span>
                   </p>
                 )}
               </div>

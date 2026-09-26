@@ -115,18 +115,21 @@ export function Chip({
   children,
   onClick,
   className,
+  compact,
 }: {
   active?: boolean;
   children: React.ReactNode;
   onClick?: () => void;
   className?: string;
+  compact?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        'px-4 h-8 rounded-full text-t12 font-medium transition-all duration-250 ease-out active:scale-95 whitespace-nowrap',
+        'rounded-full text-t12 font-medium transition-all duration-250 ease-out active:scale-95 whitespace-nowrap',
+        compact ? 'px-3 h-7' : 'px-4 h-8',
         active
           ? 'gold-grad text-charcoal shadow-[0_2px_10px_rgba(201,162,39,0.35)]'
           : 'border border-gold/30 bg-white/45 text-muted-foreground hover:border-gold/55 hover:text-charcoal',
@@ -184,11 +187,19 @@ export function SlidingPillTabs<T extends string>({
     const el = refs.current[idx];
     if (el) {
       setPill({ left: el.offsetLeft, width: el.offsetWidth, ready: true });
+      // Keep the active tab visible inside the scrollable strip (never pans the page:
+      // the strip is its own horizontal scroll container and the page clips overflow-x).
+      el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
     }
   }, [active, tabs]);
 
   return (
-    <div className={cn('relative flex rounded-full bg-white/55 border border-gold/25 p-1 backdrop-blur-md', className)}>
+    <div
+      className={cn(
+        'relative flex rounded-full bg-white/55 border border-gold/25 p-1 backdrop-blur-md overflow-x-auto no-scrollbar',
+        className,
+      )}
+    >
       <span
         className="absolute top-1 bottom-1 rounded-full gold-grad shadow-[0_2px_10px_rgba(201,162,39,0.4)]"
         style={{

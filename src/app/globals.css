@@ -138,12 +138,16 @@
   }
   html {
     scroll-behavior: smooth;
+    /* Hard guard: horizontal overflow (wide strips/tables) must never pan the page.
+       `clip` avoids creating a scroll container (unlike `hidden`). */
+    overflow-x: clip;
   }
   body {
     @apply bg-cream text-charcoal;
     font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    overflow-x: clip;
   }
   ::selection {
     background: rgba(201, 162, 39, 0.28);
@@ -228,6 +232,15 @@
   }
   .screen-leave {
     animation: fade-in 0.25s ease-in both reverse;
+  }
+
+  /* ── Hidden scrollbar (pill tab strips) ────────────────────────────── */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 
   /* ── Slim scrollbar ────────────────────────────────────────────────── */

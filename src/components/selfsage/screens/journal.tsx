@@ -256,6 +256,7 @@ function InsightTile({ label, value, sub, icon }: { label: string; value: string
 }
 
 function MoodTimeline({ entries }: { entries: Entry[] }) {
+  const { t } = useTranslation();
   if (entries.length === 0) return null;
   const W = 100;
   const H = 42;
@@ -297,10 +298,13 @@ function MoodTimeline({ entries }: { entries: Entry[] }) {
             }}
             title={b.lord}
           >
-            {(b.end - b.start) >= 3 && <span className="text-t12 font-semibold text-charcoal/70 truncate px-1">{b.lord}</span>}
+            {((b.end - b.start + 1) / n) >= 0.18 && (
+              <span className="text-t12 font-semibold text-charcoal/70 truncate px-1">{t(`planet.${b.lord}`, { defaultValue: b.lord })}</span>
+            )}
           </div>
         ))}
       </div>
+      <p className="mt-1 text-t12 text-muted-foreground/80">{t('journal.dashaBand')}</p>
     </div>
   );
 }

@@ -334,5 +334,17 @@
   "letter.stop": "रोकें",
   "letter.loadingAudio": "ऑडियो तैयार हो रहा है…",
   "journal.checkinCta": "होम से चेक-इन करें",
-  "ornament.divider": "· · ✦ · ·"
+  "ornament.divider": "· · ✦ · ·",
+  "home.moonrise": "चंद्रोदय",
+  "home.moonset": "चंद्रास्त",
+  "journal.dashaBand": "इन दिनों की दशा अवधि",
+  "reports.vargaPlanets": "इस वर्ग में ग्रह",
+  "reports.colPlanet": "ग्रह",
+  "reports.colSign": "राशि",
+  "reports.colHouse": "भाव",
+  "reports.colVargottama": "D9 जाँच",
+  "reports.vargottama": "वर्गोत्तम",
+  "reports.vargottamaHint": "वर्गोत्तम: ग्रह D1 और D9 में एक ही राशि में है — इसका फल दुगुना मज़बूत माना जाता है।",
+  "match.history": "हाल के मिलान",
+  "match.clearHistory": "साफ़ करें"
 }

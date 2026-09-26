@@ -19,7 +19,7 @@ export interface BirthDetails {
   placeName?: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export type ChartData = any; // ComputedChart JSON shape (validated server-side)
 
 interface SessionCtx {

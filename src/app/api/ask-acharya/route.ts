@@ -2,18 +2,18 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { ensureUser } from '@/lib/session';
 import { computeChart, compactChartContext, ComputedChart } from '@/lib/astro/chart';
-import { acharyaReply } from '@/lib/ai';
+import { acharyaReply, acharyaStreamReply, type ChatTurn } from '@/lib/ai';
 import { moonNakshatraNow } from '@/lib/astro/horoscope';
 import { sadeSati } from '@/lib/astro/doshas';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-/** POST /api/ask-acharya — body { question, language? } (chart pulled from saved primary chart) */
+/** POST /api/ask-acharya — body { question, language?, stream? } (chart pulled from saved primary chart) */
 export async function POST(req: Request) {
   try {
     const user = await ensureUser();
-    const { question, language } = await req.json();
+    const { question, language, stream } = await req.json();
     const q = String(question ?? '').trim();
     if (!q) return NextResponse.json({ error: 'empty_question' }, { status: 400 });
     const lang = language === 'hi' ? 'hi' : 'en';
@@ -64,17 +64,40 @@ Transit context: natal Moon in ${chart.moonSign.name}; current Moon nakshatra ${
       orderBy: { createdAt: 'desc' },
       take: 8,
     });
-    const turns = history
+    const turns: ChatTurn[] = history
       .reverse()
       .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
 
-    const answer = await acharyaReply({
+    const grounding = {
       question: q,
       chartContext,
       journalContext,
       history: turns,
-      language: lang,
-    });
+      language: lang as 'en' | 'hi',
+    };
+
+    if (stream) {
+      // Persist the user turn now; the assistant turn is saved when the stream completes.
+      await db.chatMessage.create({ data: { userId: user.id, role: 'user', content: q } });
+      const { stream: wire, done } = await acharyaStreamReply(grounding);
+      void done
+        .then((full) => {
+          if (full && full.trim()) {
+            return db.chatMessage.create({ data: { userId: user.id, role: 'assistant', content: full.trim() } });
+          }
+        })
+        .catch((e) => console.error('[ask-acharya] persist-after-stream:', (e as Error).message));
+      return new Response(wire, {
+        headers: {
+          'Content-Type': 'text/event-stream; charset=utf-8',
+          'Cache-Control': 'no-cache, no-transform',
+          Connection: 'keep-alive',
+          'X-Accel-Buffering': 'no',
+        },
+      });
+    }
+
+    const answer = await acharyaReply(grounding);
 
     await db.chatMessage.create({ data: { userId: user.id, role: 'user', content: q } });
     await db.chatMessage.create({ data: { userId: user.id, role: 'assistant', content: answer } });

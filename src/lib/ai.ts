@@ -30,18 +30,16 @@ async function complete(messages: ChatTurn[], system: string): Promise<string | 
 }
 
 /** Acharya chat — grounded strictly in the provided chart + journal context. */
-export async function acharyaReply(opts: {
-  question: string;
+function acharyaSystem(opts: {
   chartContext: string;
   journalContext: string;
-  history: ChatTurn[];
   language: 'en' | 'hi';
-}): Promise<string> {
+}): string {
   const langRule =
     opts.language === 'hi'
       ? 'Respond in natural, warm Hindi (Devanagari script). Use everyday Hindi with light Sanskrit terms where natural.'
       : 'Respond in English (you may use Sanskrit terms with a short gloss).';
-  const system = `${PERSONA}
+  return `${PERSONA}
 
 You are answering inside the "Self Sage" app. Ground every answer in the USER DATA below — cite specific placements, dasha periods or journal entries. If the data does not support a claim, say what the chart actually shows instead of inventing details. Never produce a generic horoscope. Keep answers 120-220 words. ${langRule}
 
@@ -50,7 +48,16 @@ ${opts.chartContext}
 
 KARMA JOURNAL (recent daily check-ins, most recent first):
 ${opts.journalContext || 'No journal entries yet.'}`;
+}
 
+export async function acharyaReply(opts: {
+  question: string;
+  chartContext: string;
+  journalContext: string;
+  history: ChatTurn[];
+  language: 'en' | 'hi';
+}): Promise<string> {
+  const system = acharyaSystem(opts);
   const llm = await complete(
     [...opts.history.slice(-8), { role: 'user', content: opts.question }],
     system,
@@ -62,6 +69,136 @@ ${opts.journalContext || 'No journal entries yet.'}`;
     return `क्षमा करें, इस समय मैं आपकी कुंडली से पूरी तरह जुड़ नहीं पा रहा हूँ। कृपया कुछ क्षण बाद पुनः प्रयास करें — तब तक अपनी श्वास पर ध्यान दें और आज के कर्म पर ध्यान केंद्रित रखें।`;
   }
   return 'Forgive me — I could not reach my ephemeris just now. Please try again in a moment; meanwhile, anchor yourself with three slow breaths and let today\u2019s actions, not anxieties, lead.';
+}
+
+/**
+ * Acharya chat with token streaming. Returns a SSE wire stream for the browser
+ * (`data: {"v":"chunk"}\n\n` … `data: {}` end) plus a `done` promise resolving
+ * with the FULL reply text so the caller can persist it after the stream ends.
+ * Falls back to a single-chunk stream when upstream streaming is unavailable.
+ */
+export async function acharyaStreamReply(opts: {
+  question: string;
+  chartContext: string;
+  journalContext: string;
+  history: ChatTurn[];
+  language: 'en' | 'hi';
+}): Promise<{ stream: ReadableStream<Uint8Array>; done: Promise<string> }> {
+  const enc = new TextEncoder();
+  const system = acharyaSystem(opts);
+  const turns: ChatTurn[] = [...opts.history.slice(-8), { role: 'user', content: opts.question }];
+
+  let resolveDone!: (v: string) => void;
+  let rejectDone!: (e: unknown) => void;
+  const done = new Promise<string>((res, rej) => {
+    resolveDone = res;
+    rejectDone = rej;
+  });
+
+  const sse = (obj: unknown) => enc.encode(`data: ${JSON.stringify(obj)}\n\n`);
+
+  const pumpUpstream = (upstream: ReadableStream<Uint8Array>, controller: ReadableStreamDefaultController<Uint8Array>, full: { text: string }) => {
+    const dec = new TextDecoder();
+    const reader = upstream.getReader();
+    let buf = '';
+    const handleEvent = (raw: string) => {
+      const line = raw.split('\n').filter((l) => l.startsWith('data:'))[0];
+      if (!line) return;
+      const payload = line.slice(5).trim();
+      if (!payload || payload === '[DONE]') return;
+      let delta = '';
+      try {
+        const obj = JSON.parse(payload);
+        delta =
+          obj?.choices?.[0]?.delta?.content ??
+          obj?.choices?.[0]?.message?.content ??
+          obj?.choices?.[0]?.text ??
+          obj?.delta?.content ??
+          obj?.delta?.text ??
+          obj?.content ??
+          '';
+      } catch {
+        // upstream sent a bare text line — surface it verbatim
+        delta = payload;
+      }
+      if (delta) {
+        full.text += delta;
+        controller.enqueue(sse({ v: delta }));
+      }
+    };
+    const readLoop = async () => {
+      try {
+        for (;;) {
+          const { done: up, value } = await reader.read();
+          if (up) break;
+          buf += dec.decode(value, { stream: true });
+          let idx: number;
+          while ((idx = buf.indexOf('\n\n')) >= 0) {
+            const evt = buf.slice(0, idx).trim();
+            buf = buf.slice(idx + 2);
+            if (evt) handleEvent(evt);
+          }
+        }
+        // trailing buffered event without terminator
+        const tail = buf.trim();
+        if (tail) handleEvent(tail);
+        controller.close();
+        resolveDone(full.text);
+      } catch (e) {
+        try { controller.close(); } catch { /* already closed */ }
+        rejectDone(e);
+      }
+    };
+    void readLoop();
+  };
+
+  try {
+    const zai = await getZai();
+    const upstream: unknown = await zai.chat.completions.create({
+      messages: [{ role: 'assistant', content: system } as ChatTurn, ...turns].slice(-21),
+      stream: true,
+      thinking: { type: 'disabled' },
+    });
+
+    if (upstream && typeof (upstream as ReadableStream).getReader === 'function') {
+      const full = { text: '' };
+      const wire = new ReadableStream<Uint8Array>({
+        start(controller) {
+          pumpUpstream(upstream as ReadableStream<Uint8Array>, controller, full);
+        },
+        cancel() {
+          try { (upstream as ReadableStream).cancel(); } catch { /* */ }
+          rejectDone(new Error('client_cancelled'));
+        },
+      });
+      return { stream: wire, done };
+    }
+
+    // Upstream ignored `stream` and returned a plain JSON completion
+    const text =
+      (upstream as { choices?: { message?: { content?: string } }[] })?.choices?.[0]?.message?.content?.trim() ?? '';
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        if (text) controller.enqueue(sse({ v: text }));
+        controller.close();
+        resolveDone(text);
+      },
+    });
+    return { stream, done };
+  } catch (err) {
+    console.error('[ai] stream failed, using fallback:', (err as Error).message);
+    const fallback = opts.language === 'hi'
+      ? 'क्षमा करें, इस समय मैं आपकी कुंडली से पूरी तरह जुड़ नहीं पा रहा हूँ। कृपया कुछ क्षण बाद पुनः प्रयास करें — तब तक अपनी श्वास पर ध्यान दें और आज के कर्म पर ध्यान केंद्रित रखें।'
+      : 'Forgive me — I could not reach my ephemeris just now. Please try again in a moment; meanwhile, anchor yourself with three slow breaths and let today\u2019s actions, not anxieties, lead.';
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(sse({ v: fallback }));
+        controller.close();
+        resolveDone(fallback);
+      },
+    });
+    return { stream, done };
+  }
 }
 
 /** Weekly reflection letter — must reference at least one specific logged note. */

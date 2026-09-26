@@ -13,6 +13,7 @@ interface Msg {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  streaming?: boolean;
 }
 
 const SUGGESTION_KEYS = ['acharya.suggested1', 'acharya.suggested2', 'acharya.suggested3', 'acharya.suggested4'];
@@ -54,17 +55,91 @@ export function AcharyaScreen() {
       setLoadError(false);
       setInput('');
       const userMsg: Msg = { id: `u-${Date.now()}`, role: 'user', content: q };
+      const assistantId = `a-${Date.now()}-s`;
       setMessages((m) => [...m, userMsg]);
       setLoading(true);
-      try {
-        const res = await api<{ answer: string }>('/api/ask-acharya', {
-          method: 'POST',
-          body: JSON.stringify({ question: q, language }),
+
+      // Append helper: create the streaming bubble, then grow it as deltas arrive
+      const appendDelta = (full: string) => {
+        setMessages((m) => {
+          const existing = m.find((x) => x.id === assistantId);
+          if (!existing) return [...m, { id: assistantId, role: 'assistant', content: full, streaming: true }];
+          return m.map((x) => (x.id === assistantId ? { ...x, content: full } : x));
         });
-        setMessages((m) => [...m, { id: `a-${Date.now()}`, role: 'assistant', content: res.answer }]);
+      };
+      const finishBubble = () => {
+        setMessages((m) => m.map((x) => (x.id === assistantId ? { ...x, streaming: false } : x)));
+      };
+
+      try {
+        // Preferred path: SSE token streaming
+        const res = await fetch('/api/ask-acharya', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: q, language, stream: true }),
+        });
+        if (!res.ok || !res.body) {
+          let msg = `HTTP ${res.status}`;
+          try {
+            msg = ((await res.json()) as { error?: string }).error ?? msg;
+          } catch { /* non-JSON error */ }
+          throw new Error(msg);
+        }
+        const reader = res.body.getReader();
+        const dec = new TextDecoder();
+        let buf = '';
+        let full = '';
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          let idx: number;
+          while ((idx = buf.indexOf('\n\n')) >= 0) {
+            const evt = buf.slice(0, idx);
+            buf = buf.slice(idx + 2);
+            const line = evt.split('\n').find((l) => l.startsWith('data:'));
+            if (!line) continue;
+            const payload = line.slice(5).trim();
+            if (!payload) continue;
+            try {
+              const obj = JSON.parse(payload) as { v?: string };
+              if (obj.v) {
+                full += obj.v;
+                appendDelta(full);
+              }
+            } catch {
+              full += payload;
+              appendDelta(full);
+            }
+          }
+        }
+        finishBubble();
+        if (!full.trim()) {
+          // Stream produced nothing — fall back to the non-streaming endpoint
+          const r2 = await api<{ answer: string }>('/api/ask-acharya', {
+            method: 'POST',
+            body: JSON.stringify({ question: q, language }),
+          });
+          setMessages((m) => m.map((x) => (x.id === assistantId ? { ...x, content: r2.answer } : x)));
+        }
       } catch (e) {
-        setLoadError(true);
-        console.error('[acharya]', e);
+        // Fallback path: classic JSON answer (covers SSE-unsupported gateways)
+        try {
+          const res = await api<{ answer: string }>('/api/ask-acharya', {
+            method: 'POST',
+            body: JSON.stringify({ question: q, language }),
+          });
+          setMessages((m) => {
+            const existing = m.find((x) => x.id === assistantId);
+            if (existing) return m.map((x) => (x.id === assistantId ? { ...x, content: res.answer, streaming: false } : x));
+            return [...m, { id: assistantId, role: 'assistant' as const, content: res.answer }];
+          });
+        } catch {
+          setLoadError(true);
+          console.error('[acharya]', e);
+          // remove the empty streaming bubble if it was created
+          setMessages((m) => m.filter((x) => x.id !== assistantId || x.content.length > 0));
+        }
       } finally {
         setLoading(false);
       }
@@ -143,12 +218,15 @@ export function AcharyaScreen() {
                 )}
               >
                 {m.content}
+                {m.streaming && (
+                  <span className="inline-block w-2 h-4 ml-1 align-middle rounded-sm bg-gold animate-pulse" aria-hidden />
+                )}
               </div>
             </motion.div>
           ))}
         </AnimatePresence>
 
-        {loading && (
+        {loading && !messages.some((m) => m.streaming) && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2.5">
             <AcharyaAvatar size={30} className="shrink-0 hidden sm:block" />
             <div className="glass rounded-2xl rounded-bl-md px-4 py-3">

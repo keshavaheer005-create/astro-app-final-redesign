@@ -4,7 +4,7 @@ export type IconName =
   | 'home' | 'chart' | 'journal' | 'chat' | 'user' | 'bell'
   | 'sun' | 'moon' | 'planet' | 'star' | 'sparkle' | 'flame'
   | 'calendar' | 'clock' | 'pin' | 'search' | 'locate' | 'settings'
-  | 'globe' | 'sunrise' | 'sunset' | 'heart' | 'trending' | 'shield'
+  | 'globe' | 'sunrise' | 'sunset' | 'moonrise' | 'moonset' | 'heart' | 'trending' | 'shield'
   | 'warning' | 'info' | 'check' | 'x' | 'chevron-right' | 'chevron-down'
   | 'chevron-left' | 'arrow-right' | 'arrow-left' | 'send' | 'plus'
   | 'edit' | 'lotus' | 'om' | 'compass' | 'list' | 'download' | 'refresh'
@@ -117,6 +117,20 @@ const PATHS: Record<IconName, React.ReactNode> = {
     <>
       <path d="M3 18h18M6.5 14.5a5.5 5.5 0 0 1 11 0" />
       <path d="M12 7V4M5 8l1.6 1.6M19 8l-1.6 1.6M2.5 14.5H4M20 14.5h1.5" />
+    </>
+  ),
+  moonrise: (
+    <>
+      <path d="M3 18.5h18M8.5 21h7" />
+      <path d="M6.5 15a5.5 5.5 0 0 1 11 0" />
+      <path d="M12 3.5V9M9.8 6.2 12 4l2.2 2.2" />
+    </>
+  ),
+  moonset: (
+    <>
+      <path d="M3 18.5h18M8.5 21h7" />
+      <path d="M6.5 15a5.5 5.5 0 0 1 11 0" />
+      <path d="M12 4v5.5M9.8 7.3 12 9.5l2.2-2.2" />
     </>
   ),
   heart: <path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.3 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10Z" />,

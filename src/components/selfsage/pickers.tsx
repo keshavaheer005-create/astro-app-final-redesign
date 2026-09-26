@@ -39,7 +39,7 @@ export function WheelPicker({
     if (el && Math.abs(el.scrollTop - index * ITEM_H) > 2) {
       scrollToIndex(index, false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const onScroll = useCallback(() => {

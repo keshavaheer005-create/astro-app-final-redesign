@@ -53,11 +53,13 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
   }, []);
 
   useEffect(() => {
+    // Fire-and-forget bootstrap fetches; state updates land in promise callbacks.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async loader, no synchronous setState
     void loadCharts();
     void api<{ reminder: { checkinReminder: boolean; reminderTime: string; weeklyReflection: boolean } }>('/api/reminders')
       .then((r) => setReminder(r.reminder.checkinReminder, r.reminder.reminderTime))
       .catch(() => undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
 
   const activateChart = async (id: string) => {

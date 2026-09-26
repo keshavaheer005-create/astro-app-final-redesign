@@ -121,6 +121,8 @@ export function ReportsScreen() {
         {(() => {
           const vc = chart.divisionalCharts[selectedVarga as keyof typeof chart.divisionalCharts];
           if (!vc) return null;
+          const vargaEntries = Object.entries(vc.planets) as [PlanetKey, number][];
+          const isD9 = selectedVarga === 'D9';
           return (
             <div className="mt-4">
               <div className="flex items-center justify-between mb-2">
@@ -131,8 +133,59 @@ export function ReportsScreen() {
               </div>
               <div className="max-h-[420px] overflow-y-auto scroll-slim rounded-xl bg-gold-faint/40 border border-gold/15 p-3">
                 <div className="scale-[0.92] origin-top">
-                  <NorthChart ascSign={vc.ascSign} planets={Object.entries(vc.planets).map(([k, sign]) => ({ key: k as PlanetKey, sign: sign as number }))} />
+                  <NorthChart ascSign={vc.ascSign} planets={vargaEntries.map(([k, sign]) => ({ key: k as PlanetKey, sign: sign as number }))} />
                 </div>
+              </div>
+
+              {/* Planet detail table for this varga */}
+              <div className="mt-4">
+                <p className="text-t12 uppercase tracking-wide font-semibold text-gold mb-2">{t('reports.vargaPlanets')}</p>
+                <div className="rounded-xl border border-gold/15 overflow-hidden">
+                  <table className="w-full text-t14">
+                    <thead>
+                      <tr className="bg-gold-soft/60 text-t12 text-muted-foreground">
+                        <th className="text-left font-medium px-3 py-2">{t('reports.colPlanet')}</th>
+                        <th className="text-left font-medium px-3 py-2">{t('reports.colSign')}</th>
+                        <th className="text-center font-medium px-3 py-2">{t('reports.colHouse')}</th>
+                        {isD9 && <th className="text-center font-medium px-3 py-2">{t('reports.colVargottama')}</th>}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {PLANET_ORDER.filter((pk) => vargaEntries.some(([k]) => k === pk)).map((pk, rowIdx) => {
+                        const sign = vargaEntries.find(([k]) => k === pk)![1];
+                        const house = ((sign - vc.ascSign + 12) % 12) + 1;
+                        const natalSign = chart.planets.find((p) => p.key === pk)?.sign;
+                        const vargottama = isD9 && natalSign !== undefined && natalSign === sign;
+                        return (
+                          <tr
+                            key={pk}
+                            className={cn(
+                              'border-t border-gold/10 transition-colors duration-150 hover:bg-gold-faint/60',
+                              rowIdx % 2 === 1 && 'bg-white/35',
+                            )}
+                          >
+                            <td className="px-3 py-2 font-medium text-charcoal">{t(`planet.${pk}`)}</td>
+                            <td className="px-3 py-2 text-charcoal/80">{hi ? SIGNS_HI[sign] : SIGNS[sign]}</td>
+                            <td className="px-3 py-2 text-center text-charcoal/80">{house}</td>
+                            {isD9 && (
+                              <td className="px-3 py-2 text-center">
+                                {vargottama && (
+                                  <span className="inline-flex items-center rounded-full bg-gold-soft border border-gold/40 px-2 py-0.5 text-t12 text-[#8a6d10] font-semibold">
+                                    <Icon name="star" size={11} className="mr-1" />
+                                    {t('reports.vargottama')}
+                                  </span>
+                                )}
+                              </td>
+                            )}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                {isD9 && (
+                  <p className="mt-1.5 text-t12 text-muted-foreground">{t('reports.vargottamaHint')}</p>
+                )}
               </div>
             </div>
           );

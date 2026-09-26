@@ -334,5 +334,17 @@
   "letter.stop": "Stop",
   "letter.loadingAudio": "Preparing audio…",
   "journal.checkinCta": "Check in from Home",
-  "ornament.divider": "· · ✦ · ·"
+  "ornament.divider": "· · ✦ · ·",
+  "home.moonrise": "Moonrise",
+  "home.moonset": "Moonset",
+  "journal.dashaBand": "Dasha periods during these days",
+  "reports.vargaPlanets": "Planets in this varga",
+  "reports.colPlanet": "Planet",
+  "reports.colSign": "Sign",
+  "reports.colHouse": "House",
+  "reports.colVargottama": "D9 check",
+  "reports.vargottama": "Vargottama",
+  "reports.vargottamaHint": "Vargottama: the planet occupies the same sign in D1 and D9 — its promise is doubled in strength.",
+  "match.history": "Recent matches",
+  "match.clearHistory": "Clear"
 }

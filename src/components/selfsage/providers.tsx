@@ -21,13 +21,19 @@ function initI18n(lng: string) {
   return i18next;
 }
 
+// Initialize once at module scope — NOT during Providers' render. Calling
+// i18next.init() mid-render synchronously notifies react-i18next subscribers
+// and trips React's "cannot update a component while rendering another" guard.
+// Zustand persist rehydrates localStorage synchronously, so the persisted
+// language is available here.
+initI18n(useAppStore.getState().language);
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const language = useAppStore((s) => s.language);
   const reduceMotion = useAppStore((s) => s.reduceMotion);
   const highContrast = useAppStore((s) => s.highContrast);
 
   useEffect(() => {
-    initI18n(language);
     if (i18next.language !== language) i18next.changeLanguage(language);
     document.documentElement.lang = language;
   }, [language]);

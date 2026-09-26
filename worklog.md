@@ -88,3 +88,23 @@ Stage Summary:
 - Round 1 complete. Lint 0 errors. All new features browser-verified with real data.
 - Known variance: choghadiya weekday START offsets differ between panchang software; ours matches the Sunday anchor (Udveg) + Mon/Sat/Thu anchors from AstroSage-style tables; cycle+qualities are Wikipedia-verified. Revisit if authoritative source found.
 - Next suggestions: Acharya streaming responses, moonrise/moonset on Home, push-notification scheduling, matching result save/share, D-chart navamsa planetary detail table.
+
+---
+Task ID: review-2 (cron webDevReview round 2)
+Agent: lead
+Task: Status assessment + agent-browser QA + bug fixes + new features (streaming Acharya, moon data, D9 table, match history) + styling detail pass
+
+Work Log:
+- QA sweep (agent-browser, 375px + 1440px, all 5 tabs + sub-tabs): app stable, console clean, prior features intact
+- BUG 1 (high): tapping "Dasha & Reports" panned the WHOLE page horizontally (body.scrollWidth 545 vs 375; scrollingElement.scrollLeft 164). Root cause: SlidingPillTabs rendered a non-wrapping flex row with no overflow container. FIX: strip is now its own scroll container (`overflow-x-auto no-scrollbar`), active tab auto-centers via scrollIntoView(inline:center, block:nearest); html/body get `overflow-x: clip` guard; added `.no-scrollbar` utility to globals.css
+- BUG 2: React "cannot update a component while rendering another" (Providers→PanchangScreen/AppInner). Root cause: initI18n() called during Providers render. FIX: i18next init moved to module scope (zustand persist rehydrates synchronously so persisted language still applies pre-render); verified warnings gone after fresh reload
+- Cleanup: Next.js devIndicators disabled (N badge overlapped mobile bottom nav); Chip gained `compact` prop (was silently ignored); removed invalid xmlns on div inside foreignObject; eslint fully clean (0 errors 0 warnings, incl. removing 3 stale unused-disable directives, one re-scoped with justification)
+- FEATURE — Acharya streaming: SDK chat.completions supports stream:true (returns ReadableStream). ai.ts: acharyaSystem extracted; new acharyaStreamReply() parses upstream SSE tolerantly (delta.content/message.content/bare-text), re-emits `data: {"v":chunk}` wire SSE, returns {stream, done}; route persists user turn immediately + assistant turn when done resolves; client renders token-by-token with gold pulse cursor, thinking dots hide on first delta, falls back to non-stream JSON endpoint if SSE fails/empty. VERIFIED: mid-stream capture at t+1.5s with cursor visible; grounded answer (Mercury 1st Chitra, Saturn 9th Rohini, quoted journal Sept 24/25); message persisted after reload
+- FEATURE — Moonrise/Moonset on Home hero: two new custom 1.5px gold icons (moonrise/moonset), i18n en+hi (चंद्रोदय/चंद्रास्त); hero now shows Sunrise · Moonrise · Moonset row. Verified both languages
+- FEATURE — Varga planet detail table (Reports): for the selected divisional (D1–D60), a striped table lists planet | sign | house-in-varga; D9 adds a Vargottama badge column (D1 sign == D9 sign) + explanatory hint. Verified: D9 asc Virgo, Sun Sagittarius = house 4 ✓; i18n en+hi
+- FEATURE — Matching history: last 6 matches in localStorage (`ss-match-history-v1`); RECENT MATCHES card under Match button shows names × / date / gold score pill; click restores both persons + full result instantly; Clear button. VERIFIED: computed Arjun×Diya 22.5/36, history survived reload, restore refills form + result
+- STYLING: Kundli summary tiles — labels no longer truncate ("Ascendant" fully visible); Journal mood timeline — dasha band shows lord name (≥18% width) + "Dasha periods during these days" caption (was an unexplained gold bar)
+
+Stage Summary:
+- Round 2 complete: 1 UX bug + 1 React warning fixed, 4 features added, lint 0/0, tsc src-clean, all verified in browser at 375px & 1440px with real data (i18n parity 348 keys en+hi).
+- Next candidates: TTS for Acharya replies, matching result share/export (Web Share API + PNG), Sade Sati personal timeline card, Panchang month-view tithi chips, per-checkin Acharya micro-note on Pattern dashboard.
