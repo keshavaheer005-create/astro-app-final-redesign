@@ -129,6 +129,22 @@ function LiveNowStrip({ choghadiya, rahuKaal, tz, locale }: {
   );
 }
 
+/** One upcoming sky event for the "Sky ahead" strip (see /api/sky-highlights). */
+interface SkyItem {
+  date: string;
+  kind: 'purnima' | 'amavasya' | 'ekadashi' | 'sankranti' | 'festival';
+  name: { en: string; hi: string };
+  daysUntil: number;
+}
+
+const SKY_ICON: Record<SkyItem['kind'], IconName> = {
+  purnima: 'moon',
+  amavasya: 'moon',
+  ekadashi: 'lotus',
+  sankranti: 'sun',
+  festival: 'om',
+};
+
 export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journal' | 'acharya' | 'profile', view?: string) => void }) {
   const { t, i18n } = useTranslation();
   const { chart, user } = useSession();
@@ -151,6 +167,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [reminderAlert, setReminderAlert] = useState(false);
   const [letterAlert, setLetterAlert] = useState(false); // a new letter just landed
+  const [sky, setSky] = useState<SkyItem[] | null>(null);
   const [flashCheckin, setFlashCheckin] = useState(false);
   const [flashLetter, setFlashLetter] = useState(false);
   const pendingFocus = useAppStore((s) => s.pendingFocus);
@@ -325,6 +342,26 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
         if (!cancelled) setPanchang(res.panchang);
       } catch {
         /* hero panchang is best-effort */
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [chart]);
+
+  // Sky ahead — upcoming purnima / ekadashi / sankranti / festivals (best-effort)
+  useEffect(() => {
+    if (!chart) return;
+    let cancelled = false;
+    const run = async () => {
+      try {
+        const res = await api<{ items: SkyItem[] }>(
+          `/api/sky-highlights?lat=${chart.input.lat}&lng=${chart.input.lng}&timezone=${encodeURIComponent(chart.input.timezone)}`,
+        );
+        if (!cancelled) setSky(res.items ?? []);
+      } catch {
+        /* strip is best-effort */
       }
     };
     void run();
@@ -579,6 +616,54 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
           <Icon name="chevron-right" size={18} className="text-gold transition-transform duration-250 group-hover:translate-x-0.5" />
         </button>
       </GlassCard>
+
+      {/* Sky ahead — upcoming purnima / ekadashi / sankranti / festivals */}
+      {sky && sky.length > 0 && (
+        <section aria-label={t('home.skyAhead')} className="stagger-in" style={{ animationDelay: '40ms', animationFillMode: 'backwards' }}>
+          <SectionHeader title={t('home.skyAhead')} icon="moon" />
+          <div className="relative" role="list">
+            <span className="sky-fade sky-fade-l" aria-hidden="true" />
+            <span className="sky-fade sky-fade-r" aria-hidden="true" />
+            <div className="sky-strip no-scrollbar flex gap-2.5 overflow-x-auto pb-1 px-0.5">
+              {sky.map((item, i) => {
+                const whenLabel =
+                  item.daysUntil === 0 ? t('home.today') : item.daysUntil === 1 ? t('home.tomorrow') : t('home.inDays', { n: item.daysUntil });
+                return (
+                  <button
+                    key={`${item.kind}-${item.date}`}
+                    type="button"
+                    role="listitem"
+                    onClick={() => {
+                      useAppStore.getState().pushPendingFocus(`panchang:${item.date}`);
+                      onNavigate('kundli', 'panchang');
+                    }}
+                    aria-label={`${language === 'hi' ? item.name.hi : item.name.en}, ${whenLabel}`}
+                    className={cn(
+                      'sky-chip group/chip shrink-0 min-w-[148px] max-w-[190px] text-left glass rounded-xl px-3 py-2.5',
+                      'transition-all duration-250 ease-out hover:-translate-y-0.5 hover:shadow-[0_6px_18px_-8px_rgba(201,162,39,0.45)] active:scale-[0.97]',
+                      'animate-in fade-in-0 slide-in-from-left-2 focus-visible:ring-2 focus-visible:ring-gold/60 focus-visible:outline-none',
+                    )}
+                    style={{ animationDelay: `${Math.min(i, 8) * 45}ms`, animationFillMode: 'backwards' }}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="shrink-0 w-7 h-7 rounded-full bg-gold-soft/70 border border-gold/25 flex items-center justify-center transition-transform duration-250 group-hover/chip:scale-110">
+                        <Icon name={SKY_ICON[item.kind]} size={14} className="text-gold" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-t14 font-medium text-charcoal truncate">{language === 'hi' ? item.name.hi : item.name.en}</span>
+                        <span className="block text-t12 text-muted-foreground truncate">
+                          {new Date(`${item.date}T12:00:00Z`).toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' })}
+                          <span className="text-gold"> · {whenLabel}</span>
+                        </span>
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Dasha transition countdown — ink card */}
       {dashaNow && dashaNow.next.lord && (

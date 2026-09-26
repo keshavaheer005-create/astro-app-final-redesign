@@ -13,10 +13,17 @@ export const maxDuration = 60;
 export async function POST(req: Request) {
   try {
     const user = await ensureUser();
-    const { question, language, stream } = await req.json();
+    const { question, language, stream, journalRef } = await req.json();
     const q = String(question ?? '').trim();
     if (!q) return NextResponse.json({ error: 'empty_question' }, { status: 400 });
     const lang = language === 'hi' ? 'hi' : 'en';
+    // Optional journal threading: a "YYYY-MM-DD" the exchange refers to
+    // ("discuss this note"). Persisted on both turns so the jump-back pill
+    // survives reloads.
+    const metaJson =
+      typeof journalRef === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(journalRef)
+        ? JSON.stringify({ journalRef })
+        : null;
 
     const saved = await db.birthChart.findFirst({ where: { userId: user.id, isPrimary: true } });
     if (!saved) {
@@ -78,12 +85,16 @@ Transit context: natal Moon in ${chart.moonSign.name}; current Moon nakshatra ${
 
     if (stream) {
       // Persist the user turn now; the assistant turn is saved when the stream completes.
-      await db.chatMessage.create({ data: { userId: user.id, role: 'user', content: q } });
+      await db.chatMessage.create({
+        data: { userId: user.id, role: 'user', content: q, ...(metaJson ? { meta: metaJson } : {}) },
+      });
       const { stream: wire, done } = await acharyaStreamReply(grounding);
       void done
         .then((full) => {
           if (full && full.trim()) {
-            return db.chatMessage.create({ data: { userId: user.id, role: 'assistant', content: full.trim() } });
+            return db.chatMessage.create({
+              data: { userId: user.id, role: 'assistant', content: full.trim(), ...(metaJson ? { meta: metaJson } : {}) },
+            });
           }
         })
         .catch((e) => console.error('[ask-acharya] persist-after-stream:', (e as Error).message));
@@ -99,8 +110,12 @@ Transit context: natal Moon in ${chart.moonSign.name}; current Moon nakshatra ${
 
     const answer = await acharyaReply(grounding);
 
-    await db.chatMessage.create({ data: { userId: user.id, role: 'user', content: q } });
-    await db.chatMessage.create({ data: { userId: user.id, role: 'assistant', content: answer } });
+    await db.chatMessage.create({
+      data: { userId: user.id, role: 'user', content: q, ...(metaJson ? { meta: metaJson } : {}) },
+    });
+    await db.chatMessage.create({
+      data: { userId: user.id, role: 'assistant', content: answer, ...(metaJson ? { meta: metaJson } : {}) },
+    });
 
     return NextResponse.json({ answer });
   } catch (e) {
@@ -119,7 +134,16 @@ export async function GET() {
       take: 60,
     });
     return NextResponse.json({
-      messages: msgs.map((m) => ({ id: m.id, role: m.role, content: m.content, createdAt: m.createdAt })),
+      messages: msgs.map((m) => {
+        let journalRef: string | undefined;
+        try {
+          const meta = m.meta ? (JSON.parse(m.meta) as { journalRef?: string }) : null;
+          if (meta?.journalRef && /^\d{4}-\d{2}-\d{2}$/.test(meta.journalRef)) journalRef = meta.journalRef;
+        } catch {
+          /* meta is optional */
+        }
+        return { id: m.id, role: m.role, content: m.content, createdAt: m.createdAt, journalRef };
+      }),
     });
   } catch (e) {
     console.error('[ask-acharya GET]', e);

@@ -143,6 +143,54 @@ export function Chip({
   );
 }
 
+/**
+ * Labelled segmented control — pill container with gold active segment.
+ * Keeps option rows from wrapping into loose chips (chart style / zodiac).
+ */
+export function Segmented({
+  label,
+  options,
+  active,
+  onChange,
+  className,
+}: {
+  label: string;
+  options: { id: string; label: string }[];
+  active: string;
+  onChange: (id: string) => void;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <p className="text-t12 uppercase tracking-wide font-semibold text-muted-foreground mb-1.5">{label}</p>
+      <div className="inline-flex w-full rounded-full bg-gold-faint/60 border border-gold/25 p-1 gap-1" role="radiogroup" aria-label={label}>
+        {options.map((o) => {
+          const isActive = o.id === active;
+          return (
+            <button
+              key={o.id}
+              type="button"
+              role="radio"
+              aria-checked={isActive}
+              onClick={() => onChange(o.id)}
+              className={cn(
+                'flex-1 min-w-0 min-h-[36px] px-2 sm:px-3 rounded-full text-t12 sm:text-t14 font-medium leading-tight',
+                'whitespace-normal sm:whitespace-nowrap transition-all duration-250 ease-out',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/60',
+                isActive
+                  ? 'gold-grad text-charcoal shadow-[0_2px_10px_-4px_rgba(201,162,39,0.6)]'
+                  : 'text-charcoal/70 hover:bg-white/60 hover:text-charcoal active:scale-[0.97]',
+              )}
+            >
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function StatPill({ icon, label, value }: { icon: IconName; label: string; value: string }) {
   return (
     <div className="glass rounded-2xl px-4 py-3 flex items-center gap-3 min-w-0">

@@ -87,6 +87,9 @@ export function AcharyaScreen() {
     const loadHistory = async () => {
       try {
         const res = await api<{ messages: Msg[] }>('/api/ask-acharya');
+        // Server-persisted journal threads arrive per-message (meta.journalRef),
+        // so the "View journal entry" pill survives reloads. New questions are
+        // only threaded when explicitly handed a draft ("discuss this note").
         setMessages(res.messages);
       } catch {
         /* fresh chat */
@@ -163,7 +166,7 @@ export function AcharyaScreen() {
         const res = await fetch('/api/ask-acharya', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ question: q, language, stream: true }),
+          body: JSON.stringify({ question: q, language, stream: true, journalRef: reDate ?? undefined }),
         });
         if (!res.ok || !res.body) {
           let msg = `HTTP ${res.status}`;
@@ -205,7 +208,7 @@ export function AcharyaScreen() {
           // Stream produced nothing — fall back to the non-streaming endpoint
           const r2 = await api<{ answer: string }>('/api/ask-acharya', {
             method: 'POST',
-            body: JSON.stringify({ question: q, language }),
+            body: JSON.stringify({ question: q, language, journalRef: reDate ?? undefined }),
           });
           setMessages((m) => m.map((x) => (x.id === assistantId ? { ...x, content: r2.answer, journalRef: reDate ?? undefined } : x)));
         }
@@ -215,7 +218,7 @@ export function AcharyaScreen() {
         try {
           const res = await api<{ answer: string }>('/api/ask-acharya', {
             method: 'POST',
-            body: JSON.stringify({ question: q, language }),
+            body: JSON.stringify({ question: q, language, journalRef: reDate ?? undefined }),
           });
           setMessages((m) => {
             const existing = m.find((x) => x.id === assistantId);

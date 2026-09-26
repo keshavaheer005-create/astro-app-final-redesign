@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Icon } from '../icons';
-import { GlassCard, Chip, SectionHeader, EmptyState } from '../ui-primitives';
+import { GlassCard, Segmented, SectionHeader, EmptyState } from '../ui-primitives';
 import { NorthChart, SouthChart } from './chart-diagram';
 import { useSession } from '../session-context';
 import { PLANET_ORDER, SIGNS, SIGNS_HI } from '@/lib/astro/constants';
@@ -54,14 +54,27 @@ export function KundliChartScreen() {
         <SummaryTile label={t('chart.sunSummary')} value={hi ? chart.sunSign.nameHi : chart.sunSign.name} sub={chart.planets.find((p) => p.key === 'Su')?.nakshatraName} icon="sun" />
       </div>
 
-      {/* Toggles */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Chip active={style === 'north'} onClick={() => setStyle('north')}>{t('chart.north')}</Chip>
-        <Chip active={style === 'south'} onClick={() => setStyle('south')}>{t('chart.south')}</Chip>
-        <span className="w-px h-6 bg-gold/25 mx-1" />
-        <Chip active={zodiac === 'vedic'} onClick={() => setZodiac('vedic')}>{t('chart.zodiac.vedic')}</Chip>
-        <Chip active={zodiac === 'western'} onClick={() => setZodiac('western')}>{t('chart.zodiac.western')}</Chip>
-        <Chip active={zodiac === 'both'} onClick={() => setZodiac('both')}>{t('chart.zodiac.both')}</Chip>
+      {/* Toggles — labelled segmented controls (no loose chip wrapping) */}
+      <div className="grid gap-2.5 sm:grid-cols-2 sm:items-end" role="group" aria-label={t('chart.group.toggles')}>
+        <Segmented
+          label={t('chart.group.style')}
+          options={[
+            { id: 'north', label: t('chart.north') },
+            { id: 'south', label: t('chart.south') },
+          ]}
+          active={style}
+          onChange={(v) => setStyle(v as 'north' | 'south')}
+        />
+        <Segmented
+          label={t('chart.group.zodiac')}
+          options={[
+            { id: 'vedic', label: t('chart.zodiac.vedic') },
+            { id: 'western', label: t('chart.zodiac.western') },
+            { id: 'both', label: t('chart.zodiac.both') },
+          ]}
+          active={zodiac}
+          onChange={(v) => setZodiac(v as 'vedic' | 'western' | 'both')}
+        />
       </div>
 
       {/* Chart diagrams */}

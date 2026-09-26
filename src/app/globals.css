@@ -243,6 +243,31 @@
     display: none;
   }
 
+  /* ── Sky-ahead strip: snap scroll + edge fades ─────────────────────── */
+  .sky-strip {
+    scroll-snap-type: x proximity;
+    overscroll-behavior-x: contain;
+  }
+  .sky-chip {
+    scroll-snap-align: start;
+  }
+  .sky-fade {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 28px;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .sky-fade-l {
+    left: -2px;
+    background: linear-gradient(to right, #faf7f0, rgba(250, 247, 240, 0));
+  }
+  .sky-fade-r {
+    right: -2px;
+    background: linear-gradient(to left, #faf7f0, rgba(250, 247, 240, 0));
+  }
+
   /* ── Slim scrollbar ────────────────────────────────────────────────── */
   .scroll-slim {
     scrollbar-width: thin;

@@ -48,6 +48,7 @@ model ChatMessage {
   role      String // "user" | "assistant"
   content   String
   audioUrl  String? // cached TTS data URI for assistant messages
+  meta      String? // JSON extras, e.g. {"journalRef":"2026-09-26"} threading the exchange to a journal entry
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt])

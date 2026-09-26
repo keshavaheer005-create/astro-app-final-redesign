@@ -94,6 +94,7 @@ export function PanchangScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [festDetail, setFestDetail] = useState<FestDetail | null>(null);
+  const [flashDay, setFlashDay] = useState(false);
 
   const load = useCallback(async () => {
     if (!chart) return;
@@ -124,6 +125,22 @@ export function PanchangScreen() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // One-shot handoff: a sky chip on Home asked to open a specific day
+  // ("panchang:<date>") — switch to day view, select the date, flash the limbs.
+  useEffect(() => {
+    const focus = useAppStore.getState().consumePendingFocus();
+    if (focus?.startsWith('panchang:')) {
+      const d = focus.slice('panchang:'.length);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+        setMode('day');
+        setDate(d);
+        setFlashDay(true);
+        const id = window.setTimeout(() => setFlashDay(false), 1800);
+        return () => window.clearTimeout(id);
+      }
+    }
+  }, []);
 
   if (!chart) return <EmptyState icon="sun" title={t('home.noChart')} body={t('home.noChartBody')} />;
 
@@ -183,7 +200,7 @@ export function PanchangScreen() {
           {error && <ErrorState onRetry={load} message={t('common.networkError')} />}
           {data && (
             <>
-              <div className="grid grid-cols-2 gap-3">
+              <div className={cn('grid grid-cols-2 gap-3 rounded-2xl', flashDay && 'focus-flash')}>
                 {limbs.map((l) => (
                   <GlassCard key={l.label} className="p-4">
                     <div className="flex items-center gap-2 text-gold">
