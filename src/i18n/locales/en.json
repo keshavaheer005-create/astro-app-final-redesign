@@ -408,5 +408,17 @@
   "panchang.festBy": "classical significance",
   "reports.savTapHint": "Tap a sign to see which planets contribute its bindus.",
   "reports.savContribution": "Planet contributions in {{sign}}:",
-  "panchang.festListen": "Listen to this"
+  "panchang.festListen": "Listen to this",
+  "notifications.reminderToastTitle": "Time for your daily check-in",
+  "notifications.reminderToastBody": "Your {{time}} reminder — sixty seconds of honesty keeps the pattern alive.",
+  "notifications.reminderToastAction": "Check in now",
+  "notifications.dashaAhead": "Transitions to {{next}} in {{n}} days",
+  "notifications.dashaMahaAhead": "{{next}} Mahadasha begins in {{n}} days",
+  "notifications.dashaAheadBody": "A new chapter of your dasha is approaching.",
+  "letter.export": "Save as PDF",
+  "letter.printByline": "A weekly letter from Acharya Abhishek Sharma",
+  "letter.printSignature": "— Acharya Abhishek Sharma",
+  "dasha.tipNow": "{{d}} days in · {{left}} days remaining",
+  "dasha.beginsIn": "Begins in {{n}} days",
+  "dasha.pct": "{{pct}}% complete"
 }

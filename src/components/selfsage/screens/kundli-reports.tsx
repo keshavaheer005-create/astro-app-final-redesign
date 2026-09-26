@@ -12,6 +12,41 @@ import { cn } from '@/lib/utils';
 
 const BAV_KEYS: PlanetKey[] = ['Su', 'Mo', 'Ma', 'Me', 'Ju', 'Ve', 'Sa'];
 
+const DAY_MS = 86_400_000;
+
+/** % of the [start,end] window that has already elapsed (clamped 0-100). */
+function pctBetween(start: string, end: string): number {
+  const a = new Date(`${start}T00:00:00Z`).getTime();
+  const b = new Date(`${end}T00:00:00Z`).getTime();
+  if (!Number.isFinite(a) || !Number.isFinite(b) || b <= a) return 0;
+  return Math.max(0, Math.min(100, ((Date.now() - a) / (b - a)) * 100));
+}
+
+function daysUntil(dateStr: string): number {
+  return Math.ceil((new Date(`${dateStr}T00:00:00Z`).getTime() - Date.now()) / DAY_MS);
+}
+
+function daysIn(start: string): number {
+  return Math.max(0, Math.floor((Date.now() - new Date(`${start}T00:00:00Z`).getTime()) / DAY_MS));
+}
+
+/** Dasha-window progress: thin gold bar with a styled hover tooltip. */
+function DashaProgress({ start, end, tipLabel }: { start: string; end: string; tipLabel: string }) {
+  const pct = pctBetween(start, end);
+  return (
+    <div className="mt-2">
+      <div className="dasha-tip-host">
+        <div className="h-1.5 rounded-full bg-gold/15 overflow-hidden" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}>
+          <div className="h-full gold-grad rounded-full transition-[width] duration-500" style={{ width: `${pct}%` }} />
+        </div>
+        <span role="tooltip" className="dasha-tip">
+          {tipLabel}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function ReportsScreen() {
   const { t, i18n } = useTranslation();
   const { chart } = useSession();
@@ -72,6 +107,16 @@ export function ReportsScreen() {
                   </div>
                   <p className="text-t12 text-muted-foreground mt-1">{md.start}</p>
                   <p className="text-t12 text-muted-foreground">→ {md.end}</p>
+                  {isCurrent && (
+                    <DashaProgress
+                      start={md.start}
+                      end={md.end}
+                      tipLabel={t('dasha.tipNow', { d: daysIn(md.start), left: Math.max(0, daysUntil(md.end)) })}
+                    />
+                  )}
+                  {isFuture && (
+                    <p className="mt-1.5 text-t12 text-gold/80 italic">{t('dasha.beginsIn', { n: daysUntil(md.start) })}</p>
+                  )}
                 </div>
               );
             })}
@@ -90,9 +135,11 @@ export function ReportsScreen() {
             <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-64 overflow-y-auto scroll-slim pr-1">
               {chart.dashas.current?.maha.antardashas.map((ad) => {
                 const active = ds.antarLord === ad.lord;
+                const adPct = pctBetween(ad.start, ad.end);
                 return (
                   <div
                     key={ad.lord + ad.start}
+                    title={t('dasha.pct', { pct: Math.round(adPct) })}
                     className={cn(
                       'rounded-lg px-3 py-2 border text-t12 transition-colors duration-200',
                       active ? 'gold-grad border-gold/40 font-semibold text-charcoal' : 'bg-white/50 border-gold/15 text-muted-foreground',
@@ -100,6 +147,11 @@ export function ReportsScreen() {
                   >
                     <span className="font-medium text-t14 text-charcoal">{t(`planet.${ad.lord}`)}</span>
                     <span className="block">{ad.start} → {ad.end}</span>
+                    {active && (
+                      <div className="mt-1.5 h-1 rounded-full bg-charcoal/15 overflow-hidden">
+                        <div className="h-full bg-charcoal/70 rounded-full transition-[width] duration-500" style={{ width: `${adPct}%` }} />
+                      </div>
+                    )}
                   </div>
                 );
               })}

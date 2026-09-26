@@ -14,6 +14,8 @@ interface AppState {
   weeklyReflectionEnabled: boolean;
   /** One-shot composer draft handed to the Acharya screen (e.g. "discuss this journal note"). */
   acharyaDraft: string | null;
+  /** One-shot focus target handed to Home (e.g. 'checkin' from the reminder toast). */
+  pendingFocus: string | null;
   setLanguage: (l: Language) => void;
   setReduceMotion: (v: boolean) => void;
   setHighContrast: (v: boolean) => void;
@@ -21,6 +23,8 @@ interface AppState {
   setWeeklyReflection: (v: boolean) => void;
   pushAcharyaDraft: (text: string) => void;
   consumeAcharyaDraft: () => string | null;
+  pushPendingFocus: (target: string) => void;
+  consumePendingFocus: () => string | null;
 }
 
 export const useAppStore = create<AppState>()(
@@ -33,6 +37,7 @@ export const useAppStore = create<AppState>()(
       reminderTime: '20:00',
       weeklyReflectionEnabled: true,
       acharyaDraft: null as string | null,
+      pendingFocus: null as string | null,
       setLanguage: (language) => set({ language }),
       setReduceMotion: (reduceMotion) => set({ reduceMotion }),
       setHighContrast: (highContrast) => set({ highContrast }),
@@ -44,6 +49,12 @@ export const useAppStore = create<AppState>()(
         if (draft) set({ acharyaDraft: null });
         return draft;
       },
+      pushPendingFocus: (pendingFocus) => set({ pendingFocus }),
+      consumePendingFocus: () => {
+        const target = get().pendingFocus;
+        if (target) set({ pendingFocus: null });
+        return target;
+      },
     }),
     {
       name: 'selfsage-prefs',
@@ -54,7 +65,7 @@ export const useAppStore = create<AppState>()(
         reminderEnabled: s.reminderEnabled,
         reminderTime: s.reminderTime,
         weeklyReflectionEnabled: s.weeklyReflectionEnabled,
-        // acharyaDraft intentionally NOT persisted — it is a one-shot handoff
+        // acharyaDraft + pendingFocus intentionally NOT persisted — one-shot handoffs
       }),
     },
   ),

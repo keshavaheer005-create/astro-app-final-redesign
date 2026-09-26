@@ -123,6 +123,17 @@ function AppInner() {
     return () => clearTimeout(timer);
   }, [loading]);
 
+  // Global navigation events (e.g. the reminder toast's "Check in now" action)
+  useEffect(() => {
+    const onNav = (e: Event) => {
+      const detail = (e as CustomEvent<{ tab?: TabId; view?: string }>).detail ?? {};
+      setRoute({ tab: detail.tab ?? 'home', kundliView: detail.view as KundliView | undefined });
+      window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+    };
+    window.addEventListener('ss:navigate', onNav);
+    return () => window.removeEventListener('ss:navigate', onNav);
+  }, []);
+
   if (loading && (slowTimer || bootstrapError)) {
     return <Splash timedOut onRetry={retryBootstrap} />;
   }

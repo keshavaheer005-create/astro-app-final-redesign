@@ -11,14 +11,16 @@ export function GlassCard({
   ink,
   children,
   onClick,
+  id,
 }: {
   className?: string;
   ink?: boolean;
   children: React.ReactNode;
   onClick?: () => void;
+  id?: string;
 }) {
   return (
-    <div onClick={onClick} className={cn(ink ? 'glass-ink' : 'glass', onClick && 'cursor-pointer transition-transform duration-300 ease-out hover:-translate-y-0.5', className)}>
+    <div id={id} onClick={onClick} className={cn(ink ? 'glass-ink' : 'glass', onClick && 'cursor-pointer transition-transform duration-300 ease-out hover:-translate-y-0.5', className)}>
       {children}
     </div>
   );

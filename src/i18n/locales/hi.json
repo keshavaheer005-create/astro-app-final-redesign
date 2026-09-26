@@ -408,5 +408,17 @@
   "panchang.festBy": "पारंपरिक महत्व",
   "reports.savTapHint": "प्रत्येक राशि के बिंदु योगदान देखने के लिए उस पर टैप करें।",
   "reports.savContribution": "{{sign}} में ग्रहों का योगदान:",
-  "panchang.festListen": "इसे सुनें"
+  "panchang.festListen": "इसे सुनें",
+  "notifications.reminderToastTitle": "आपकी दैनिक चेक-इन का समय हो गया",
+  "notifications.reminderToastBody": "आपका {{time}} रिमाइंडर — साठ सेकंड की ईमानदारी पैटर्न को जीवित रखती है।",
+  "notifications.reminderToastAction": "अभी चेक-इन करें",
+  "notifications.dashaAhead": "{{n}} दिनों में {{next}} का आगमन",
+  "notifications.dashaMahaAhead": "{{next}} महादशा {{n}} दिनों में शुरू होगी",
+  "notifications.dashaAheadBody": "आपकी दशा का एक नया अध्याय नज़दीक है।",
+  "letter.export": "PDF सहेजें",
+  "letter.printByline": "आचार्य अभिषेक शर्मा का साप्ताहिक पत्र",
+  "letter.printSignature": "— आचार्य अभिषेक शर्मा",
+  "dasha.tipNow": "{{d}} दिन बीते · {{left}} दिन शेष",
+  "dasha.beginsIn": "{{n}} दिनों में शुरू",
+  "dasha.pct": "{{pct}}% पूर्ण"
 }

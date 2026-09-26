@@ -1,11 +1,39 @@
 'use client';
 
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Icon, LogoMark, type IconName } from './icons';
 import { MandalaBackdrop } from './ui-primitives';
 import { cn } from '@/lib/utils';
 
 export type TabId = 'home' | 'kundli' | 'journal' | 'acharya' | 'profile';
+
+/**
+ * Immersive scroll behaviour for the floating pill nav: slides out of the way
+ * while scrolling down, returns the moment you scroll up (or near the top).
+ * Only transform/opacity are animated; keyboard focus forces it visible.
+ */
+function useHideOnScroll() {
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const y = window.scrollY;
+        const dy = y - lastY;
+        if (y > 140 && dy > 6) setHidden(true);
+        else if (dy < -6 || y <= 140) setHidden(false);
+        lastY = y;
+        ticking = false;
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  return hidden;
+}
 
 export const TABS: { id: TabId; icon: IconName; labelKey: string }[] = [
   { id: 'home', icon: 'home', labelKey: 'tab.home' },
@@ -100,6 +128,8 @@ export function AppShellInner({
   labelOf: (key: string) => string;
   children: React.ReactNode;
 }) {
+  const hidden = useHideOnScroll();
+
   return (
     <div className="min-h-screen flex flex-col bg-cream text-charcoal">
       <MandalaBackdrop />
@@ -132,10 +162,15 @@ export function AppShellInner({
         </div>
       </main>
 
-      {/* Mobile floating pill nav (<1024px) */}
+      {/* Mobile floating pill nav (<1024px) — hides on scroll down, returns on scroll up */}
       <nav
         aria-label="Main navigation"
-        className="lg:hidden fixed z-40 bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 right-4 glass rounded-full h-16 px-2 flex items-center shadow-[0_12px_40px_rgba(42,36,32,0.18)]"
+        aria-hidden={hidden}
+        className={cn(
+          'lg:hidden fixed z-40 bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 right-4 glass rounded-full h-16 px-2 flex items-center shadow-[0_12px_40px_rgba(42,36,32,0.18)]',
+          'transition-all duration-300 ease-out will-change-transform',
+          hidden ? 'translate-y-[160%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100 focus-within:pointer-events-auto focus-within:translate-y-0 focus-within:opacity-100',
+        )}
       >
         <NavItems active={activeTab} onChange={onTabChange} labelOf={labelOf} />
       </nav>

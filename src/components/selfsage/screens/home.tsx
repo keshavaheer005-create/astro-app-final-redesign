@@ -146,6 +146,36 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
   const [letterOpen, setLetterOpen] = useState(false);
   const [audioState, setAudioState] = useState<'idle' | 'loading' | 'playing'>('idle');
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [reminderAlert, setReminderAlert] = useState(false);
+  const [flashCheckin, setFlashCheckin] = useState(false);
+  const pendingFocus = useAppStore((s) => s.pendingFocus);
+
+  // Scroll to the check-in card and pulse it (used by the bell item and the
+  // reminder toast's "Check in now" action via the pendingFocus handoff).
+  const focusCheckin = React.useCallback(() => {
+    document.getElementById('daily-checkin')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setFlashCheckin(true);
+    window.setTimeout(() => setFlashCheckin(false), 1800);
+  }, []);
+
+  // One-shot focus handoff from the reminder toast (works even if Home was
+  // not mounted when the toast action fired).
+  useEffect(() => {
+    if (pendingFocus === 'checkin') {
+      useAppStore.getState().consumePendingFocus();
+      focusCheckin();
+    }
+  }, [pendingFocus, focusCheckin]);
+
+  // Reminder scheduler handshake → bell dot + wiggle
+  useEffect(() => {
+    const onFire = () => setReminderAlert(true);
+    window.addEventListener('ss:reminder-fired', onFire);
+    return () => window.removeEventListener('ss:reminder-fired', onFire);
+  }, []);
+  useEffect(() => {
+    if (checkin?.checkedInToday) setReminderAlert(false);
+  }, [checkin?.checkedInToday]);
 
   const toggleLetterAudio = async () => {
     if (audioState === 'playing') {
@@ -331,10 +361,13 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
             <button
               type="button"
               aria-label={t('home.headerBell')}
-              className="relative w-11 h-11 rounded-full glass inline-flex items-center justify-center text-gold hover:scale-105 active:scale-95 transition-transform duration-250"
+              className={cn(
+                'relative w-11 h-11 rounded-full glass inline-flex items-center justify-center text-gold hover:scale-105 active:scale-95 transition-transform duration-250',
+                reminderAlert && 'bell-wiggle',
+              )}
             >
               <Icon name="bell" size={20} />
-              {((checkin && !checkin.checkedInToday) || checkin?.reflection) && (
+              {((checkin && !checkin.checkedInToday) || checkin?.reflection || reminderAlert) && (
                 <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-maroon animate-pulse" />
               )}
             </button>
@@ -350,8 +383,10 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                   onClick={(e) => {
                     e.stopPropagation();
                     document.body.click();
+                    focusCheckin();
                   }}
-                  className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-gold-soft/50 transition-colors duration-150 border-b border-gold/10"
+                  className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-gold-soft/50 transition-colors duration-150 border-b border-gold/10 animate-in fade-in-0 slide-in-from-bottom-1 duration-300"
+                  style={{ animationDelay: '0ms', animationFillMode: 'backwards' }}
                 >
                   <span className="mt-0.5 text-maroon"><Icon name="check" size={15} /></span>
                   <span>
@@ -368,14 +403,37 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                     setLetterOpen(true);
                     document.body.click();
                   }}
-                  className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-gold-soft/50 transition-colors duration-150 border-b border-gold/10"
+                  className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-gold-soft/50 transition-colors duration-150 border-b border-gold/10 animate-in fade-in-0 slide-in-from-bottom-1 duration-300"
+                  style={{ animationDelay: '50ms', animationFillMode: 'backwards' }}
                 >
                   <span className="mt-0.5 text-gold"><Icon name="journal" size={15} /></span>
                   <span className="text-t14 text-charcoal">{t('notifications.reflectionReady')}</span>
                 </button>
               )}
+              {dashaNow?.next.lord && dashaNow.next.daysLeft <= 7 && dashaNow.next.daysLeft >= 0 && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    document.body.click();
+                    onNavigate('kundli', 'reports');
+                  }}
+                  className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-gold-soft/50 transition-colors duration-150 border-b border-gold/10 animate-in fade-in-0 slide-in-from-bottom-1 duration-300"
+                  style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}
+                >
+                  <span className="mt-0.5 text-gold"><Icon name="clock" size={15} /></span>
+                  <span>
+                    <span className="block text-t14 text-charcoal">
+                      {dashaNow.next.isMahaChange
+                        ? t('notifications.dashaMahaAhead', { next: t(`planet.${dashaNow.next.lord}`), n: dashaNow.next.daysLeft })
+                        : t('notifications.dashaAhead', { next: t(`planet.${dashaNow.next.lord}`), n: dashaNow.next.daysLeft })}
+                    </span>
+                    <span className="block text-t12 text-muted-foreground">{t('notifications.dashaAheadBody')}</span>
+                  </span>
+                </button>
+              )}
               {checkin && checkin.streak >= 3 && (
-                <div className="px-4 py-3 flex items-start gap-3 border-b border-gold/10">
+                <div className="px-4 py-3 flex items-start gap-3 border-b border-gold/10 animate-in fade-in-0 slide-in-from-bottom-1 duration-300" style={{ animationDelay: '150ms', animationFillMode: 'backwards' }}>
                   <span className="mt-0.5 text-maroon"><Icon name="flame" size={15} /></span>
                   <span className="text-t14 text-charcoal">{t('notifications.streak', { n: checkin.streak })}</span>
                 </div>
@@ -501,7 +559,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
       )}
 
       {/* Daily check-in */}
-      <GlassCard className="p-5 sm:p-6">
+      <GlassCard id="daily-checkin" className={cn('p-5 sm:p-6', flashCheckin && 'focus-flash')}>
         <AnimatePresence mode="wait">
           {checkin?.checkedInToday ? (
             <motion.div
@@ -614,15 +672,25 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                       {checkin.reflection.reflectionText}
                     </p>
                     <div className="ornament-divider mt-4" style={{ color: 'rgba(232,197,104,0.45)' }} aria-hidden>✦</div>
-                    <button
-                      type="button"
-                      onClick={toggleLetterAudio}
-                      className="mt-3 inline-flex items-center gap-2 rounded-full bg-gold/15 border border-gold/40 px-4 py-1.5 text-t12 font-medium text-gold-light hover:bg-gold/25 active:scale-95 transition-all duration-250"
-                    >
-                      <Icon name={audioState === 'playing' ? 'pause' : 'speaker'} size={14} />
-                      {audioState === 'loading' ? t('letter.loadingAudio') : audioState === 'playing' ? t('letter.stop') : t('letter.listen')}
-                      {audioState === 'loading' && <span className="w-2 h-2 rounded-full bg-gold animate-pulse" />}
-                    </button>
+                    <div className="mt-3 flex items-center gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={toggleLetterAudio}
+                        className="inline-flex items-center gap-2 rounded-full bg-gold/15 border border-gold/40 px-4 py-1.5 text-t12 font-medium text-gold-light hover:bg-gold/25 active:scale-95 transition-all duration-250"
+                      >
+                        <Icon name={audioState === 'playing' ? 'pause' : 'speaker'} size={14} />
+                        {audioState === 'loading' ? t('letter.loadingAudio') : audioState === 'playing' ? t('letter.stop') : t('letter.listen')}
+                        {audioState === 'loading' && <span className="w-2 h-2 rounded-full bg-gold animate-pulse" />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => window.print()}
+                        className="inline-flex items-center gap-2 rounded-full border border-gold/25 px-4 py-1.5 text-t12 font-medium text-[#cdb98e] hover:bg-gold/15 hover:text-gold-light active:scale-95 transition-all duration-250"
+                      >
+                        <Icon name="download" size={14} />
+                        {t('letter.export')}
+                      </button>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -648,6 +716,22 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
           )}
         </GlassCard>
       </div>
+
+      {/* Print-only letterhead view — revealed by the Export button (window.print) */}
+      {checkin?.reflection && (
+        <div id="letter-print" aria-hidden="true" hidden>
+          <p className="lp-brand">Self Sage</p>
+          <p className="lp-byline">{t('letter.printByline')}</p>
+          {weekRangeLabel && <p className="lp-week">{weekRangeLabel}</p>}
+          <div className="lp-rule" />
+          <p className="lp-body">{checkin.reflection.reflectionText}</p>
+          <p className="lp-sign">{t('letter.printSignature')}</p>
+          <div className="lp-foot">
+            <span>Self Sage · {t('home.weeklyTitle')}</span>
+            <span>{dateLine}</span>
+          </div>
+        </div>
+      )}
 
       {/* Feature grid */}
       {!chart && (

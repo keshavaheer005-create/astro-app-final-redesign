@@ -5,6 +5,7 @@ import i18next from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import { resources } from '@/i18n/locales';
 import { useAppStore } from '@/store/app';
+import { ReminderScheduler } from './reminder-scheduler';
 
 let initialized = false;
 
@@ -46,5 +47,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   initI18n(language);
 
-  return <I18nextProvider i18n={i18next}>{children}</I18nextProvider>;
+  return (
+    <I18nextProvider i18n={i18next}>
+      <ReminderScheduler />
+      {children}
+    </I18nextProvider>
+  );
 }
