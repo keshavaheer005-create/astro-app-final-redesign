@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String             @id @default(cuid())
+  email          String?            @unique
+  passwordHash   String?
+  name           String?
+  isGuest        Boolean            @default(true)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  birthCharts    BirthChart[]
+  checkIns       DailyCheckIn[]
+  chatHistory    ChatMessage[]
+  reflections    WeeklyReflection[]
+  decisions      DecisionCheck[]
+  reminderSettings ReminderSettings?
+}
+
+model BirthChart {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  dob         String // YYYY-MM-DD
+  tob         String // HH:MM 24h
+  lat         Float
+  lng         Float
+  timezone    String
+  placeName   String?
+  chartData   String // JSON blob of full computed chart
+  isPrimary   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String // "user" | "assistant"
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model DailyCheckIn {
+  id                   String   @id @default(cuid())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date                 String // YYYY-MM-DD, unique per user
+  moodScore            Int // 1-5
+  energyScore          Int? // 1-5
+  note                 String?
+  dashaPeriodSnapshot  String // JSON {mahaLord, antarLord, mahaStart, mahaEnd, moonSign}
+  createdAt            DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model WeeklyReflection {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekStartDate   String // YYYY-MM-DD (Monday)
+  reflectionText  String
+  audioUrl        String?
+  createdAt       DateTime @default(now())
+
+  @@unique([userId, weekStartDate])
+}
+
+model DecisionCheck {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  decisionText String
+  verdict      String // JSON verdict payload
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model ReminderSettings {
+  id                String  @id @default(cuid())
+  userId            String  @unique
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checkinReminder   Boolean @default(true)
+  reminderTime      String  @default("20:00")
+  weeklyReflectionN Boolean @default(true)
+}
