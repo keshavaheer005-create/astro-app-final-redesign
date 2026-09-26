@@ -137,7 +137,7 @@ export interface BareDay {
 }
 
 export interface EnrichedDay {
-  lunarMonth: { key: string; en: string; hi: string } | null;
+  lunarMonth: { key: string; en: string; hi: string; adhika: boolean } | null;
   festivals: FestivalInfo[];
 }
 
@@ -231,11 +231,11 @@ export function enrichLunarDays(days: BareDay[], displayDates: Set<string>): Map
       }
     }
   }
-  const monthOf = (date: string): string | null => {
+  const monthOf = (date: string): { name: string | null; adhika: boolean } => {
     const p = purnimas.find((x) => x >= date);
-    if (!p) return null;
+    if (!p) return { name: null, adhika: false };
     const span = spanOfDay(p);
-    return span?.name ?? null;
+    return { name: span?.name ?? null, adhika: span?.adhika ?? false };
   };
 
   // ── 4. Festivals, ekadashis, sankrantis per display day ──────────────────
@@ -243,7 +243,7 @@ export function enrichLunarDays(days: BareDay[], displayDates: Set<string>): Map
     if (!displayDates.has(d.date)) continue;
     const festivals: FestivalInfo[] = [];
 
-    const mKey = monthOf(d.date);
+    const { name: mKey, adhika: isAdhikaMonth } = monthOf(d.date);
     const month = mKey ? monthByKey(mKey) : null;
 
     const paksha = d.tithiIdx0 < 15 ? 'Shukla' : 'Krishna';
@@ -269,13 +269,14 @@ export function enrichLunarDays(days: BareDay[], displayDates: Set<string>): Map
 
     // A long tithi can span two local noons — keep only the FIRST occurrence
     // of each named observance (e.g. Diwali amavasya shown once, not twice).
+    const lunarMonth = month ? { ...month, adhika: isAdhikaMonth } : null;
     const prev = out.get(shiftDate(d.date, -1));
     if (prev) {
       const prevNames = new Set(prev.festivals.map((f) => f.en));
       const deduped = festivals.filter((f) => f.kind === 'sankranti' || !prevNames.has(f.en));
-      out.set(d.date, { lunarMonth: month, festivals: deduped });
+      out.set(d.date, { lunarMonth, festivals: deduped });
     } else {
-      out.set(d.date, { lunarMonth: month, festivals });
+      out.set(d.date, { lunarMonth, festivals });
     }
   }
   return out;

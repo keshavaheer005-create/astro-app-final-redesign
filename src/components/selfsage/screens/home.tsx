@@ -10,7 +10,7 @@ import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { api, useSession } from '../session-context';
 import { useAppStore } from '@/store/app';
-import { cn } from '@/lib/utils';
+import { cn, choghName } from '@/lib/utils';
 
 interface CheckinState {
   streak: number;
@@ -27,6 +27,11 @@ interface TodayPanchang {
   moonriseISO: string | null;
   moonsetISO: string | null;
   moonSign: { name: string; nameHi: string };
+  choghadiya?: {
+    day: { name: string; quality: 'good' | 'medium' | 'bad'; startISO: string; endISO: string }[];
+    night: { name: string; quality: 'good' | 'medium' | 'bad'; startISO: string; endISO: string }[];
+  };
+  rahuKaal?: { startISO: string | null; endISO: string | null };
 }
 
 interface DashaNow {
@@ -47,6 +52,79 @@ function phaseKeyOf(p: number): string {
     if (p >= b[i][0]) return b[i][1];
   }
   return 'phase.new';
+}
+
+/**
+ * Live "right now" strip for the Home hero: current Choghadiya slot with a
+ * ticking countdown + progress, and a Rahu-Kaal warning while it is active.
+ * Ticks locally (1s) without re-rendering the parent screen.
+ */
+function LiveNowStrip({ choghadiya, rahuKaal, tz, locale }: {
+  choghadiya: NonNullable<TodayPanchang['choghadiya']>;
+  rahuKaal: TodayPanchang['rahuKaal'];
+  tz: string;
+  locale: string;
+}) {
+  const { t } = useTranslation();
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((n) => n + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const now = Date.now();
+  const slots = [...choghadiya.day, ...choghadiya.night];
+  const cur = slots.find((s) => new Date(s.startISO).getTime() <= now && new Date(s.endISO).getTime() > now);
+  const rahuStart = rahuKaal?.startISO ? new Date(rahuKaal.startISO).getTime() : null;
+  const rahuEnd = rahuKaal?.endISO ? new Date(rahuKaal.endISO).getTime() : null;
+  const rahuActive = rahuStart != null && rahuEnd != null && rahuStart <= now && rahuEnd > now;
+  if (!cur && !rahuActive) return null;
+
+  const start = cur ? new Date(cur.startISO).getTime() : 0;
+  const end = cur ? new Date(cur.endISO).getTime() : 0;
+  const pct = cur ? Math.min(100, Math.max(0, ((now - start) / (end - start)) * 100)) : 0;
+  const remMs = Math.max(0, end - now);
+  const remStr = remMs >= 3600_000
+    ? `${Math.floor(remMs / 3600_000)}h ${Math.floor((remMs % 3600_000) / 60_000)}m`
+    : `${Math.floor(remMs / 60_000)}m ${String(Math.floor((remMs % 60_000) / 1000)).padStart(2, '0')}s`;
+  const fmtT = (iso: string) => new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: tz });
+
+  return (
+    <div className="mt-3.5 pt-3 border-t border-gold/15" data-testid="live-now-strip">
+      {cur && (
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <span className="inline-flex items-center gap-1.5 shrink-0">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-60" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-gold" />
+            </span>
+            <span className="text-t12 font-bold uppercase tracking-wider text-gold">{t('home.liveTitle')}</span>
+          </span>
+          <span className="font-serif text-t16 font-semibold text-charcoal">{choghName(t, cur.name)}</span>
+          <span
+            className={cn(
+              'rounded-full px-2 py-0.5 text-t12 font-semibold',
+              cur.quality === 'good' ? 'bg-gold-faint text-[#7a8b6f]' : cur.quality === 'medium' ? 'bg-white/60 text-muted-foreground' : 'bg-maroon-soft text-maroon',
+            )}
+          >
+            {t(`choghadiya.${cur.quality}`)}
+          </span>
+          <span className="text-t12 text-muted-foreground tabular-nums">{t('home.liveEndsIn', { time: remStr })}</span>
+        </div>
+      )}
+      {cur && (
+        <div className="mt-2 h-1 rounded-full bg-gold/15 overflow-hidden" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}>
+          <div className="h-full gold-grad rounded-full" style={{ width: `${pct}%`, transition: 'width 1s linear' }} />
+        </div>
+      )}
+      {rahuActive && rahuEnd && (
+        <p className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-t12 font-semibold bg-maroon-soft text-maroon border border-maroon/25', cur && 'mt-2')}>
+          <Icon name="warning" size={13} />
+          {t('home.liveRahu', { time: fmtT(rahuKaal?.endISO as string) })}
+        </p>
+      )}
+    </div>
+  );
 }
 
 export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journal' | 'acharya' | 'profile', view?: string) => void }) {
@@ -306,6 +384,14 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                       {t('home.moonset')}: {panchang.moonsetISO ? new Date(panchang.moonsetISO).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: chart.input.timezone }) : '—'}
                     </span>
                   </p>
+                )}
+                {panchang.choghadiya && (
+                  <LiveNowStrip
+                    choghadiya={panchang.choghadiya}
+                    rahuKaal={panchang.rahuKaal}
+                    tz={chart.input.timezone}
+                    locale={locale}
+                  />
                 )}
               </div>
             ) : (

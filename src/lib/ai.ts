@@ -299,3 +299,34 @@ USER NOTE: ${opts.note?.trim() || 'none'}`;
     ? `${lord} की दशा में आपकी मन:शक्ति धीरे-धीरे लौट रही है — आज एक छोटा, स्थिर कदम पर्याप्त है।`
     : `Under ${lord}'s dasha your inner weather is slowly settling — one small, steady step today is enough.`;
 }
+
+/**
+ * Festival / parva significance (vrat katha in brief) — classical, warm,
+ * 70-120 words. Not user-specific: the same text is cached per festival.
+ */
+export async function festivalSignificance(opts: {
+  name: string;
+  kind: 'festival' | 'ekadashi' | 'sankranti';
+  language: 'en' | 'hi';
+  anchor?: string;
+}): Promise<string> {
+  const langRule =
+    opts.language === 'hi'
+      ? 'उत्तर स्वाभाविक, गर्म हिंदी (देवनागरी) में दें।'
+      : 'Respond in natural, warm English.';
+  const kindRule =
+    opts.kind === 'ekadashi'
+      ? 'This is one of the 24 named EKADASHI vrats. Briefly say which tradition it belongs to and its classical benefit.'
+      : opts.kind === 'sankranti'
+        ? 'This is a SANKRANTI (solar ingress). Briefly explain what the Sun entering this sign classically marks (Uttarayan/Dakshinayan context where apt) and common observances.'
+        : 'This is a major Hindu festival/parva. Give its classical significance and a 1-2 line essence of the associated story/vrat katha.';
+  const anchorRule = opts.anchor
+    ? ` CLASSICAL TIMING (verified — never contradict): the observance falls on ${opts.anchor} (purnimanta lunar month scheme).`
+    : '';
+  const system = `You are ${ACHARYA_NAME}, a wise Vedic astrologer. Explain the significance of a Hindu observance in 70-120 words: what it commemorates (classical story in essence), why it matters spiritually, and one simple way an ordinary devotee can observe it. Never invent dates or rituals beyond common tradition. No greetings, no markdown headings, flowing prose. ${kindRule}${anchorRule} ${langRule}`;
+  const llm = await complete([{ role: 'user', content: `OBSERVANCE: ${opts.name}` }], system);
+  if (llm) return llm;
+  return opts.language === 'hi'
+    ? `${opts.name} का पालन भक्ति, संयम और कृतज्ञता का पर्व है। इस दिन संकल्प लेकर, दीप जलाकर और मन को एकाग्र कर अपने कर्मों को समर्पण भाव से करने का विधान है — यही इसका सार है।`
+    : `${opts.name} is observed with devotion, restraint and gratitude. Traditionally one takes a resolve, lights a lamp, and turns the mind inward — offering the day's actions with surrender. That essence is its real significance.`;
+}

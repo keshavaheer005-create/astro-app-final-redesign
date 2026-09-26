@@ -2,12 +2,13 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Icon } from '../icons';
+import { Icon, AcharyaAvatar } from '../icons';
 import { GlassCard, SectionHeader, EmptyState, PageLoader, ErrorState } from '../ui-primitives';
 import { CalendarPicker } from '../pickers';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { api, useSession } from '../session-context';
 import { useAppStore } from '@/store/app';
-import { cn } from '@/lib/utils';
+import { cn, choghName } from '@/lib/utils';
 
 interface PanchangPayload {
   date: string;
@@ -31,7 +32,7 @@ interface PanchangPayload {
 }
 
 interface Observance {
-  lunarMonth: { key: string; en: string; hi: string } | null;
+  lunarMonth: { key: string; en: string; hi: string; adhika?: boolean } | null;
   festivals: FestivalInfo[];
 }
 
@@ -39,6 +40,8 @@ interface FestivalInfo {
   en: string;
   hi: string;
   kind: 'festival' | 'ekadashi' | 'sankranti';
+  month?: string;
+  anchor?: string;
 }
 
 interface MonthDay {
@@ -48,8 +51,26 @@ interface MonthDay {
   nakshatra: { name: string; nameHi: string };
   sunriseISO: string | null;
   special: 'purnima' | 'amavasya' | 'ekadashi' | null;
-  lunarMonth: { key: string; en: string; hi: string } | null;
+  lunarMonth: { key: string; en: string; hi: string; adhika?: boolean } | null;
   festivals: FestivalInfo[];
+}
+
+/** Festival picked for the significance dialog. */
+interface FestDetail {
+  en: string;
+  hi: string;
+  kind: 'festival' | 'ekadashi' | 'sankranti';
+  date: string;
+  anchor?: string;
+}
+
+/** Compose a human-readable classical timing from festival month+anchor (e.g. "Bhadrapada, Shukla 15"). */
+function anchorText(f: FestivalInfo): string | undefined {
+  if (!f.anchor) return undefined;
+  const paksha = f.anchor.startsWith('S') ? 'Shukla' : 'Krishna';
+  const num = f.anchor.slice(1);
+  const monthName = f.month ? f.month.charAt(0).toUpperCase() + f.month.slice(1) : '';
+  return [monthName, `${paksha} ${num}`].filter(Boolean).join(', ');
 }
 
 export function PanchangScreen() {
@@ -72,6 +93,7 @@ export function PanchangScreen() {
   const [monthData, setMonthData] = useState<MonthDay[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [festDetail, setFestDetail] = useState<FestDetail | null>(null);
 
   const load = useCallback(async () => {
     if (!chart) return;
@@ -183,14 +205,17 @@ export function PanchangScreen() {
                 ))}
               </div>
 
-              {/* Today's observances — festivals, ekadashi, sankranti */}
+              {/* Today's observances — festivals, ekadashi, sankranti (tap → significance) */}
               {observance && observance.festivals.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {observance.festivals.map((f) => (
-                    <div
+                    <button
                       key={f.en}
+                      type="button"
+                      onClick={() => setFestDetail({ en: f.en, hi: f.hi, kind: f.kind, date, anchor: anchorText(f) })}
+                      title={t('panchang.festDetailHint')}
                       className={cn(
-                        'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-t12 font-semibold border transition-transform duration-200 hover:-translate-y-px',
+                        'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-t12 font-semibold border transition-all duration-200 hover:-translate-y-px active:scale-95 cursor-pointer',
                         f.kind === 'sankranti'
                           ? 'bg-sage/10 border-sage/40 text-[#5c6b52]'
                           : f.kind === 'ekadashi'
@@ -200,7 +225,8 @@ export function PanchangScreen() {
                     >
                       <Icon name={f.kind === 'sankranti' ? 'compass' : 'lotus'} size={13} />
                       {language === 'hi' ? f.hi : f.en}
-                    </div>
+                      <Icon name="chevron-right" size={11} className="opacity-50" />
+                    </button>
                   ))}
                 </div>
               )}
@@ -208,6 +234,11 @@ export function PanchangScreen() {
                 <p className="text-t12 text-muted-foreground">
                   {t('panchang.lunarMonth')}:{' '}
                   <span className="text-charcoal font-medium">{language === 'hi' ? observance.lunarMonth.hi : observance.lunarMonth.en}</span>
+                  {observance.lunarMonth.adhika && (
+                    <span className="ml-1.5 inline-flex items-center rounded-full bg-gold-faint border border-gold/40 px-2 py-0.5 text-[10px] font-semibold text-[#8a6d1f] uppercase tracking-wide">
+                      {t('panchang.adhika')}
+                    </span>
+                  )}
                 </p>
               )}
 
@@ -257,9 +288,9 @@ export function PanchangScreen() {
               {data.choghadiya.day.length > 0 && (
                 <GlassCard className="p-4 sm:p-5">
                   <SectionHeader title={t('choghadiya.title')} icon="clock" />
-                  <ChoghadiyaGrid slots={data.choghadiya.day} label={t('choghadiya.day')} locale={locale} tz={chart.input.timezone} now />
+                  <ChoghadiyaGrid slots={data.choghadiya.day} label={t('choghadiya.day')} locale={locale} tz={chart.input.timezone} now language={language} />
                   <div className="h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent my-4" />
-                  <ChoghadiyaGrid slots={data.choghadiya.night} label={t('choghadiya.night')} locale={locale} tz={chart.input.timezone} now />
+                  <ChoghadiyaGrid slots={data.choghadiya.night} label={t('choghadiya.night')} locale={locale} tz={chart.input.timezone} now language={language} />
                 </GlassCard>
               )}
             </>
@@ -284,12 +315,16 @@ export function PanchangScreen() {
                 setDate(d);
                 setMode('day');
               }}
+              onInfo={(d, f) => setFestDetail({ en: f.en, hi: f.hi, kind: f.kind, date: d, anchor: anchorText(f) })}
               prevLabel={t('common.previousMonth')}
               nextLabel={t('common.nextMonth')}
             />
           )}
         </GlassCard>
       )}
+
+      {/* Festival significance dialog (Acharya) */}
+      <FestivalDetailDialog detail={festDetail} onClose={() => setFestDetail(null)} />
     </div>
   );
 }
@@ -316,6 +351,7 @@ function MonthGrid({
   onPrev,
   onNext,
   onPickDay,
+  onInfo,
   prevLabel,
   nextLabel,
 }: {
@@ -327,6 +363,7 @@ function MonthGrid({
   onPrev: () => void;
   onNext: () => void;
   onPickDay: (date: string) => void;
+  onInfo: (date: string, f: FestivalInfo) => void;
   prevLabel: string;
   nextLabel: string;
 }) {
@@ -427,26 +464,36 @@ function MonthGrid({
             <div className="max-h-56 overflow-y-auto scroll-slim">
               {festDays.map((d) =>
                 d.festivals.map((f) => (
-                  <button
-                    key={`${d.date}-${f.en}`}
-                    type="button"
-                    onClick={() => onPickDay(d.date)}
-                    className="w-full text-left px-3.5 py-2 flex items-center gap-2.5 hover:bg-gold-soft/60 transition-colors duration-150 border-b border-gold/10 last:border-b-0"
-                  >
-                    <span className="w-9 shrink-0 text-center rounded-md bg-white/70 border border-gold/25 py-0.5 text-t12 font-bold text-charcoal">
-                      {Number(d.date.slice(8, 10))}
-                    </span>
-                    <span className="flex-1 min-w-0 text-t12 text-charcoal truncate">{language === 'hi' ? f.hi : f.en}</span>
+                  <div key={`${d.date}-${f.en}`} className="flex items-center border-b border-gold/10 last:border-b-0 hover:bg-gold-soft/60 transition-colors duration-150">
+                    <button
+                      type="button"
+                      onClick={() => onPickDay(d.date)}
+                      className="flex-1 min-w-0 text-left px-3.5 py-2 flex items-center gap-2.5"
+                    >
+                      <span className="w-9 shrink-0 text-center rounded-md bg-white/70 border border-gold/25 py-0.5 text-t12 font-bold text-charcoal">
+                        {Number(d.date.slice(8, 10))}
+                      </span>
+                      <span className="flex-1 min-w-0 text-t12 text-charcoal truncate">{language === 'hi' ? f.hi : f.en}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onInfo(d.date, f)}
+                      aria-label={t('panchang.festDetailHint')}
+                      title={t('panchang.festDetailHint')}
+                      className="shrink-0 w-7 h-7 mr-1 rounded-full inline-flex items-center justify-center text-gold/80 hover:text-gold hover:bg-gold-faint active:scale-90 transition-all duration-150"
+                    >
+                      <Icon name="info" size={14} />
+                    </button>
                     <span
                       className={cn(
-                        'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                        'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold mr-3.5',
                         f.kind === 'sankranti' ? 'bg-sage/15 text-[#5c6b52]' : f.kind === 'ekadashi' ? 'bg-gold-faint text-[#8a6d1f]' : 'bg-gold-soft text-[#7a5c10]',
                       )}
                     >
                       {t(`panchang.festKind.${f.kind}`)}
                     </span>
-                  </button>
-                )),
+                  </div>
+               )),
               )}
             </div>
           </div>
@@ -488,12 +535,14 @@ function ChoghadiyaGrid({
   locale,
   tz,
   now = false,
+  language,
 }: {
   slots: { name: string; quality: 'good' | 'medium' | 'bad'; startISO: string; endISO: string }[];
   label: string;
   locale: string;
   tz: string;
   now?: boolean;
+  language: 'en' | 'hi';
 }) {
   const { t } = useTranslation();
   const nowMs = Date.now();
@@ -513,7 +562,7 @@ function ChoghadiyaGrid({
               )}
               title={`${new Date(s.startISO).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: tz })} – ${new Date(s.endISO).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: tz })}`}
             >
-              <p className="text-t12 font-semibold truncate">{s.name}</p>
+              <p className="text-t12 font-semibold truncate">{choghName(t, s.name)}</p>
               <p className="text-t12 opacity-70">{t(`choghadiya.${s.quality}`)}</p>
               {isNow && <p className="text-t12 font-bold text-gold mt-0.5">{t('choghadiya.now')}</p>}
             </div>
@@ -521,5 +570,115 @@ function ChoghadiyaGrid({
         })}
       </div>
     </div>
+  );
+}
+
+/**
+ * Festival / parva significance dialog — Acharya-generated classical note,
+ * cached per (lang|kind|name) in localStorage so it generates only once.
+ */
+function FestivalDetailDialog({ detail, onClose }: { detail: FestDetail | null; onClose: () => void }) {
+  const { t, i18n } = useTranslation();
+  const language = useAppStore((s) => s.language);
+  const locale = language === 'hi' ? 'hi-IN' : 'en-IN';
+  const [text, setText] = useState<string | null>(null);
+  const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
+
+  useEffect(() => {
+    if (!detail) return;
+    let cancelled = false;
+    const run = async () => {
+      setState('loading');
+      setText(null);
+      const cacheKey = `ss-fest-${language}-${detail.kind}-${detail.en}`;
+      try {
+        const hit = localStorage.getItem(cacheKey);
+        if (hit) {
+          if (!cancelled) {
+            setText(hit);
+            setState('ready');
+          }
+          return;
+        }
+      } catch {
+        /* private mode — skip cache */
+      }
+      try {
+        const res = await api<{ text: string }>('/api/festival-detail', {
+          method: 'POST',
+          body: JSON.stringify({ name: detail.en, kind: detail.kind, language, anchor: detail.anchor }),
+        });
+        if (cancelled) return;
+        setText(res.text);
+        setState('ready');
+        try {
+          localStorage.setItem(cacheKey, res.text);
+        } catch {
+          /* ignore */
+        }
+      } catch {
+        if (!cancelled) setState('error');
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [detail, language]);
+
+  const kindLabel = detail ? t(`panchang.festKind.${detail.kind}`) : '';
+  const dateLine = detail
+    ? new Date(`${detail.date}T12:00:00Z`).toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })
+    : '';
+
+  return (
+    <Dialog open={!!detail} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="glass border-gold/30 max-w-md p-0 overflow-hidden gap-0" showCloseButton>
+        {detail && (
+          <>
+            <DialogHeader className="px-5 pt-5 pb-3 border-b border-gold/15 bg-gold-faint/50">
+              <div className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+                    detail.kind === 'sankranti' ? 'bg-sage/15 text-[#5c6b52]' : detail.kind === 'ekadashi' ? 'bg-gold-faint text-[#8a6d1f]' : 'bg-gold-soft text-[#7a5c10]',
+                  )}
+                >
+                  {kindLabel}
+                </span>
+                <DialogDescription className="text-t12 text-muted-foreground">{dateLine}</DialogDescription>
+              </div>
+              <DialogTitle className="font-serif text-t20 text-charcoal mt-1.5">{language === 'hi' ? detail.hi : detail.en}</DialogTitle>
+            </DialogHeader>
+            <div className="px-5 py-4">
+              {state === 'loading' && (
+                <div className="space-y-2.5 py-1" aria-busy="true">
+                  <div className="h-3.5 w-full rounded shimmer" />
+                  <div className="h-3.5 w-11/12 rounded shimmer" />
+                  <div className="h-3.5 w-4/5 rounded shimmer" />
+                  <div className="h-3.5 w-3/5 rounded shimmer" />
+                  <p className="text-t12 text-muted-foreground pt-1">{t('panchang.festLoading')}</p>
+                </div>
+              )}
+              {state === 'error' && (
+                <ErrorState message={t('common.networkError')} />
+              )}
+              {state === 'ready' && text && (
+                <div className="rounded-xl glass-ink px-4 py-3.5 relative overflow-hidden">
+                  <div className="flex items-center gap-2.5 mb-2.5">
+                    <AcharyaAvatar size={30} />
+                    <div>
+                      <p className="text-t12 font-semibold text-gold-grad font-serif">Acharya Abhishek Sharma</p>
+                      <p className="text-[10px] text-[#a5947a]">{t('panchang.festBy')}</p>
+                    </div>
+                  </div>
+                  <p className="text-t14 leading-relaxed text-[#e8ddc8] whitespace-pre-line">{text}</p>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

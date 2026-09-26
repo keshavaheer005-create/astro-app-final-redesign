@@ -19,6 +19,7 @@ export function ReportsScreen() {
   const [selectedVarga, setSelectedVarga] = useState<string>('D9');
   const [bavPlanet, setBavPlanet] = useState<PlanetKey>('Su');
   const [showAntars, setShowAntars] = useState(true);
+  const [savOpen, setSavOpen] = useState<number | null>(null);
 
   const savMax = useMemo(() => (chart ? Math.max(...chart.ashtakavarga.sav) : 40), [chart]);
 
@@ -197,14 +198,53 @@ export function ReportsScreen() {
         <SectionHeader title={t('reports.ashtakavarga')} icon="chart" />
         <p className="text-t12 text-muted-foreground mb-3">{t('reports.savHint')}</p>
         <p className="text-t12 uppercase tracking-wide font-semibold text-gold mb-2">{t('reports.sav')}</p>
-        <div className="space-y-1.5 max-h-80 overflow-y-auto scroll-slim pr-1">
-          {chart.ashtakavarga.sav.map((v, i) => (
-            <div key={i} className="flex items-center gap-2.5">
-              <span className="w-20 text-t12 text-muted-foreground truncate">{hi ? SIGNS_HI[i] : SIGNS[i]}</span>
-              <ProgressBar value={(v / savMax) * 100} className={cn('flex-1', v >= 28 ? '' : 'opacity-70')} />
-              <span className={cn('w-8 text-right text-t14 font-bold', v >= 28 ? 'text-[#8a6d10]' : v < 25 ? 'text-maroon' : 'text-charcoal')}>{v}</span>
-            </div>
-          ))}
+        <p className="text-t12 text-muted-foreground mb-2 -mt-1">{t('reports.savTapHint')}</p>
+        <div className="space-y-1.5 max-h-96 overflow-y-auto scroll-slim pr-1">
+          {chart.ashtakavarga.sav.map((v, i) => {
+            const open = savOpen === i;
+            return (
+              <div key={i} className={cn('rounded-xl transition-colors duration-200', open && 'bg-gold-faint/60 border border-gold/25')}>
+                <button
+                  type="button"
+                  onClick={() => setSavOpen(open ? null : i)}
+                  aria-expanded={open}
+                  className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-xl text-left hover:bg-gold-faint/50 active:scale-[0.99] transition-all duration-200"
+                >
+                  <span className="w-20 text-t12 text-muted-foreground truncate">{hi ? SIGNS_HI[i] : SIGNS[i]}</span>
+                  <ProgressBar value={(v / savMax) * 100} className={cn('flex-1', v >= 28 ? '' : 'opacity-70')} />
+                  <span className={cn('w-8 text-right text-t14 font-bold', v >= 28 ? 'text-[#8a6d10]' : v < 25 ? 'text-maroon' : 'text-charcoal')}>{v}</span>
+                  <Icon name={open ? 'chevron-down' : 'chevron-right'} size={13} className="text-gold/70 shrink-0" />
+                </button>
+                {open && (
+                  <div className="px-2.5 pb-2.5 pt-1 animate-in fade-in-50 duration-200">
+                    <p className="text-t12 text-muted-foreground mb-1.5">{t('reports.savContribution', { sign: hi ? SIGNS_HI[i] : SIGNS[i] })}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {BAV_KEYS.map((k) => {
+                        const bindu = chart.ashtakavarga.bav[k][i] as number;
+                        return (
+                          <span
+                            key={k}
+                            className={cn(
+                              'inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-t12',
+                              bindu >= 4
+                                ? 'bg-gold-soft/70 border-gold/50 text-[#7a5c10] font-semibold'
+                                : bindu <= 1
+                                  ? 'bg-maroon-soft/60 border-maroon/25 text-maroon/80'
+                                  : 'bg-white/60 border-gold/15 text-charcoal/75',
+                            )}
+                            title={t(`planet.${k}`)}
+                          >
+                            <span className="opacity-70">{t(`planet.${k}`)}</span>
+                            <span className="font-bold">{bindu}</span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <div className="mt-5">

@@ -388,5 +388,21 @@
   "acharya.listening": "Listening…",
   "acharya.transcribing": "Transcribing…",
   "acharya.micError": "Microphone unavailable",
-  "acharya.voiceHint": "Speak your question — it will appear here for review"
+  "acharya.voiceHint": "Speak your question — it will appear here for review",
+  "choghadiya.n.udveg": "Udveg",
+  "choghadiya.n.char": "Char",
+  "choghadiya.n.labh": "Labh",
+  "choghadiya.n.amrit": "Amrit",
+  "choghadiya.n.kaal": "Kaal",
+  "choghadiya.n.shubh": "Shubh",
+  "choghadiya.n.rog": "Rog",
+  "home.liveTitle": "Now",
+  "home.liveEndsIn": "ends in {{time}}",
+  "home.liveRahu": "Rahu Kaal in effect until {{time}}",
+  "panchang.festDetailHint": "Meaning & significance",
+  "panchang.adhika": "Adhika · leap month",
+  "panchang.festLoading": "Acharya is recalling the tradition…",
+  "panchang.festBy": "classical significance",
+  "reports.savTapHint": "Tap a sign to see which planets contribute its bindus.",
+  "reports.savContribution": "Planet contributions in {{sign}}:"
 }

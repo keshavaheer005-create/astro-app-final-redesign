@@ -128,7 +128,7 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
         <div className="flex-1 min-w-0">
           <p className="font-serif text-t20 font-semibold text-charcoal truncate">{chart?.input?.name || user?.name || 'Seeker'}</p>
           {chart ? (
-            <p className="text-t12 text-muted-foreground truncate">
+            <p className="text-t12 text-muted-foreground line-clamp-2 leading-snug" title={`${chart.input.dob} · ${chart.input.tob} · ${chart.input.placeName}`}>
               {chart.input.dob} · {chart.input.tob} · {chart.input.placeName}
             </p>
           ) : (

@@ -388,5 +388,21 @@
   "acharya.listening": "सुन रहे हैं…",
   "acharya.transcribing": "ट्रांसक्राइब हो रहा है…",
   "acharya.micError": "माइक्रोफ़ोन उपलब्ध नहीं",
-  "acharya.voiceHint": "अपना प्रश्न बोलें — यह यहाँ जाँच के लिए आएगा"
+  "acharya.voiceHint": "अपना प्रश्न बोलें — यह यहाँ जाँच के लिए आएगा",
+  "choghadiya.n.udveg": "उद्वेग",
+  "choghadiya.n.char": "चर",
+  "choghadiya.n.labh": "लाभ",
+  "choghadiya.n.amrit": "अमृत",
+  "choghadiya.n.kaal": "काल",
+  "choghadiya.n.shubh": "शुभ",
+  "choghadiya.n.rog": "रोग",
+  "home.liveTitle": "अभी",
+  "home.liveEndsIn": "{{time}} में समाप्त",
+  "home.liveRahu": "राहु काल चल रहा है — {{time}} तक",
+  "panchang.festDetailHint": "महत्व और माहात्म्य",
+  "panchang.adhika": "अधिक · अधिक मास",
+  "panchang.festLoading": "आचार्य परंपरा का स्मरण कर रहे हैं…",
+  "panchang.festBy": "पारंपरिक महत्व",
+  "reports.savTapHint": "प्रत्येक राशि के बिंदु योगदान देखने के लिए उस पर टैप करें।",
+  "reports.savContribution": "{{sign}} में ग्रहों का योगदान:"
 }

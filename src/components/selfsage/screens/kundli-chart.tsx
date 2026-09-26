@@ -165,8 +165,8 @@ function SummaryTile({ label, value, sub, icon }: { label: string; value: string
         <Icon name={icon} size={16} className="shrink-0" />
         <span className="text-t12 text-muted-foreground leading-tight">{label}</span>
       </div>
-      <p className="mt-1.5 font-serif text-t16 sm:text-t20 font-semibold text-charcoal truncate">{value}</p>
-      {sub && <p className="text-t12 text-muted-foreground truncate">{sub}</p>}
+      <p className="mt-1.5 font-serif text-t16 sm:text-t20 font-semibold text-charcoal leading-snug line-clamp-2" title={value}>{value}</p>
+      {sub && <p className="text-t12 text-muted-foreground leading-snug line-clamp-2" title={sub}>{sub}</p>}
     </GlassCard>
   );
 }
