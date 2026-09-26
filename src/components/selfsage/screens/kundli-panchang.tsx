@@ -30,6 +30,17 @@ interface PanchangPayload {
   muhurtas: { name: string; startISO: string; endISO: string; note: 'auspicious' | 'caution' }[];
 }
 
+interface Observance {
+  lunarMonth: { key: string; en: string; hi: string } | null;
+  festivals: FestivalInfo[];
+}
+
+interface FestivalInfo {
+  en: string;
+  hi: string;
+  kind: 'festival' | 'ekadashi' | 'sankranti';
+}
+
 interface MonthDay {
   date: string;
   weekday: number;
@@ -37,6 +48,8 @@ interface MonthDay {
   nakshatra: { name: string; nameHi: string };
   sunriseISO: string | null;
   special: 'purnima' | 'amavasya' | 'ekadashi' | null;
+  lunarMonth: { key: string; en: string; hi: string } | null;
+  festivals: FestivalInfo[];
 }
 
 export function PanchangScreen() {
@@ -55,6 +68,7 @@ export function PanchangScreen() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
   const [data, setData] = useState<PanchangPayload | null>(null);
+  const [observance, setObservance] = useState<Observance | null>(null);
   const [monthData, setMonthData] = useState<MonthDay[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -71,11 +85,12 @@ export function PanchangScreen() {
         });
         setMonthData(res.days);
       } else {
-        const res = await api<{ panchang: PanchangPayload }>('/api/panchang', {
+        const res = await api<{ panchang: PanchangPayload; observance: Observance }>('/api/panchang', {
           method: 'POST',
           body: JSON.stringify({ date, lat: chart.input.lat, lng: chart.input.lng, timezone: chart.input.timezone }),
         });
         setData(res.panchang);
+        setObservance(res.observance ?? null);
       }
     } catch {
       setError(true);
@@ -167,6 +182,34 @@ export function PanchangScreen() {
                   </GlassCard>
                 ))}
               </div>
+
+              {/* Today's observances — festivals, ekadashi, sankranti */}
+              {observance && observance.festivals.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {observance.festivals.map((f) => (
+                    <div
+                      key={f.en}
+                      className={cn(
+                        'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-t12 font-semibold border transition-transform duration-200 hover:-translate-y-px',
+                        f.kind === 'sankranti'
+                          ? 'bg-sage/10 border-sage/40 text-[#5c6b52]'
+                          : f.kind === 'ekadashi'
+                            ? 'bg-gold-faint border-gold/40 text-[#8a6d1f]'
+                            : 'bg-gold-soft/80 border-gold/60 text-[#7a5c10] shadow-[0_1px_6px_rgba(201,162,39,0.25)]',
+                      )}
+                    >
+                      <Icon name={f.kind === 'sankranti' ? 'compass' : 'lotus'} size={13} />
+                      {language === 'hi' ? f.hi : f.en}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {observance?.lunarMonth && (
+                <p className="text-t12 text-muted-foreground">
+                  {t('panchang.lunarMonth')}:{' '}
+                  <span className="text-charcoal font-medium">{language === 'hi' ? observance.lunarMonth.hi : observance.lunarMonth.en}</span>
+                </p>
+              )}
 
               <GlassCard className="p-4 sm:p-5">
                 <SectionHeader title={language === 'hi' ? 'समय' : 'Timings'} icon="clock" />
@@ -331,26 +374,29 @@ function MonthGrid({
         {days.map((d) => {
           const dayNum = Number(d.date.slice(8, 10));
           const isToday = d.date === today;
+          const festival = d.festivals.find((f) => f.kind === 'festival') ?? d.festivals[0];
+          const festName = festival ? (language === 'hi' ? festival.hi : festival.en) : null;
           return (
             <button
               key={d.date}
               type="button"
               onClick={() => onPickDay(d.date)}
-              title={`${d.date} · ${language === 'hi' ? `${d.tithi.paksha === 'Shukla' ? 'शुक्ल' : 'कृष्ण'} ${d.tithi.nameHi}` : `${d.tithi.paksha} ${d.tithi.name}`} · ${language === 'hi' ? d.nakshatra.nameHi : d.nakshatra.name}`}
+              title={`${d.date} · ${language === 'hi' ? `${d.tithi.paksha === 'Shukla' ? 'शुक्ल' : 'कृष्ण'} ${d.tithi.nameHi}` : `${d.tithi.paksha} ${d.tithi.name}`} · ${language === 'hi' ? d.nakshatra.nameHi : d.nakshatra.name}${festName ? ` · ${festName}` : ''}`}
               className={cn(
                 'relative rounded-lg border px-0.5 py-1.5 text-center transition-all duration-200 active:scale-90 hover:border-gold/50',
                 d.tithi.paksha === 'Shukla' ? 'bg-gold-faint/60 border-gold/25' : 'bg-white/50 border-gold/15',
                 d.special === 'purnima' && 'bg-gold-soft/80 border-gold/60 shadow-[0_1px_8px_rgba(201,162,39,0.35)]',
                 d.special === 'amavasya' && 'bg-maroon-soft border-maroon/35',
                 d.special === 'ekadashi' && 'bg-sage/15 border-sage/40',
+                festival && 'border-gold/70',
                 isToday && 'ring-2 ring-gold ring-offset-1 ring-offset-[#FAF7F0]',
               )}
             >
               <span className={cn('block text-t12 font-semibold leading-none', d.special === 'amavasya' ? 'text-maroon' : 'text-charcoal')}>
                 {dayNum}
               </span>
-              <span className={cn('block text-[10px] leading-tight truncate', d.special === 'amavasya' ? 'text-maroon/80' : 'text-muted-foreground/90')}>
-                {language === 'hi' ? d.tithi.nameHi : d.tithi.name}
+              <span className={cn('block text-[10px] leading-tight truncate', festival && festName ? 'text-[#8a6d1f] font-semibold' : d.special === 'amavasya' ? 'text-maroon/80' : 'text-muted-foreground/90')}>
+                {festName ?? (language === 'hi' ? d.tithi.nameHi : d.tithi.name)}
               </span>
               {d.special && (
                 <span
@@ -367,6 +413,45 @@ function MonthGrid({
           );
         })}
       </div>
+
+      {/* Festivals this month */}
+      {(() => {
+        const festDays = days.filter((d) => d.festivals.length > 0);
+        if (festDays.length === 0) return null;
+        return (
+          <div className="mt-4 rounded-xl bg-gold-faint/50 border border-gold/25 overflow-hidden">
+            <div className="px-3.5 py-2.5 border-b border-gold/20 flex items-center gap-2">
+              <Icon name="lotus" size={14} className="text-gold" />
+              <p className="text-t12 font-bold uppercase tracking-wider text-gold">{t('panchang.festivalsThisMonth')}</p>
+            </div>
+            <div className="max-h-56 overflow-y-auto scroll-slim">
+              {festDays.map((d) =>
+                d.festivals.map((f) => (
+                  <button
+                    key={`${d.date}-${f.en}`}
+                    type="button"
+                    onClick={() => onPickDay(d.date)}
+                    className="w-full text-left px-3.5 py-2 flex items-center gap-2.5 hover:bg-gold-soft/60 transition-colors duration-150 border-b border-gold/10 last:border-b-0"
+                  >
+                    <span className="w-9 shrink-0 text-center rounded-md bg-white/70 border border-gold/25 py-0.5 text-t12 font-bold text-charcoal">
+                      {Number(d.date.slice(8, 10))}
+                    </span>
+                    <span className="flex-1 min-w-0 text-t12 text-charcoal truncate">{language === 'hi' ? f.hi : f.en}</span>
+                    <span
+                      className={cn(
+                        'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                        f.kind === 'sankranti' ? 'bg-sage/15 text-[#5c6b52]' : f.kind === 'ekadashi' ? 'bg-gold-faint text-[#8a6d1f]' : 'bg-gold-soft text-[#7a5c10]',
+                      )}
+                    >
+                      {t(`panchang.festKind.${f.kind}`)}
+                    </span>
+                  </button>
+                )),
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Legend */}
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-t12 text-muted-foreground">

@@ -29,6 +29,14 @@ interface TodayPanchang {
   moonSign: { name: string; nameHi: string };
 }
 
+interface DashaNow {
+  mahaLord: string;
+  antarLord: string | null;
+  antarEnd: string;
+  antarPercent: number;
+  next: { lord: string | null; isMahaChange: boolean; dateISO: string; daysLeft: number };
+}
+
 function phaseKeyOf(p: number): string {
   const b = [
     [0, 'phase.new'], [0.0625, 'phase.waxingCrescent'], [0.1875, 'phase.firstQuarter'],
@@ -51,6 +59,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
   const [checkin, setCheckin] = useState<CheckinState | null>(null);
   const [checkinError, setCheckinError] = useState(false);
   const [panchang, setPanchang] = useState<TodayPanchang | null>(null);
+  const [dashaNow, setDashaNow] = useState<DashaNow | null>(null);
   const [mood, setMood] = useState(3);
   const [energy, setEnergy] = useState(3);
   const [note, setNote] = useState('');
@@ -120,6 +129,23 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
         if (!cancelled) setPanchang(res.panchang);
       } catch {
         /* hero panchang is best-effort */
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [chart]);
+
+  useEffect(() => {
+    if (!chart) return;
+    let cancelled = false;
+    const run = async () => {
+      try {
+        const res = await api<{ dasha: DashaNow }>('/api/dasha-now');
+        if (!cancelled) setDashaNow(res.dasha);
+      } catch {
+        /* dasha card is best-effort */
       }
     };
     void run();
@@ -312,6 +338,43 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
           <Icon name="chevron-right" size={18} className="text-gold transition-transform duration-250 group-hover:translate-x-0.5" />
         </button>
       </GlassCard>
+
+      {/* Dasha transition countdown — ink card */}
+      {dashaNow && dashaNow.next.lord && (
+        <GlassCard className="p-5 sm:p-6 glass-ink relative overflow-hidden">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-t12 uppercase tracking-wider text-gold font-semibold">{t('dasha.cardTitle')}</p>
+              <p className="mt-2 text-t16 font-serif text-gold-grad font-semibold">
+                {t('dasha.current', { maha: t(`planet.${dashaNow.mahaLord}`), antar: dashaNow.antarLord ? t(`planet.${dashaNow.antarLord}`) : '' })}
+              </p>
+              <p className="mt-1 text-t14 text-[#cdb98e]">
+                {dashaNow.next.daysLeft <= 0
+                  ? t('dasha.endsToday')
+                  : dashaNow.next.isMahaChange
+                    ? t('dasha.mahaChange', { next: t(`planet.${dashaNow.next.lord}`) })
+                    : t('dasha.endsIn', { n: dashaNow.next.daysLeft, next: t(`planet.${dashaNow.next.lord}`) })}
+                <span className="text-[#a5947a]"> · {new Date(`${dashaNow.next.dateISO}T12:00:00Z`).toLocaleDateString(locale, { day: 'numeric', month: 'short' })}</span>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onNavigate('kundli', 'reports')}
+              className="shrink-0 text-t12 text-gold hover:text-gold-light underline underline-offset-4 decoration-gold/30 transition-colors duration-200"
+            >
+              {t('dasha.viewReports')}
+            </button>
+          </div>
+          {/* Antardasha progress — thin gold bar on ink */}
+          <div className="mt-4 h-1.5 rounded-full bg-white/10 overflow-hidden" role="progressbar" aria-valuenow={dashaNow.antarPercent} aria-valuemin={0} aria-valuemax={100}>
+            <div className="h-full gold-grad rounded-full transition-all duration-500" style={{ width: `${dashaNow.antarPercent}%` }} />
+          </div>
+          <div className="mt-1.5 flex justify-between text-t12 text-[#a5947a]">
+            <span>{t(`planet.${dashaNow.mahaLord}`)}-{dashaNow.antarLord ? t(`planet.${dashaNow.antarLord}`) : ''}</span>
+            <span>{dashaNow.antarPercent}%</span>
+          </div>
+        </GlassCard>
+      )}
 
       {/* Daily check-in */}
       <GlassCard className="p-5 sm:p-6">

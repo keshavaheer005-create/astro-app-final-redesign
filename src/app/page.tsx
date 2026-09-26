@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Component, useEffect, useState } from 'react';
+import React, { Component, useEffect, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SessionProvider, useSession } from '@/components/selfsage/session-context';
 import { AppShellInner, type TabId } from '@/components/selfsage/app-shell';
@@ -52,6 +52,30 @@ class TopErrorBoundary extends Component<{ children: React.ReactNode }, { error:
   }
 }
 
+/* ── Static splash (language-neutral) ───────────────────────────────────── */
+
+/**
+ * Rendered during SSR and the first client render ONLY. Contains no i18n text
+ * and no time-dependent output, so server HTML always matches the client tree.
+ * (i18next is initialized at module scope with the persisted language, so any
+ * translated string rendered pre-mount would differ from the server's 'en'
+ * default and trip a hydration mismatch — e.g. the splash motto.)
+ */
+function StaticSplash() {
+  return (
+    <div className="min-h-screen bg-cream flex flex-col items-center justify-center px-6 relative">
+      <div className="mandala-bg" aria-hidden="true" />
+      <LogoMark size={88} className="animate-pulse" />
+      <h1 className="mt-5 font-serif text-t28 font-bold text-charcoal">Self Sage</h1>
+      <div className="mt-8 flex gap-1.5" aria-label="loading">
+        {[0, 1, 2].map((i) => (
+          <span key={i} className="w-2 h-2 rounded-full bg-gold animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ── Splash with hard timeout ───────────────────────────────────────────── */
 
 function Splash({ timedOut, onRetry }: { timedOut?: boolean; onRetry?: () => void }) {
@@ -81,6 +105,8 @@ function Splash({ timedOut, onRetry }: { timedOut?: boolean; onRetry?: () => voi
 }
 
 /* ── App root ───────────────────────────────────────────────────────────── */
+
+const subscribeNoop = () => () => undefined;
 
 type Route = { tab: TabId; kundliView?: KundliView; decisionOpen?: boolean };
 
@@ -130,11 +156,25 @@ function AppInner() {
 }
 
 export default function Page() {
+  // Gate the i18n-aware tree behind hydration: while hydrating (and on the
+  // server) we show the language-neutral StaticSplash, so hydration always
+  // matches. Once hydrated, the full app renders with the persisted language.
+  // useSyncExternalStore gives us a lint-clean isHydrated (server snapshot
+  // false during hydration, client snapshot true after).
+  const mounted = useSyncExternalStore(
+    subscribeNoop,
+    () => true,
+    () => false,
+  );
   return (
     <TopErrorBoundary>
-      <SessionProvider>
-        <AppInner />
-      </SessionProvider>
+      {mounted ? (
+        <SessionProvider>
+          <AppInner />
+        </SessionProvider>
+      ) : (
+        <StaticSplash />
+      )}
     </TopErrorBoundary>
   );
 }

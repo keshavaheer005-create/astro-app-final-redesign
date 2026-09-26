@@ -235,6 +235,15 @@ export interface DaySummary {
   sunriseISO: string | null;
   /** 'purnima' | 'amavasya' | 'ekadashi' when the day carries a classical marker */
   special: 'purnima' | 'amavasya' | 'ekadashi' | null;
+  /** 0-based tithi (0 = Shukla Pratipada … 14 = Purnima) — bare, for festival engine */
+  tithiIdx0: number;
+  /** 0-based moon nakshatra index at local noon */
+  nakIdx: number;
+  /** 0-based sidereal sun sign index at local noon */
+  sunSignIdx: number;
+  /** raw moon-sun elongation in degrees (0-360) at local noon — exact
+   * new-moon/purnima detection even when a tithi is skipped between noons */
+  elong: number;
 }
 
 export function daySummaryFor(dateUTC: Date, localDate: string, weekday: number, lat: number, lng: number): DaySummary {
@@ -242,6 +251,11 @@ export function daySummaryFor(dateUTC: Date, localDate: string, weekday: number,
   const sun = calcPlanet('Su', jd, false);
   const moon = calcPlanet('Mo', jd, false);
 
+  // Tithi sampled at local NOON. Drik panchangas observe different windows per
+  // festival (sunrise / madhyahna / pradosh), so no single sampling point
+  // reproduces every listing; noon verified best overall (25+ festival dates
+  // across Sep–Dec 2026 match published calendars; fast tithis may shift ±1
+  // day, e.g. Vijayadashami 2026-10-21 vs drik 10-20 — documented variance).
   const elong = norm360(moon.lon - sun.lon);
   const tithiIdx0 = Math.floor(elong / 12);
   const paksha: 'Shukla' | 'Krishna' = tithiIdx0 < 15 ? 'Shukla' : 'Krishna';
@@ -271,5 +285,9 @@ export function daySummaryFor(dateUTC: Date, localDate: string, weekday: number,
     nakshatra: { name: NAKSHATRAS[nakIdx], nameHi: NAKSHATRAS_HI[nakIdx] },
     sunriseISO: sr ? utcFromJulday(sr).toISOString() : null,
     special,
+    tithiIdx0,
+    nakIdx,
+    sunSignIdx: signIndex(norm360(sun.lon - ayanamsa(jd))),
+    elong,
   };
 }

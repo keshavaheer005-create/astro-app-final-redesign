@@ -9,7 +9,7 @@ export type IconName =
   | 'chevron-left' | 'arrow-right' | 'arrow-left' | 'send' | 'plus'
   | 'edit' | 'lotus' | 'om' | 'compass' | 'list' | 'download' | 'refresh'
   | 'book' | 'scale' | 'handshake' | 'timeline' | 'grid' | 'eye' | 'logout'
-  | 'speaker' | 'pause' | 'share';
+  | 'speaker' | 'pause' | 'share' | 'mic' | 'mic-off';
 
 const PATHS: Record<IconName, React.ReactNode> = {
   home: <path d="M4 11.2 12 4l8 7.2M6 9.8V20h4.5v-5.2h3V20H18V9.8" />,
@@ -181,6 +181,18 @@ const PATHS: Record<IconName, React.ReactNode> = {
     </>
   ),
   refresh: <path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3L20 9.5M20 4.5v5h-5" />,
+  mic: (
+    <>
+      <rect x="9" y="3.5" width="6" height="11" rx="3" />
+      <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M8.5 21h7" />
+    </>
+  ),
+  'mic-off': (
+    <>
+      <path d="M9 6a3 3 0 0 1 6 0v5m-.6 3.4a3 3 0 0 1-5.4-1.9v-4" />
+      <path d="M5.5 11.5a6.5 6.5 0 0 0 10.2 5.3M18.5 11.5c0 .9-.18 1.7-.5 2.5M12 18v3M8.5 21h7M4 4l16 16" />
+    </>
+  ),
   book: (
     <>
       <path d="M12 6.5C10.5 5 8.3 4.5 4 4.7v13.6c4.3-.2 6.5.3 8 1.7 1.5-1.4 3.7-1.9 8-1.7V4.7c-4.3-.2-6.5.3-8 1.8Z" />

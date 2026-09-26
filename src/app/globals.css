@@ -339,6 +339,35 @@
     }
   }
 
+  /* ── Voice input: mic icon heartbeat + expanding ring ─────────────── */
+  .mic-pulse {
+    animation: mic-pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes mic-pulse {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.18);
+      opacity: 0.75;
+    }
+  }
+  .mic-ring {
+    animation: mic-ring 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  @keyframes mic-ring {
+    0% {
+      box-shadow: 0 0 0 0 rgba(107, 39, 55, 0.35);
+    }
+    70% {
+      box-shadow: 0 0 0 12px rgba(107, 39, 55, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(107, 39, 55, 0);
+    }
+  }
+
   /* ── Gold focus ring for keyboard users ────────────────────────────── */
   :where(button, [role="tab"], a, input, textarea, [tabindex]):focus-visible {
     outline: 2px solid rgba(201, 162, 39, 0.75);

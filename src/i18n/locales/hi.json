@@ -371,5 +371,22 @@
   "match.share": "परिणाम साझा करें",
   "match.shareCopied": "कॉपी हुआ ✓",
   "match.shareTitle": "गुण मिलान: {{boy}} × {{girl}}",
-  "match.shareFooter": "स्विस एफ़ेमेरिस (लाहिरी अयनांश) द्वारा गणना · Self Sage"
+  "match.shareFooter": "स्विस एफ़ेमेरिस (लाहिरी अयनांश) द्वारा गणना · Self Sage",
+  "panchang.lunarMonth": "चंद्र मास",
+  "panchang.festivalsThisMonth": "इस माह के पर्व",
+  "panchang.festKind.festival": "पर्व",
+  "panchang.festKind.ekadashi": "एकादशी",
+  "panchang.festKind.sankranti": "संक्रांति",
+  "panchang.observationNote": "पर्व तिथियाँ शास्त्रीय तिथि नियमों पर आधारित हैं; कुछ छपे कैलेंडर से ±1 दिन का अंतर संभव है।",
+  "dasha.cardTitle": "दशा अवधि",
+  "dasha.current": "{{maha}} महादशा · {{antar}} अंतर्दशा",
+  "dasha.endsIn": "{{n}} दिनों में {{next}} पर संक्रमण",
+  "dasha.endsToday": "आज ही संक्रमण",
+  "dasha.mahaChange": "{{next}} महादशा प्रारंभ",
+  "dasha.viewReports": "दशा रिपोर्ट देखें",
+  "acharya.micLabel": "ध्वनि इनपुट",
+  "acharya.listening": "सुन रहे हैं…",
+  "acharya.transcribing": "ट्रांसक्राइब हो रहा है…",
+  "acharya.micError": "माइक्रोफ़ोन उपलब्ध नहीं",
+  "acharya.voiceHint": "अपना प्रश्न बोलें — यह यहाँ जाँच के लिए आएगा"
 }

@@ -27,6 +27,12 @@ export function AcharyaScreen() {
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Voice input — MediaRecorder → /api/asr → draft text in the composer
+  const [voiceState, setVoiceState] = useState<'idle' | 'recording' | 'transcribing'>('idle');
+  const [voiceError, setVoiceError] = useState(false);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
   // TTS playback — one message at a time
   const [audioMsgId, setAudioMsgId] = useState<string | null>(null);
   const [audioLoadingId, setLoadingId] = useState<string | null>(null);
@@ -216,6 +222,78 @@ export function AcharyaScreen() {
     setMessages([]);
   };
 
+  const micSupported = typeof navigator !== 'undefined' && !!navigator.mediaDevices && typeof MediaRecorder !== 'undefined';
+
+  const stopRecording = useCallback(() => {
+    if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
+  }, []);
+
+  // stop mic + stream when leaving the screen
+  useEffect(
+    () => () => {
+      streamRef.current?.getTracks().forEach((tr) => tr.stop());
+    },
+    [],
+  );
+
+  const transcribe = async (blob: Blob) => {
+    setVoiceState('transcribing');
+    try {
+      const buf = await blob.arrayBuffer();
+      let binary = '';
+      const bytes = new Uint8Array(buf);
+      const CHUNK = 0x8000;
+      for (let i = 0; i < bytes.length; i += CHUNK) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+      }
+      const res = await api<{ text: string }>('/api/asr', {
+        method: 'POST',
+        body: JSON.stringify({ audioBase64: btoa(binary) }),
+      });
+      setVoiceError(false);
+      setInput((prev) => (prev ? `${prev} ${res.text}`.slice(0, 600) : res.text.slice(0, 600)));
+    } catch {
+      setVoiceError(true);
+    } finally {
+      setVoiceState('idle');
+    }
+  };
+
+  const toggleMic = async () => {
+    if (voiceState === 'recording') {
+      stopRecording();
+      return;
+    }
+    if (voiceState !== 'idle' || !micSupported) return;
+    setVoiceError(false);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+      const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      chunksRef.current = [];
+      rec.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      rec.onstop = () => {
+        streamRef.current?.getTracks().forEach((tr) => tr.stop());
+        streamRef.current = null;
+        const blob = new Blob(chunksRef.current, { type: rec.mimeType || 'audio/webm' });
+        recorderRef.current = null;
+        if (blob.size > 1024) void transcribe(blob);
+        else setVoiceState('idle');
+      };
+      recorderRef.current = rec;
+      rec.start();
+      setVoiceState('recording');
+      // hard cap at 60s to keep ASR snappy
+      setTimeout(() => stopRecording(), 60000);
+    } catch {
+      setVoiceError(true);
+      setVoiceState('idle');
+    }
+  };
+
   return (
     <div className="flex flex-col h-[calc(100dvh-11rem)] lg:h-[calc(100dvh-9rem)]">
       {/* Chat header — inverted ink card */}
@@ -345,21 +423,50 @@ export function AcharyaScreen() {
           e.preventDefault();
           ask(input);
         }}
-        className="shrink-0 flex items-center gap-2 pt-1"
+        className="shrink-0 space-y-1.5 pt-1"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder={chart ? t('acharya.placeholder') : t('acharya.needChart')}
-          disabled={!chart || loading}
-          className="flex-1 h-12 rounded-full glass px-5 text-t14 text-charcoal placeholder:text-muted-foreground/60 outline-none transition-all duration-250 focus:border-gold/50 focus:ring-2 focus:ring-gold/25 disabled:opacity-60"
-          maxLength={600}
-        />
-        <GoldButton type="submit" disabled={!input.trim() || loading || !chart} className="w-12 h-12 p-0 !px-0 shrink-0">
-          <Icon name="send" size={18} />
-          <span className="sr-only">{t('acharya.placeholder')}</span>
-        </GoldButton>
+        {voiceState !== 'idle' && (
+          <div className="flex items-center gap-2 px-2" aria-live="polite">
+            <span className={cn('inline-flex items-center gap-1.5 text-t12', voiceState === 'recording' ? 'text-maroon' : 'text-muted-foreground')}>
+              <Icon name={voiceState === 'recording' ? 'mic' : 'sparkle'} size={13} className={voiceState === 'recording' ? 'mic-pulse' : 'animate-spin-slow'} />
+              {voiceState === 'recording' ? t('acharya.listening') : t('acharya.transcribing')}
+            </span>
+            {voiceState === 'recording' && <span className="flex-1 h-px bg-gradient-to-r from-maroon/30 to-transparent" />}
+          </div>
+        )}
+        {voiceError && <p className="px-2 text-t12 text-maroon">{t('acharya.micError')}</p>}
+        <div className="flex items-center gap-2">
+          {micSupported && (
+            <button
+              type="button"
+              onClick={() => void toggleMic()}
+              disabled={!chart || loading}
+              aria-label={t('acharya.micLabel')}
+              aria-pressed={voiceState === 'recording'}
+              className={cn(
+                'w-12 h-12 rounded-full shrink-0 inline-flex items-center justify-center border transition-all duration-250 active:scale-90 disabled:opacity-40',
+                voiceState === 'recording'
+                  ? 'bg-maroon text-[#f5e6d8] border-maroon shadow-[0_0_0_0_rgba(107,39,55,0.4)] mic-ring'
+                  : 'glass text-gold hover:border-gold/50',
+              )}
+            >
+              <Icon name="mic" size={19} />
+            </button>
+          )}
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={chart ? (voiceState === 'transcribing' ? t('acharya.voiceHint') : t('acharya.placeholder')) : t('acharya.needChart')}
+            disabled={!chart || loading}
+            className="flex-1 min-w-0 h-12 rounded-full glass px-5 text-t14 text-charcoal placeholder:text-muted-foreground/60 outline-none transition-all duration-250 focus:border-gold/50 focus:ring-2 focus:ring-gold/25 disabled:opacity-60"
+            maxLength={600}
+          />
+          <GoldButton type="submit" disabled={!input.trim() || loading || !chart} className="w-12 h-12 p-0 !px-0 shrink-0">
+            <Icon name="send" size={18} />
+            <span className="sr-only">{t('acharya.placeholder')}</span>
+          </GoldButton>
+        </div>
       </form>
     </div>
   );

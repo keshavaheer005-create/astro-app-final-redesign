@@ -371,5 +371,22 @@
   "match.share": "Share result",
   "match.shareCopied": "Copied ✓",
   "match.shareTitle": "Guna Milan: {{boy}} × {{girl}}",
-  "match.shareFooter": "Computed with Swiss Ephemeris (Lahiri ayanamsa) · Self Sage"
+  "match.shareFooter": "Computed with Swiss Ephemeris (Lahiri ayanamsa) · Self Sage",
+  "panchang.lunarMonth": "Lunar month",
+  "panchang.festivalsThisMonth": "Festivals this month",
+  "panchang.festKind.festival": "Parva",
+  "panchang.festKind.ekadashi": "Ekadashi",
+  "panchang.festKind.sankranti": "Sankranti",
+  "panchang.observationNote": "Festival dates follow classical tithi rules; fast tithis may shift ±1 day vs some printed calendars.",
+  "dasha.cardTitle": "Dasha window",
+  "dasha.current": "{{maha}} Mahadasha · {{antar}} Antardasha",
+  "dasha.endsIn": "Transitions to {{next}} in {{n}} days",
+  "dasha.endsToday": "Transitions today",
+  "dasha.mahaChange": "{{next}} Mahadasha begins",
+  "dasha.viewReports": "View dasha report",
+  "acharya.micLabel": "Voice input",
+  "acharya.listening": "Listening…",
+  "acharya.transcribing": "Transcribing…",
+  "acharya.micError": "Microphone unavailable",
+  "acharya.voiceHint": "Speak your question — it will appear here for review"
 }
