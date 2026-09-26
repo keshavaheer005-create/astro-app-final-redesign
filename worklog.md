@@ -69,3 +69,22 @@ QA (agent-browser, mobile 375px + desktop 1440px):
 
 Stage Summary:
 - ALL 8 build stages complete and verified with real data. App is production-quality. Worklog current.
+
+---
+Task ID: review-1 (cron webDevReview round 1)
+Agent: lead
+Task: QA sweep + new features (Choghadiya/muhurtas, notification center, TTS letter playback) + styling detail pass
+
+Work Log:
+- QA: full tab sweep at 375px + 1280px via agent-browser — console clean, page 200, all prior flows stable
+- FEATURE 1 — Muhurtas & Choghadiya (Panchang screen): classical 7-cycle day/night choghadiya (8 slots each from sunrise→sunset→next sunrise), quality coloring (Amrit/Shubh/Labh favorable · Char moderate · Udveg/Kaal/Rog caution), live "Now" slot ring-highlight (verified: 14:36 UTC correctly inside Amrit slot); Abhijit muhurta (8th of 15 day parts) + Brahma muhurta (96→48min before sunrise) cards
+- FEATURE 2 — Notification center: bell now opens a glass popover with dynamic items (check-in due + reminder time, letter ready, streak milestone ≥3d, or all-quiet empty state)
+- FEATURE 3 — TTS letter playback ("Listen" button on weekly letter): POST /api/reflection-audio → z-ai TTS (voice tongtong, speed 0.95), sentence-chunked <1024 chars, WAV PCM extraction + single RIFF header rewrite for smooth chunk merge, cached as data URI in WeeklyReflection.audioUrl (62s audio, 16s gen). FIXED: SDK named-import crash (default import), API rejects mp3 → wav
+- BUG FIX: Journal empty-state button was a no-op → now navigates Home (onNavigate prop wired through page.tsx)
+- STYLING: parametric MoonPhaseGlyph in hero (verified shows "Full moon" on Purnima ✓), gold drop-cap on letter body (.letter-body), shimmer skeletons replace pulse blocks, ascendant house highlighted in N/S charts (glow + ASC tag / gold cell), ink-card gold aura (radial ::after), ornament dividers between Home sections, planet tooltips on chart tags
+- i18n: +26 keys (phases, choghadiya, muhurtas, notifications, listen/stop) en+hi
+
+Stage Summary:
+- Round 1 complete. Lint 0 errors. All new features browser-verified with real data.
+- Known variance: choghadiya weekday START offsets differ between panchang software; ours matches the Sunday anchor (Udveg) + Mon/Sat/Thu anchors from AstroSage-style tables; cycle+qualities are Wikipedia-verified. Revisit if authoritative source found.
+- Next suggestions: Acharya streaming responses, moonrise/moonset on Home, push-notification scheduling, matching result save/share, D-chart navamsa planetary detail table.

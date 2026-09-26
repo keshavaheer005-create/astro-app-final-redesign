@@ -7,6 +7,7 @@ import { GlassCard, SectionHeader, EmptyState, PageLoader, ErrorState } from '..
 import { CalendarPicker } from '../pickers';
 import { api, useSession } from '../session-context';
 import { useAppStore } from '@/store/app';
+import { cn } from '@/lib/utils';
 
 interface PanchangPayload {
   date: string;
@@ -22,6 +23,11 @@ interface PanchangPayload {
   moonriseISO: string | null;
   moonsetISO: string | null;
   rahuKaal: { startISO: string | null; endISO: string | null };
+  choghadiya: {
+    day: { name: string; quality: 'good' | 'medium' | 'bad'; startISO: string; endISO: string }[];
+    night: { name: string; quality: 'good' | 'medium' | 'bad'; startISO: string; endISO: string }[];
+  };
+  muhurtas: { name: string; startISO: string; endISO: string; note: 'auspicious' | 'caution' }[];
 }
 
 export function PanchangScreen() {
@@ -134,6 +140,34 @@ export function PanchangScreen() {
                   {t('panchang.moonSign')}: <span className="text-charcoal font-medium">{language === 'hi' ? data.moonSign.nameHi : data.moonSign.name}</span> · {t('panchang.paksha')}: <span className="text-charcoal font-medium">{language === 'hi' ? (data.tithi.paksha === 'Shukla' ? 'शुक्ल' : 'कृष्ण') : data.tithi.paksha}</span> · {t('weekdays.' + data.weekday)}
                 </p>
               </GlassCard>
+
+              {/* Muhurtas */}
+              {data.muhurtas.length > 0 && (
+                <div className="grid grid-cols-2 gap-3">
+                  {data.muhurtas.map((m) => (
+                    <GlassCard key={m.name} className="p-4">
+                      <div className="flex items-center gap-2 text-gold">
+                        <Icon name="lotus" size={16} />
+                        <span className="text-t12 uppercase tracking-wide font-semibold text-muted-foreground">{t(`muhurta.${m.name.toLowerCase()}`)}</span>
+                      </div>
+                      <p className="mt-2 text-t14 font-semibold text-charcoal">
+                        {fmtTime(m.startISO)} – {fmtTime(m.endISO)}
+                      </p>
+                      <p className="text-t12 text-muted-foreground mt-1 leading-snug">{t(`muhurta.${m.name.toLowerCase()}Note`)}</p>
+                    </GlassCard>
+                  ))}
+                </div>
+              )}
+
+              {/* Choghadiya */}
+              {data.choghadiya.day.length > 0 && (
+                <GlassCard className="p-4 sm:p-5">
+                  <SectionHeader title={t('choghadiya.title')} icon="clock" />
+                  <ChoghadiyaGrid slots={data.choghadiya.day} label={t('choghadiya.day')} locale={locale} tz={chart.input.timezone} now />
+                  <div className="h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent my-4" />
+                  <ChoghadiyaGrid slots={data.choghadiya.night} label={t('choghadiya.night')} locale={locale} tz={chart.input.timezone} now />
+                </GlassCard>
+              )}
             </>
           )}
         </div>
@@ -150,6 +184,54 @@ function TimeTile({ icon, label, value }: { icon: 'sunrise' | 'sunset' | 'moon';
         <span className="text-t12 text-muted-foreground truncate">{label}</span>
       </div>
       <p className="mt-1 text-t14 font-semibold text-charcoal">{value}</p>
+    </div>
+  );
+}
+
+const QUALITY_STYLE = {
+  good: 'bg-gold-faint border-gold/40 text-[#7a8b6f]',
+  medium: 'bg-white/55 border-gold/20 text-muted-foreground',
+  bad: 'bg-maroon-soft/70 border-maroon/25 text-maroon',
+} as const;
+
+function ChoghadiyaGrid({
+  slots,
+  label,
+  locale,
+  tz,
+  now = false,
+}: {
+  slots: { name: string; quality: 'good' | 'medium' | 'bad'; startISO: string; endISO: string }[];
+  label: string;
+  locale: string;
+  tz: string;
+  now?: boolean;
+}) {
+  const { t } = useTranslation();
+  const nowMs = Date.now();
+  return (
+    <div className="mt-2">
+      <p className="text-t12 font-semibold uppercase tracking-wide text-gold mb-2">{label}</p>
+      <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
+        {slots.map((s, i) => {
+          const isNow = now && new Date(s.startISO).getTime() <= nowMs && new Date(s.endISO).getTime() > nowMs;
+          return (
+            <div
+              key={`${s.name}-${i}`}
+              className={cn(
+                'rounded-lg border px-1.5 py-2 text-center transition-all duration-200',
+                QUALITY_STYLE[s.quality],
+                isNow && 'ring-2 ring-gold shadow-[0_2px_10px_rgba(201,162,39,0.3)] scale-[1.04]',
+              )}
+              title={`${new Date(s.startISO).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: tz })} – ${new Date(s.endISO).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: tz })}`}
+            >
+              <p className="text-t12 font-semibold truncate">{s.name}</p>
+              <p className="text-t12 opacity-70">{t(`choghadiya.${s.quality}`)}</p>
+              {isNow && <p className="text-t12 font-bold text-gold mt-0.5">{t('choghadiya.now')}</p>}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

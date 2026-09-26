@@ -19,6 +19,7 @@ function PlanetTag({ p, hi }: { p: ChartPlanet; hi: boolean }) {
   const label = hi ? { Su: 'सू', Mo: 'चं', Ma: 'मं', Me: 'बु', Ju: 'गु', Ve: 'शु', Sa: 'श', Ra: 'रा', Ke: 'के' }[p.key] : SHORT[p.key];
   return (
     <span
+      title={p.key}
       className={cn(
         'inline-flex items-center rounded px-1 py-px text-[10px] font-bold leading-tight',
         p.retrograde ? 'bg-maroon-soft text-maroon' : 'bg-gold-soft text-[#8a6d10]',
@@ -43,6 +44,8 @@ export function NorthChart({ ascSign, planets, className }: { ascSign: number; p
   return (
     <svg viewBox="0 0 400 400" className={cn('w-full max-w-md mx-auto', className)} role="img" aria-label="North Indian chart">
       <rect x="4" y="4" width="392" height="392" fill="none" stroke="rgba(201,162,39,0.55)" strokeWidth="1.6" rx="10" />
+      {/* ascendant (house 1) soft glow */}
+      <circle cx="200" cy="95" r="46" fill="rgba(201,162,39,0.09)" />
       {/* diagonals */}
       <line x1="4" y1="4" x2="396" y2="396" stroke="rgba(201,162,39,0.4)" strokeWidth="1.1" />
       <line x1="396" y1="4" x2="4" y2="396" stroke="rgba(201,162,39,0.4)" strokeWidth="1.1" />
@@ -59,6 +62,11 @@ export function NorthChart({ ascSign, planets, className }: { ascSign: number; p
             <text x={cx} y={cy - 22} textAnchor="middle" className="fill-[#b08a1e] text-[13px] font-semibold" fontSize="13">
               {h + 1}
             </text>
+            {h === 0 && (
+              <text x={cx} y={cy - 34} textAnchor="middle" fontSize="8.5" className="fill-[#b08a1e] font-bold tracking-widest" letterSpacing="2">
+                ASC
+              </text>
+            )}
             <text x={cx} y={cy - 8} textAnchor="middle" fontSize="10" className="fill-[#8b7a55]">
               {hi ? SIGNS_HI[sign] : SIGNS[sign].slice(0, 3)}
             </text>
@@ -120,8 +128,20 @@ export function SouthChart({ ascSign, planets, className }: { ascSign: number; p
         const wx = corner ? 2 * cell : cell;
         return (
           <g key={sign}>
-            {corner && (
+            {corner ? (
               <rect x={x * cell + 2} y={y * cell + 2} width={wx} height={wx} fill="none" stroke="rgba(201,162,39,0.35)" strokeWidth="0.8" />
+            ) : null}
+            {sign === ascSign && (
+              <rect
+                x={x * cell + 2}
+                y={y * cell + 2}
+                width={wx}
+                height={wx}
+                fill="rgba(201,162,39,0.1)"
+                stroke="rgba(201,162,39,0.5)"
+                strokeWidth="1"
+                rx="4"
+              />
             )}
             <text x={cx - 30} y={cy - 26} fontSize="10" className="fill-[#8b7a55]" textAnchor="middle">
               {hi ? SIGNS_HI[sign] : SIGNS[sign].slice(0, 3)}

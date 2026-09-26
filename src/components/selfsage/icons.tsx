@@ -8,7 +8,8 @@ export type IconName =
   | 'warning' | 'info' | 'check' | 'x' | 'chevron-right' | 'chevron-down'
   | 'chevron-left' | 'arrow-right' | 'arrow-left' | 'send' | 'plus'
   | 'edit' | 'lotus' | 'om' | 'compass' | 'list' | 'download' | 'refresh'
-  | 'book' | 'scale' | 'handshake' | 'timeline' | 'grid' | 'eye' | 'logout';
+  | 'book' | 'scale' | 'handshake' | 'timeline' | 'grid' | 'eye' | 'logout'
+  | 'speaker' | 'pause';
 
 const PATHS: Record<IconName, React.ReactNode> = {
   home: <path d="M4 11.2 12 4l8 7.2M6 9.8V20h4.5v-5.2h3V20H18V9.8" />,
@@ -194,7 +195,65 @@ const PATHS: Record<IconName, React.ReactNode> = {
     </>
   ),
   logout: <path d="M14 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2M9.5 12H20m0 0-3.5-3.5M20 12l-3.5 3.5" />,
+  speaker: (
+    <>
+      <path d="M11 5.5 6.5 9H3.5v6h3L11 18.5v-13Z" />
+      <path d="M14.5 9.5a3.6 3.6 0 0 1 0 5M17 7a7 7 0 0 1 0 10" />
+    </>
+  ),
+  pause: <path d="M9 5.5v13M15 5.5v13" />,
 };
+
+/**
+ * Parametric moon-phase glyph. phase 0..1 (0 = new, 0.5 = full, 1 = new again).
+ * Standard 3-shape construction: dark base disc + lit semicircle + terminator ellipse.
+ */
+export function MoonPhaseGlyph({
+  phase,
+  size = 34,
+  className,
+}: {
+  phase: number; // 0..1
+  size?: number;
+  className?: string;
+}) {
+  const p = ((phase % 1) + 1) % 1;
+  const illum = (1 - Math.cos(2 * Math.PI * p)) / 2; // 0 new → 1 full
+  const waxing = p < 0.5;
+  const r = 9;
+  const cx = 12;
+  const cy = 12;
+  const rx = Math.abs(r * Math.cos(Math.PI * illum));
+  const litSide = waxing ? 1 : -1;
+  const clipId = `moon-${Math.round(p * 360)}`;
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <defs>
+        <clipPath id={clipId}>
+          <rect x={litSide === 1 ? 12 : 0} y="0" width="12" height="24" />
+        </clipPath>
+      </defs>
+      {/* dark disc */}
+      <circle cx={cx} cy={cy} r={r} fill="rgba(42,36,32,0.14)" stroke="rgba(201,162,39,0.6)" strokeWidth="1.4" />
+      {/* lit semicircle */}
+      {illum > 0.02 && illum < 0.98 && (
+        <circle cx={cx} cy={cy} r={r} fill="#E8C568" clipPath={`url(#${clipId})`} />
+      )}
+      {/* terminator ellipse */}
+      {illum >= 0.98 ? (
+        <circle cx={cx} cy={cy} r={r} fill="#E8C568" stroke="rgba(201,162,39,0.6)" strokeWidth="1.4" />
+      ) : illum <= 0.02 ? null : (
+        <ellipse
+          cx={cx}
+          cy={cy}
+          rx={Math.max(0.01, rx)}
+          ry={r}
+          fill={illum > 0.5 ? '#E8C568' : 'rgba(42,36,32,0.14)'}
+        />
+      )}
+    </svg>
+  );
+}
 
 export function Icon({
   name,

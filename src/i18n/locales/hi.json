@@ -45,7 +45,6 @@
   "greeting.afternoon": "नमस्कार",
   "greeting.evening": "शुभ संध्या",
   "greeting.night": "शुभ रात्रि",
-
   "splash.motto": "आपकी कुंडली। आपका कर्म। आपकी स्पष्टता।",
   "splash.timeout": "तारे थोड़े धीमे चल रहे हैं।",
   "onboarding.welcome": "सेल्फ सेज में आपका स्वागत है",
@@ -70,7 +69,6 @@
   "onboarding.readyBody": "आपका लग्न, चंद्र राशि और दशा-क्रम सेकंड-स्तर की सटीकता से गणना किया गया है। यही यहाँ दिखने वाली हर बात की चुपचाप नींव है।",
   "onboarding.enter": "सेल्फ सेज में प्रवेश करें",
   "onboarding.timezoneNote": "समय-क्षेत्र",
-
   "home.headerBell": "रिमाइंडर और पत्र",
   "home.heroTitle": "आज का आकाश",
   "home.talkToAcharya": "आचार्य से बात करें",
@@ -111,7 +109,6 @@
   "home.tithi": "तिथि",
   "home.nakshatra": "नक्षत्र",
   "home.sunrise": "सूर्योदय",
-
   "kundli.tab.chart": "चार्ट",
   "kundli.tab.panchang": "पंचांग",
   "kundli.tab.horoscope": "राशिफल",
@@ -134,7 +131,6 @@
   "chart.nakshatraCol": "नक्षत्र",
   "chart.lord": "स्वामी",
   "chart.houses": "भाव (पूर्ण-राशि)",
-
   "panchang.title": "पंचांग",
   "panchang.subtitle": "दिन के पाँच अंग",
   "panchang.location": "स्थान",
@@ -151,7 +147,6 @@
   "panchang.avoidWindow": "नए कार्य के लिए परंपरागत रूप से टाला जाता है",
   "panchang.paksha": "पक्ष",
   "panchang.moonSign": "चंद्रमा",
-
   "horoscope.daily": "दैनिक",
   "horoscope.weekly": "साप्ताहिक",
   "horoscope.monthly": "मासिक",
@@ -166,7 +161,6 @@
   "horoscope.score": "गोचर सहयोग",
   "horoscope.disclaimer": "जन्म चंद्र से गणना किया शास्त्रीय गोचर — सामान्य राशिफल नहीं।",
   "horoscope.dasha": "दशा",
-
   "match.title": "कुंडली मिलान",
   "match.subtitle": "अष्टकूट गुण मिलान · 36 अंक",
   "match.boy": "पहला जातक",
@@ -188,7 +182,6 @@
   "match.summaryAsc": "लग्न",
   "match.summaryMoon": "चंद्र",
   "match.summaryNak": "नक्षत्र",
-
   "reports.title": "दशा और रिपोर्ट",
   "reports.dasha": "विंशोत्तरी दशा",
   "reports.current": "अभी: {{maha}} महादशा, {{antar}} अंतर्दशा",
@@ -217,7 +210,6 @@
   "reports.marsFromAsc": "लग्न से {{house}}वें भाव में मंगल",
   "reports.marsFromMoon": "चंद्र से {{house}}वें भाव में",
   "reports.noIssues": "मंगल दोष-भावों (1, 2, 4, 7, 8, 12) से दूर है",
-
   "journal.title": "कर्मा जर्नल",
   "journal.subtitle": "जहाँ आकाश आपके दिनों से मिलता है",
   "journal.streak": "{{n}} दिन की लय",
@@ -242,7 +234,6 @@
   "journal.correlationMid": "ऊर्जा आंशिक रूप से मनोदशा का अनुसरण करती है (r={{r}}) — नियमित दिनचर्या मदद करती है।",
   "journal.correlationLow": "मनोदशा और ऊर्जा स्वतंत्र चलती हैं (r={{r}}) — अर्थ चमक से अधिक मायने रखता है।",
   "journal.moodScale": "1 भारी · 3 संतुलित · 5 उजला",
-
   "decision.title": "निर्णय समय सहायक",
   "decision.subtitle": "अभी बढ़ें या आकाश को शांत होने दें?",
   "decision.placeholder": "कौन-सा निर्णय विचाराधीन है? जैसे “क्या मुझे नई नौकरी स्वीकार करनी चाहिए?”",
@@ -255,7 +246,6 @@
   "decision.windowsEmpty": "14 दिनों में कोई स्पष्ट बेहतर अवसर नहीं — अभी निरंतर प्रयास उचित है।",
   "decision.needChart": "पहले अपनी जन्म कुंडली जोड़ें — उसी के विरुद्ध समय पढ़ा जाएगा।",
   "decision.disclaimer": "आपकी वर्तमान दशा, चंद्र गोचर और दैनिक पंचांग से गणना।",
-
   "acharya.title": "आचार्य अभिषेक शर्मा",
   "acharya.subtitle": "वैदिक मार्गदर्शक · आपकी कुंडली व जर्नल पढ़ते हैं",
   "acharya.placeholder": "करियर, समय, रिश्तों के बारे में पूछें…",
@@ -269,7 +259,6 @@
   "acharya.retry": "संपर्क में विघ्न आया। फिर से पूछें?",
   "acharya.grounded": "आपकी कुंडली + जर्नल पर आधारित",
   "acharya.clear": "बातचीत साफ़ करें",
-
   "profile.title": "प्रोफ़ाइल",
   "profile.yourChart": "सहेजी गई कुंडलियाँ",
   "profile.active": "सक्रिय",
@@ -309,15 +298,41 @@
   "auth.errorTaken": "इस ईमेल से खाता पहले से है",
   "auth.errorInvalid": "ईमेल और पासवर्ड जाँचें (6+ अक्षर)",
   "auth.errorCredentials": "ईमेल या पासवर्ड मेल नहीं खाया",
-  "notifications.title": "रिमाइंडर और पत्र",
+  "notifications.title": "आज आपके लिए",
   "notifications.checkinDue": "आपकी दैनिक चेक-इन प्रतीक्षारत है",
-  "notifications.reflectionReady": "आपका साप्ताहिक पत्र तैयार है",
-  "notifications.none": "सब शांत — कुछ नया नहीं।",
+  "notifications.reflectionReady": "आचार्य का साप्ताहिक पत्र तैयार है",
+  "notifications.none": "सब शांत — आकाश में कुछ नया नहीं।",
   "weekdays.0": "रविवार",
   "weekdays.1": "सोमवार",
   "weekdays.2": "मंगलवार",
   "weekdays.3": "बुधवार",
   "weekdays.4": "गुरुवार",
   "weekdays.5": "शुक्रवार",
-  "weekdays.6": "शनिवार"
+  "weekdays.6": "शनिवार",
+  "phase.new": "अमावस्या",
+  "phase.waxingCrescent": "बढ़ता चाँद",
+  "phase.firstQuarter": "प्रथम चतुर्थांश",
+  "phase.waxingGibbous": "बढ़ता गिब्बस",
+  "phase.full": "पूर्णिमा",
+  "phase.waningGibbous": "घटता गिब्बस",
+  "phase.lastQuarter": "अंतिम चतुर्थांश",
+  "phase.waningCrescent": "घटता चाँद",
+  "choghadiya.title": "चौघड़िया",
+  "choghadiya.day": "दिन",
+  "choghadiya.night": "रात्रि",
+  "choghadiya.good": "शुभ",
+  "choghadiya.medium": "मध्यम",
+  "choghadiya.bad": "सावधानी",
+  "choghadiya.now": "अभी",
+  "muhurta.abhijit": "अभिजीत मुहूर्त",
+  "muhurta.brahma": "ब्रह्म मुहूर्त",
+  "muhurta.abhijitNote": "विजय का समय — इस अवधि में आरंभ कार्य बाधाएँ पार करते हैं",
+  "muhurta.brahmaNote": "ध्यान, कृतज्ञता और संकल्प के लिए आदर्श",
+  "notifications.streak": "{{n}} दिन की लय — लय बन रही है",
+  "notifications.reminderSet": "चेक-इन अनुस्मारक {{time}} बजे का है",
+  "letter.listen": "सुनें",
+  "letter.stop": "रोकें",
+  "letter.loadingAudio": "ऑडियो तैयार हो रहा है…",
+  "journal.checkinCta": "होम से चेक-इन करें",
+  "ornament.divider": "· · ✦ · ·"
 }

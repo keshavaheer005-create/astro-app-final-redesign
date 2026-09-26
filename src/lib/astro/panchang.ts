@@ -6,6 +6,20 @@ import {
 } from './constants';
 import { calcPlanet, calcHouses, riseTrans, findCrossing, ayanamsa, juldayFromUTC, utcFromJulday } from './ephemeris';
 
+export interface Choghadiya {
+  name: string;
+  quality: 'good' | 'medium' | 'bad';
+  startISO: string;
+  endISO: string;
+}
+
+export interface MuhurtaWindow {
+  name: string;
+  startISO: string;
+  endISO: string;
+  note: 'auspicious' | 'caution';
+}
+
 export interface PanchangResult {
   date: string; // local calendar date at the location
   weekday: number;
@@ -20,6 +34,8 @@ export interface PanchangResult {
   moonriseISO: string | null;
   moonsetISO: string | null;
   rahuKaal: { startISO: string | null; endISO: string | null };
+  choghadiya: { day: Choghadiya[]; night: Choghadiya[] };
+  muhurtas: MuhurtaWindow[]; // Abhijit + Brahma
   ayanamsa: number;
 }
 
@@ -38,6 +54,36 @@ function rahuKaalWindow(weekday: number, sunrise: number, sunset: number): [numb
   const part = partsByDay[weekday];
   const len = (sunset - sunrise) / 8;
   return [sunrise + (part - 1) * len, sunrise + part * len];
+}
+
+// ── Choghadiya ───────────────────────────────────────────────────────────────
+// Cycle of 7, repeated to fill 8 slots. Weekday start offsets (classical).
+const CHOGH_NAMES = ['Udveg', 'Char', 'Labh', 'Amrit', 'Kaal', 'Shubh', 'Rog'] as const;
+const CHOGH_QUALITY: Record<(typeof CHOGH_NAMES)[number], 'good' | 'medium' | 'bad'> = {
+  Amrit: 'good', Shubh: 'good', Labh: 'good', Char: 'medium', Udveg: 'bad', Kaal: 'bad', Rog: 'bad',
+};
+const CHOGH_DAY_START = [0, 3, 5, 2, 4, 1, 6]; // Sun..Sat → index into CHOGH_NAMES
+const CHOGH_NIGHT_START = [3, 1, 4, 0, 2, 5, 2]; // Sun..Sat
+
+function choghadiyaSlots(
+  startJD: number,
+  endJD: number,
+  weekday: number,
+  isNight: boolean,
+): Choghadiya[] {
+  const len = (endJD - startJD) / 8;
+  const startIdx = isNight ? CHOGH_NIGHT_START[weekday] : CHOGH_DAY_START[weekday];
+  const out: Choghadiya[] = [];
+  for (let i = 0; i < 8; i++) {
+    const name = CHOGH_NAMES[(startIdx + i) % 7];
+    out.push({
+      name,
+      quality: CHOGH_QUALITY[name],
+      startISO: utcFromJulday(startJD + i * len).toISOString(),
+      endISO: utcFromJulday(startJD + (i + 1) * len).toISOString(),
+    });
+  }
+  return out;
 }
 
 export function panchangFor(
@@ -84,6 +130,34 @@ export function panchangFor(
   const ss = riseTrans(jdMidnight, 'Su', false, lat, lng);
   const mr = riseTrans(jdMidnight, 'Mo', true, lat, lng);
   const ms = riseTrans(jdMidnight, 'Mo', false, lat, lng);
+
+  // Choghadiya + muhurtas (need sunrise/sunset + next sunrise for the night slots)
+  let choghadiya: { day: Choghadiya[]; night: Choghadiya[] } = { day: [], night: [] };
+  const muhurtas: MuhurtaWindow[] = [];
+  if (sr && ss) {
+    const nextSr = riseTrans(ss - 0.05, 'Su', true, lat, lng) ?? ss + 1;
+    choghadiya = {
+      day: choghadiyaSlots(sr, ss, weekday, false),
+      night: choghadiyaSlots(ss, nextSr, weekday, true),
+    };
+    // Abhijit muhurta: 8th of 15 day muhurtas (local noon ± ~24 min)
+    const dayLen = ss - sr;
+    const abhStart = sr + (dayLen / 15) * 7;
+    const abhEnd = sr + (dayLen / 15) * 8;
+    muhurtas.push({
+      name: 'Abhijit',
+      startISO: utcFromJulday(abhStart).toISOString(),
+      endISO: utcFromJulday(abhEnd).toISOString(),
+      note: 'auspicious',
+    });
+    // Brahma muhurta: 96→48 min before sunrise
+    muhurtas.push({
+      name: 'Brahma',
+      startISO: utcFromJulday(sr - 96 / 1440).toISOString(),
+      endISO: utcFromJulday(sr - 48 / 1440).toISOString(),
+      note: 'auspicious',
+    });
+  }
 
   // Rahu kaal from sunrise/sunset
   let rahuStartISO: string | null = null;
@@ -143,6 +217,8 @@ export function panchangFor(
     moonriseISO: mr ? utcFromJulday(mr).toISOString() : null,
     moonsetISO: ms ? utcFromJulday(ms).toISOString() : null,
     rahuKaal: { startISO: rahuStartISO, endISO: rahuEndISO },
+    choghadiya,
+    muhurtas,
     ayanamsa: ayanamsa(jd),
   };
 }

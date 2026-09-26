@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Icon, AcharyaAvatar, type IconName } from '../icons';
+import { Icon, AcharyaAvatar, MoonPhaseGlyph, type IconName } from '../icons';
 import { GlassCard, SectionHeader, GoldButton, ErrorState } from '../ui-primitives';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { api, useSession } from '../session-context';
@@ -20,16 +21,29 @@ interface CheckinState {
 }
 
 interface TodayPanchang {
-  tithi: { name: string; nameHi: string; paksha: string; percent: number };
+  tithi: { index: number; name: string; nameHi: string; paksha: string; percent: number };
   nakshatra: { name: string; nameHi: string; pada: number };
   sunriseISO: string | null;
   moonSign: { name: string; nameHi: string };
+}
+
+function phaseKeyOf(p: number): string {
+  const b = [
+    [0, 'phase.new'], [0.0625, 'phase.waxingCrescent'], [0.1875, 'phase.firstQuarter'],
+    [0.3125, 'phase.waxingGibbous'], [0.4375, 'phase.full'], [0.5625, 'phase.waningGibbous'],
+    [0.6875, 'phase.lastQuarter'], [0.8125, 'phase.waningCrescent'],
+  ] as [number, string][];
+  for (let i = b.length - 1; i >= 0; i--) {
+    if (p >= b[i][0]) return b[i][1];
+  }
+  return 'phase.new';
 }
 
 export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journal' | 'acharya' | 'profile', view?: string) => void }) {
   const { t, i18n } = useTranslation();
   const { chart, user } = useSession();
   const language = useAppStore((s) => s.language);
+  const reminderTime = useAppStore((s) => s.reminderTime);
   const locale = language === 'hi' ? 'hi-IN' : 'en-IN';
 
   const [checkin, setCheckin] = useState<CheckinState | null>(null);
@@ -41,6 +55,32 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
   const [saving, setSaving] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
   const [letterOpen, setLetterOpen] = useState(false);
+  const [audioState, setAudioState] = useState<'idle' | 'loading' | 'playing'>('idle');
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const toggleLetterAudio = async () => {
+    if (audioState === 'playing') {
+      audioRef.current?.pause();
+      setAudioState('idle');
+      return;
+    }
+    if (audioRef.current) {
+      void audioRef.current.play().catch(() => undefined);
+      setAudioState('playing');
+      return;
+    }
+    setAudioState('loading');
+    try {
+      const res = await api<{ audioDataUri: string }>('/api/reflection-audio', { method: 'POST' });
+      const audio = new Audio(res.audioDataUri);
+      audio.onended = () => setAudioState('idle');
+      audioRef.current = audio;
+      void audio.play().catch(() => setAudioState('idle'));
+      setAudioState('playing');
+    } catch {
+      setAudioState('idle');
+    }
+  };
 
   const greeting = (() => {
     const h = new Date().getHours();
@@ -142,17 +182,68 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
           <h1 className="font-serif text-t28 font-bold text-charcoal truncate">{displayName}</h1>
           <p className="text-t12 text-muted-foreground mt-0.5">{dateLine}</p>
         </div>
-        <button
-          type="button"
-          aria-label={t('home.headerBell')}
-          onClick={() => onNavigate('journal')}
-          className="relative w-11 h-11 rounded-full glass inline-flex items-center justify-center text-gold hover:scale-105 active:scale-95 transition-transform duration-250"
-        >
-          <Icon name="bell" size={20} />
-          {checkin && !checkin.checkedInToday && (
-            <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-maroon animate-pulse" />
-          )}
-        </button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              aria-label={t('home.headerBell')}
+              className="relative w-11 h-11 rounded-full glass inline-flex items-center justify-center text-gold hover:scale-105 active:scale-95 transition-transform duration-250"
+            >
+              <Icon name="bell" size={20} />
+              {((checkin && !checkin.checkedInToday) || checkin?.reflection) && (
+                <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-maroon animate-pulse" />
+              )}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="end" sideOffset={10} className="w-72 glass border-gold/30 p-0 overflow-hidden">
+            <div className="px-4 pt-3 pb-2 border-b border-gold/15 bg-gold-faint/60">
+              <p className="text-t12 font-bold uppercase tracking-wider text-gold">{t('notifications.title')}</p>
+            </div>
+            <div className="max-h-72 overflow-y-auto scroll-slim">
+              {checkin && !checkin.checkedInToday && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    document.body.click();
+                  }}
+                  className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-gold-soft/50 transition-colors duration-150 border-b border-gold/10"
+                >
+                  <span className="mt-0.5 text-maroon"><Icon name="check" size={15} /></span>
+                  <span>
+                    <span className="block text-t14 text-charcoal">{t('notifications.checkinDue')}</span>
+                    <span className="block text-t12 text-muted-foreground">{t('notifications.reminderSet', { time: reminderTime })}</span>
+                  </span>
+                </button>
+              )}
+              {checkin?.reflection && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLetterOpen(true);
+                    document.body.click();
+                  }}
+                  className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-gold-soft/50 transition-colors duration-150 border-b border-gold/10"
+                >
+                  <span className="mt-0.5 text-gold"><Icon name="journal" size={15} /></span>
+                  <span className="text-t14 text-charcoal">{t('notifications.reflectionReady')}</span>
+                </button>
+              )}
+              {checkin && checkin.streak >= 3 && (
+                <div className="px-4 py-3 flex items-start gap-3 border-b border-gold/10">
+                  <span className="mt-0.5 text-maroon"><Icon name="flame" size={15} /></span>
+                  <span className="text-t14 text-charcoal">{t('notifications.streak', { n: checkin.streak })}</span>
+                </div>
+              )}
+              {checkin?.checkedInToday && !checkin.reflection && (checkin?.streak ?? 0) < 3 && (
+                <div className="px-4 py-6 text-center">
+                  <p className="text-t12 text-muted-foreground">{t('notifications.none')}</p>
+                </div>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
       </header>
 
       {/* Hero: today's panchang + Acharya CTA */}
@@ -178,14 +269,20 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                 )}
               </div>
             ) : (
-              <div className="mt-2.5 space-y-2 animate-pulse">
-                <div className="h-4 w-44 rounded bg-gold/15" />
-                <div className="h-4 w-36 rounded bg-gold/15" />
+              <div className="mt-2.5 space-y-2">
+                <div className="h-4 w-44 rounded shimmer" />
+                <div className="h-4 w-36 rounded shimmer" />
               </div>
             )}
           </div>
-          <span className="shrink-0 text-gold/70 hidden sm:block">
-            <Icon name="sun" size={40} strokeWidth={1.2} />
+          <span className="shrink-0 hidden sm:flex flex-col items-center gap-1">
+            {panchang && (
+              <MoonPhaseGlyph phase={((panchang.tithi.index - 1) + panchang.tithi.percent / 100) / 30} size={38} />
+            )}
+            {panchang && (
+              <span className="text-t12 text-muted-foreground">{t(phaseKeyOf(((panchang.tithi.index - 1) + panchang.tithi.percent / 100) / 30))}</span>
+            )}
+            {!panchang && <Icon name="sun" size={40} strokeWidth={1.2} className="text-gold/70" />}
           </span>
         </div>
         <button
@@ -231,10 +328,10 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
           ) : checkinError ? (
             <ErrorState message={t('common.networkError')} onRetry={loadCheckin} />
           ) : !checkin ? (
-            <div className="space-y-3 animate-pulse py-2">
-              <div className="h-5 w-40 rounded bg-gold/15" />
-              <div className="h-9 rounded-xl bg-gold/10" />
-              <div className="h-9 rounded-xl bg-gold/10" />
+            <div className="space-y-3 py-2">
+              <div className="h-5 w-40 rounded shimmer" />
+              <div className="h-9 rounded-xl shimmer" />
+              <div className="h-9 rounded-xl shimmer" />
             </div>
           ) : (
             <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -8 }}>
@@ -288,13 +385,13 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
             <>
               <button type="button" onClick={() => setLetterOpen((v) => !v)} className="w-full text-left">
                 <div className="flex items-center justify-between gap-3">
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-t12 uppercase tracking-wider text-gold font-semibold">{t('home.weeklyReady')}</p>
-                    <p className="font-serif text-t20 mt-1 text-[#f0e4c3]">
+                    <p className="font-serif text-t20 mt-1 text-[#f0e4c3] truncate">
                       {checkin.reflection.reflectionText.split('\n')[0].slice(0, 80)}…
                     </p>
                   </div>
-                  <Icon name="chevron-down" size={20} className={cn('text-gold transition-transform duration-250', letterOpen && 'rotate-180')} />
+                  <Icon name="chevron-down" size={20} className={cn('text-gold transition-transform duration-250 shrink-0', letterOpen && 'rotate-180')} />
                 </div>
               </button>
               <AnimatePresence>
@@ -306,9 +403,18 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                     transition={{ duration: 0.3, ease: 'easeOut' }}
                     className="overflow-hidden"
                   >
-                    <p className="mt-4 whitespace-pre-wrap text-t14 leading-relaxed text-[#e8dcbf] prose-ink">
+                    <p className="mt-4 whitespace-pre-wrap text-t14 leading-relaxed text-[#e8dcbf] letter-body">
                       {checkin.reflection.reflectionText}
                     </p>
+                    <button
+                      type="button"
+                      onClick={toggleLetterAudio}
+                      className="mt-4 inline-flex items-center gap-2 rounded-full bg-gold/15 border border-gold/40 px-4 py-1.5 text-t12 font-medium text-gold-light hover:bg-gold/25 active:scale-95 transition-all duration-250"
+                    >
+                      <Icon name={audioState === 'playing' ? 'pause' : 'speaker'} size={14} />
+                      {audioState === 'loading' ? t('letter.loadingAudio') : audioState === 'playing' ? t('letter.stop') : t('letter.listen')}
+                      {audioState === 'loading' && <span className="w-2 h-2 rounded-full bg-gold animate-pulse" />}
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -349,8 +455,9 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
         </GlassCard>
       )}
 
-      {features.sections.map((section) => (
+      {features.sections.map((section, si) => (
         <section key={section.titleKey} aria-label={t(section.titleKey)}>
+          {si > 0 && <div className="ornament-divider my-6">✦</div>}
           <SectionHeader title={t(section.titleKey)} />
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {section.items.map((item) => (

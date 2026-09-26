@@ -49,7 +49,7 @@ interface DecisionResult {
   narrative: string;
 }
 
-export function JournalScreen({ initialDecisionOpen }: { initialDecisionOpen?: boolean }) {
+export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDecisionOpen?: boolean; onNavigate?: (tab: 'home' | 'kundli' | 'journal' | 'acharya' | 'profile', view?: string) => void }) {
   const { t } = useTranslation();
   const { chart } = useSession();
   const [data, setData] = useState<CheckinData | null>(null);
@@ -109,8 +109,8 @@ export function JournalScreen({ initialDecisionOpen }: { initialDecisionOpen?: b
         <GlassCard className="p-6">
           <EmptyState icon="journal" title={t('journal.empty')} body={t('journal.emptyBody')} />
           <div className="flex justify-center -mt-2">
-            <GoldButton onClick={() => setDecisionOpen(false) /* no-op keep state simple */}>
-              <Icon name="check" size={16} /> {t('home.checkinSubmit')}
+            <GoldButton onClick={() => onNavigate?.('home')}>
+              <Icon name="home" size={16} /> {t('journal.checkinCta')}
             </GoldButton>
           </div>
         </GlassCard>

@@ -120,7 +120,7 @@ function AppInner() {
     <AppShellInner activeTab={route.tab} onTabChange={(tab) => setRoute({ tab })} labelOf={labelOf}>
       {route.tab === 'home' && <HomeScreen onNavigate={navigate} />}
       {route.tab === 'kundli' && <KundliTab key={route.kundliView ?? 'chart'} initialView={route.kundliView} />}
-      {route.tab === 'journal' && <JournalScreen />}
+      {route.tab === 'journal' && <JournalScreen onNavigate={navigate} />}
       {route.tab === 'acharya' && <AcharyaScreen />}
       {route.tab === 'profile' && <ProfileScreen onChartUpdated={() => undefined} />}
       {/* user/chart loaded flag for potential future gating */}

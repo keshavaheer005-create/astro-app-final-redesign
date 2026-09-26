@@ -253,6 +253,70 @@
     mask-image: linear-gradient(180deg, transparent 4%, #000 32%, #000 68%, transparent 96%);
   }
 
+  /* ── Shimmer skeleton ──────────────────────────────────────────────── */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+    background: rgba(201, 162, 39, 0.1);
+    border-radius: 12px;
+  }
+  .shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+    animation: shimmer-sweep 1.4s ease-in-out infinite;
+  }
+  @keyframes shimmer-sweep {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  /* ── Ink card gold aura (top-right radial) ─────────────────────────── */
+  .glass-ink::after {
+    content: "";
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 190px;
+    height: 190px;
+    background: radial-gradient(circle, rgba(232, 197, 104, 0.14), transparent 65%);
+    pointer-events: none;
+  }
+
+  /* ── Drop cap for the weekly letter ────────────────────────────────── */
+  .letter-body::first-letter {
+    font-family: var(--font-playfair), Georgia, serif;
+    font-size: 2.6em;
+    line-height: 0.9;
+    float: left;
+    padding-right: 0.12em;
+    padding-top: 0.05em;
+    background: linear-gradient(135deg, #c9a227, #e8c568);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* ── Section ornament divider ──────────────────────────────────────── */
+  .ornament-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: rgba(201, 162, 39, 0.5);
+    font-size: 10px;
+    letter-spacing: 4px;
+  }
+  .ornament-divider::before,
+  .ornament-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201, 162, 39, 0.4), transparent);
+  }
+
   /* ── Long-form text stays on solid cream for readability ───────────── */
   .prose-cream {
     background: #faf7f0;
