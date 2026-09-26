@@ -166,5 +166,30 @@ export function compactChartContext(chart: ComputedChart): string {
   lines.push(`Mangal dosha: ${chart.mangalDosha.severity}; Sade sati: ${chart.sadeSati.active ? `active (${chart.sadeSati.phase})` : 'not active'}`);
   const sav = chart.ashtakavarga.sav;
   lines.push(`Sarvashtakavarga of key signs: ascendant ${sav[chart.ascendant.sign]}, moon ${sav[chart.moonSign.index]}, 10th house sign ${sav[(chart.ascendant.sign + 9) % 12]}`);
+  lines.push(transitStrengthLine(chart));
   return lines.join('\n');
+}
+
+/**
+ * Gochara quality from the natal Sarvashtakavarga: for the slowly moving
+ * grahas (Saturn, Jupiter, Rahu — plus the Sun as a fast reference), report
+ * the SAV bindus of the sign each planet CURRENTLY transits. Classical
+ * SAV gochara rule: a sign with 29+ bindus supports any planet's transit,
+ * 25-28 is average, below 25 strains the planet's significations.
+ */
+export function transitStrengthLine(chart: ComputedChart, when: Date = new Date()): string {
+  try {
+    const jd = juldayFromUTC(when);
+    const transit = calcAllPlanets(jd, true);
+    const sav = chart.ashtakavarga.sav;
+    const label = (b: number) => (b >= 29 ? 'supportive' : b >= 25 ? 'neutral' : 'demanding');
+    const parts = (['Sa', 'Ju', 'Ra', 'Su'] as PlanetKey[]).map((k) => {
+      const sign = Math.floor(transit[k].lon / 30) % 12;
+      const b = sav[sign];
+      return `${k} transits ${SIGNS[sign]}: ${b} bindus (${label(b)})`;
+    });
+    return `Transit strength (natal SAV at current transit sign): ${parts.join('; ')}.`;
+  } catch {
+    return '';
+  }
 }

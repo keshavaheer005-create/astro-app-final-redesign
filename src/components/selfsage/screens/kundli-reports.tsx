@@ -3,11 +3,11 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Icon } from '../icons';
-import { GlassCard, SectionHeader, EmptyState, Chip, ProgressBar } from '../ui-primitives';
+import { GlassCard, SectionHeader, EmptyState, Chip, ProgressBar, DignityChip } from '../ui-primitives';
 import { useSession } from '../session-context';
 import { PLANET_ORDER, SIGNS, SIGNS_HI, type PlanetKey } from '@/lib/astro/constants';
 import { VARGA_LIST, VARGA_INFO } from '@/lib/astro/varga';
-import { dignityOf, type Dignity } from '@/lib/astro/dignity';
+import { dignityOf } from '@/lib/astro/dignity';
 import { NorthChart } from './chart-diagram';
 import { cn } from '@/lib/utils';
 
@@ -29,27 +29,6 @@ function daysUntil(dateStr: string): number {
 
 function daysIn(start: string): number {
   return Math.max(0, Math.floor((Date.now() - new Date(`${start}T00:00:00Z`).getTime()) / DAY_MS));
-}
-
-/** Chip styling per classical dignity tier (gold = strong, maroon = strain). */
-const DIGNITY_STYLE: Record<Dignity, string> = {
-  exalted: 'bg-gold-grad border-gold/60 text-charcoal font-semibold',
-  own: 'bg-gold-soft border-gold/40 text-[#8a6d10] font-semibold',
-  friendly: 'bg-gold-faint/70 border-gold/25 text-charcoal/80',
-  neutral: 'bg-white/50 border-charcoal/10 text-charcoal/60',
-  enemy: 'bg-[#6B2737]/8 border-[#6B2737]/25 text-[#6B2737]',
-  debilitated: 'bg-[#6B2737]/12 border-[#6B2737]/35 text-[#6B2737] font-semibold',
-};
-
-function DignityChip({ dignity }: { dignity: Dignity }) {
-  const { t } = useTranslation();
-  return (
-    <span
-      className={cn('inline-flex items-center rounded-full border px-2 py-0.5 text-t12 whitespace-nowrap', DIGNITY_STYLE[dignity])}
-    >
-      {t(`reports.dignity.${dignity}`)}
-    </span>
-  );
 }
 
 /** Dasha-window progress: thin gold bar with a styled hover tooltip. */

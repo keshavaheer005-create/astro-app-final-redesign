@@ -452,5 +452,15 @@
   "home.prompt.Ve": "What beautiful or loving moment crossed my path today?",
   "home.prompt.Sa": "What tested my patience or discipline today?",
   "home.prompt.Ra": "What new craving or ambition pulled at me today?",
-  "home.prompt.Ke": "What did I let go of — or want to — today?"
+  "home.prompt.Ke": "What did I let go of — or want to — today?",
+  "home.promptLabelAntar": "In your {{maha}}–{{antar}} period, what did you notice?",
+  "home.prompt2.Su": "Where did I step up and lead today?",
+  "home.prompt2.Mo": "How did I truly feel in my own skin today?",
+  "home.prompt2.Ma": "What did I push through — or push too hard on?",
+  "home.prompt2.Me": "What worth remembering did I learn or note today?",
+  "home.prompt2.Ju": "What expanded my horizons a little today?",
+  "home.prompt2.Ve": "What small beauty or kindness did I savour today?",
+  "home.prompt2.Sa": "What steady duty did I honour today?",
+  "home.prompt2.Ra": "What pulled me into unusual or restless territory today?",
+  "home.prompt2.Ke": "What felt empty, complete, or worth letting go today?"
 }

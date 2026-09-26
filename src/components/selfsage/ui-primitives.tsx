@@ -1,8 +1,34 @@
 'use client';
 
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Icon, LogoMark, type IconName } from './icons';
 import { cn } from '@/lib/utils';
+import type { Dignity } from '@/lib/astro/dignity';
+
+/* ── Dignity chips (shared by D1 planets table & D9 varga table) ─────────── */
+
+/** Chip styling per classical dignity tier (gold = strong, maroon = strain). */
+const DIGNITY_STYLE: Record<Dignity, string> = {
+  exalted: 'bg-gold-grad border-gold/60 text-charcoal font-semibold',
+  own: 'bg-gold-soft border-gold/40 text-[#8a6d10] font-semibold',
+  friendly: 'bg-gold-faint/70 border-gold/25 text-charcoal/80',
+  neutral: 'bg-white/50 border-charcoal/10 text-charcoal/60',
+  enemy: 'bg-[#6B2737]/8 border-[#6B2737]/25 text-[#6B2737]',
+  debilitated: 'bg-[#6B2737]/12 border-[#6B2737]/35 text-[#6B2737] font-semibold',
+};
+
+export function DignityChip({ dignity, className }: { dignity: Dignity; className?: string }) {
+  const { t } = useTranslation();
+  return (
+    <span
+      title={t('reports.dignityHint')}
+      className={cn('inline-flex items-center rounded-full border px-2 py-0.5 text-t12 whitespace-nowrap align-middle', DIGNITY_STYLE[dignity], className)}
+    >
+      {t(`reports.dignity.${dignity}`)}
+    </span>
+  );
+}
 
 /* ── Cards ──────────────────────────────────────────────────────────────── */
 

@@ -145,6 +145,35 @@ const SKY_ICON: Record<SkyItem['kind'], IconName> = {
   festival: 'om',
 };
 
+/** localStorage key holding ids of sky notifications the user has opened. */
+const SKY_SEEN_KEY = 'ss-sky-seen-v1';
+
+function readSkySeen(): Set<string> {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const raw = window.localStorage.getItem(SKY_SEEN_KEY);
+    const arr = raw ? (JSON.parse(raw) as string[]) : [];
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function persistSkySeen(ids: Set<string>) {
+  try {
+    // keep the newest 60 entries only
+    const arr = [...ids].slice(-60);
+    window.localStorage.setItem(SKY_SEEN_KEY, JSON.stringify(arr));
+  } catch {
+    /* private mode — unread state simply won't persist */
+  }
+}
+
+/** Stable unread id for a sky notification (date + kind + en name). */
+function skyNotifId(item: SkyItem): string {
+  return `${item.date}|${item.kind}|${item.name.en}`;
+}
+
 export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journal' | 'acharya' | 'profile', view?: string) => void }) {
   const { t, i18n } = useTranslation();
   const { chart, user } = useSession();
@@ -168,6 +197,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
   const [reminderAlert, setReminderAlert] = useState(false);
   const [letterAlert, setLetterAlert] = useState(false); // a new letter just landed
   const [sky, setSky] = useState<SkyItem[] | null>(null);
+  const [skySeen, setSkySeen] = useState<Set<string>>(() => readSkySeen());
   const [flashCheckin, setFlashCheckin] = useState(false);
   const [flashLetter, setFlashLetter] = useState(false);
   const pendingFocus = useAppStore((s) => s.pendingFocus);
@@ -242,6 +272,21 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
       setAudioState('idle');
     }
   };
+
+  // Sky-ahead bell notifications: events within the next 14 days (one paksha)
+  // become bell items. Unread state persists in localStorage (per event id),
+  // so the dot survives reloads until the user opens each one.
+  const skyNotifs = (sky ?? []).filter((s) => s.daysUntil >= 0 && s.daysUntil <= 14);
+  const skyUnreadCount = skyNotifs.filter((s) => !skySeen.has(skyNotifId(s))).length;
+  const markSkySeen = useCallback((id: string) => {
+    setSkySeen((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      persistSkySeen(next);
+      return next;
+    });
+  }, []);
 
   const greeting = (() => {
     const h = new Date().getHours();
@@ -454,7 +499,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
               )}
             >
               <Icon name="bell" size={20} />
-              {((checkin && !checkin.checkedInToday) || letterAlert || reminderAlert) && (
+              {((checkin && !checkin.checkedInToday) || letterAlert || reminderAlert || skyUnreadCount > 0) && (
                 <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-maroon animate-pulse" />
               )}
             </button>
@@ -528,13 +573,49 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                   </span>
                 </button>
               )}
+              {skyNotifs.map((item, i) => {
+                const id = skyNotifId(item);
+                const unread = !skySeen.has(id);
+                const whenLabel =
+                  item.daysUntil === 0 ? t('home.today') : item.daysUntil === 1 ? t('home.tomorrow') : t('home.inDays', { n: item.daysUntil });
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      document.body.click();
+                      markSkySeen(id);
+                      useAppStore.getState().pushPendingFocus(`panchang:${item.date}`);
+                      onNavigate('kundli', 'panchang');
+                    }}
+                    className={cn(
+                      'w-full text-left px-4 py-3 flex items-start gap-3 transition-colors duration-150 border-b border-gold/10 animate-in fade-in-0 slide-in-from-bottom-1 duration-300',
+                      unread ? 'bg-gold-faint/60 hover:bg-gold-faint' : 'hover:bg-gold-soft/50',
+                    )}
+                    style={{ animationDelay: `${150 + Math.min(i, 6) * 50}ms`, animationFillMode: 'backwards' }}
+                  >
+                    <span className={cn('mt-0.5 shrink-0', unread ? 'text-gold' : 'text-gold/70')}><Icon name={SKY_ICON[item.kind]} size={15} /></span>
+                    <span className="min-w-0">
+                      <span className={cn('block text-t14 truncate', unread ? 'font-semibold text-charcoal' : 'text-charcoal/85')}>
+                        {language === 'hi' ? item.name.hi : item.name.en}
+                      </span>
+                      <span className="block text-t12 text-muted-foreground">
+                        {new Date(`${item.date}T12:00:00Z`).toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' })}
+                        <span className="text-gold"> · {whenLabel}</span>
+                      </span>
+                    </span>
+                    {unread && <span className="ml-auto shrink-0 mt-0.5 w-2 h-2 rounded-full bg-gold animate-pulse" aria-hidden />}
+                  </button>
+                );
+              })}
               {checkin && checkin.streak >= 3 && (
                 <div className="px-4 py-3 flex items-start gap-3 border-b border-gold/10 animate-in fade-in-0 slide-in-from-bottom-1 duration-300" style={{ animationDelay: '150ms', animationFillMode: 'backwards' }}>
                   <span className="mt-0.5 text-maroon"><Icon name="flame" size={15} /></span>
                   <span className="text-t14 text-charcoal">{t('notifications.streak', { n: checkin.streak })}</span>
                 </div>
               )}
-              {checkin?.checkedInToday && !checkin.reflection && (checkin?.streak ?? 0) < 3 && (
+              {checkin?.checkedInToday && !checkin.reflection && (checkin?.streak ?? 0) < 3 && skyNotifs.length === 0 && (
                 <div className="px-4 py-6 text-center">
                   <p className="text-t12 text-muted-foreground">{t('notifications.none')}</p>
                 </div>
@@ -770,31 +851,44 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                   className="resize-none rounded-xl border-gold/25 bg-white/70 text-t14 focus-visible:ring-gold/30 max-h-24"
                   maxLength={280}
                 />
-                {/* Dasha-grounded note prompts — one per maha lord, tap to insert */}
-                {dashaNow?.mahaLord && !note && (
-                  <div className="rounded-xl bg-gold-faint/40 border border-gold/20 px-3 py-2.5">
-                    <p className="text-t12 text-muted-foreground flex items-center gap-1.5">
-                      <Icon name="sparkle" size={12} className="text-gold" />
-                      {t('home.promptLabel', { maha: t(`planet.${dashaNow.mahaLord}`) })}
-                    </p>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {(PROMPT_LORDS[dashaNow.mahaLord] ?? ['Su', 'Mo', 'Ju']).map((lord) => (
-                        <button
-                          key={lord}
-                          type="button"
-                          onClick={() => {
-                            setNote(t(`home.prompt.${lord}`));
-                            document.getElementById('checkin-note')?.focus();
-                          }}
-                          className="inline-flex items-center gap-1 rounded-full bg-white/70 border border-gold/30 px-2.5 py-1 text-t12 text-charcoal/80 hover:border-gold/60 hover:bg-gold-faint active:scale-95 transition-all duration-250"
-                        >
-                          <span className="text-gold font-semibold">{t(`planet.${lord}`)}</span>
-                          <span className="max-w-52 truncate">{t(`home.prompt.${lord}`)}</span>
-                        </button>
-                      ))}
+                {/* Dasha-grounded note prompts — antardasha-aware, tap to insert */}
+                {dashaNow?.mahaLord && !note && (() => {
+                  const maha = dashaNow.mahaLord;
+                  const antar = dashaNow.antarLord ?? null;
+                  // With an antardasha: lead with its lord (most specific), then the
+                  // maha lord, then one Navagraha neighbour that isn't already shown.
+                  const lords = antar
+                    ? [antar, maha, (PROMPT_LORDS[antar] ?? ['Su', 'Mo', 'Ju']).find((l) => l !== antar && l !== maha) ?? 'Mo']
+                        .filter((v, i, a) => a.indexOf(v) === i).slice(0, 3)
+                    : PROMPT_LORDS[maha] ?? ['Su', 'Mo', 'Ju'];
+                  const promptOf = (lord: string) => (lord === antar ? t(`home.prompt2.${lord}`) : t(`home.prompt.${lord}`));
+                  return (
+                    <div className="rounded-xl bg-gold-faint/40 border border-gold/20 px-3 py-2.5">
+                      <p className="text-t12 text-muted-foreground flex items-center gap-1.5">
+                        <Icon name="sparkle" size={12} className="text-gold" />
+                        {antar
+                          ? t('home.promptLabelAntar', { maha: t(`planet.${maha}`), antar: t(`planet.${antar}`) })
+                          : t('home.promptLabel', { maha: t(`planet.${maha}`) })}
+                      </p>
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {lords.map((lord) => (
+                          <button
+                            key={lord}
+                            type="button"
+                            onClick={() => {
+                              setNote(promptOf(lord));
+                              document.getElementById('checkin-note')?.focus();
+                            }}
+                            className="inline-flex items-center gap-1 rounded-full bg-white/70 border border-gold/30 px-2.5 py-1 text-t12 text-charcoal/80 hover:border-gold/60 hover:bg-gold-faint active:scale-95 transition-all duration-250"
+                          >
+                            <span className="text-gold font-semibold">{t(`planet.${lord}`)}</span>
+                            <span className="max-w-52 truncate">{promptOf(lord)}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
                 {mood <= 2 && <p className="text-t12 text-maroon/80 italic">{t('home.checkinLow')}</p>}
                 <GoldButton onClick={submitCheckin} disabled={saving} className="w-full">
                   {saving ? t('common.loading') : justSaved ? t('common.saved') : t('home.checkinSubmit')}

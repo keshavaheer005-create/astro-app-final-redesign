@@ -3,10 +3,11 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Icon } from '../icons';
-import { GlassCard, Segmented, SectionHeader, EmptyState } from '../ui-primitives';
+import { GlassCard, Segmented, SectionHeader, EmptyState, DignityChip } from '../ui-primitives';
 import { NorthChart, SouthChart } from './chart-diagram';
 import { useSession } from '../session-context';
 import { PLANET_ORDER, SIGNS, SIGNS_HI } from '@/lib/astro/constants';
+import { dignityOf } from '@/lib/astro/dignity';
 import { useAppStore } from '@/store/app';
 import { cn } from '@/lib/utils';
 
@@ -144,7 +145,13 @@ export function KundliChartScreen() {
                       {p.retrograde && <span className="text-t12 text-maroon font-bold">℞</span>}
                     </span>
                   </td>
-                  <td className="py-2.5 text-charcoal/85">{hi ? SIGNS_HI[p.sign] : p.signName} <span className="text-muted-foreground text-t12">({p.house})</span></td>
+                  <td className="py-2.5 text-charcoal/85">
+                    <span className="inline-flex items-center gap-1.5 flex-wrap">
+                      {hi ? SIGNS_HI[p.sign] : p.signName}
+                      {dignityOf(p.key, p.sign) && <DignityChip dignity={dignityOf(p.key, p.sign)!} />}
+                      <span className="text-muted-foreground text-t12">({p.house})</span>
+                    </span>
+                  </td>
                   <td className="py-2.5 text-muted-foreground">{p.degInSign.toFixed(2)}°</td>
                   <td className="py-2.5 text-charcoal/85">{p.nakshatraName} <span className="text-t12 text-muted-foreground">·{p.pada}</span></td>
                   <td className="py-2.5"><span className="inline-flex w-7 h-7 items-center justify-center rounded-full bg-gold-soft text-t12 font-bold text-[#8a6d10]">{p.house}</span></td>
