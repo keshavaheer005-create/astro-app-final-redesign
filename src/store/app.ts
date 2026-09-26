@@ -14,15 +14,17 @@ interface AppState {
   weeklyReflectionEnabled: boolean;
   /** One-shot composer draft handed to the Acharya screen (e.g. "discuss this journal note"). */
   acharyaDraft: string | null;
-  /** One-shot focus target handed to Home (e.g. 'checkin' from the reminder toast). */
+  /** Journal date the draft refers to (threads the Acharya reply back to the entry). */
+  acharyaDraftDate: string | null;
+  /** One-shot focus target handed to Home/Journal (e.g. 'checkin', 'letter', 'journal:<date>'). */
   pendingFocus: string | null;
   setLanguage: (l: Language) => void;
   setReduceMotion: (v: boolean) => void;
   setHighContrast: (v: boolean) => void;
   setReminder: (enabled: boolean, time: string) => void;
   setWeeklyReflection: (v: boolean) => void;
-  pushAcharyaDraft: (text: string) => void;
-  consumeAcharyaDraft: () => string | null;
+  pushAcharyaDraft: (text: string, journalDate?: string) => void;
+  consumeAcharyaDraft: () => { text: string; journalDate: string | null } | null;
   pushPendingFocus: (target: string) => void;
   consumePendingFocus: () => string | null;
 }
@@ -37,17 +39,19 @@ export const useAppStore = create<AppState>()(
       reminderTime: '20:00',
       weeklyReflectionEnabled: true,
       acharyaDraft: null as string | null,
+      acharyaDraftDate: null as string | null,
       pendingFocus: null as string | null,
       setLanguage: (language) => set({ language }),
       setReduceMotion: (reduceMotion) => set({ reduceMotion }),
       setHighContrast: (highContrast) => set({ highContrast }),
       setReminder: (reminderEnabled, reminderTime) => set({ reminderEnabled, reminderTime }),
       setWeeklyReflection: (weeklyReflectionEnabled) => set({ weeklyReflectionEnabled }),
-      pushAcharyaDraft: (acharyaDraft) => set({ acharyaDraft }),
+      pushAcharyaDraft: (acharyaDraft, journalDate) => set({ acharyaDraft, acharyaDraftDate: journalDate ?? null }),
       consumeAcharyaDraft: () => {
         const draft = get().acharyaDraft;
-        if (draft) set({ acharyaDraft: null });
-        return draft;
+        const journalDate = get().acharyaDraftDate;
+        if (draft) set({ acharyaDraft: null, acharyaDraftDate: null });
+        return draft ? { text: draft, journalDate } : null;
       },
       pushPendingFocus: (pendingFocus) => set({ pendingFocus }),
       consumePendingFocus: () => {
@@ -65,7 +69,7 @@ export const useAppStore = create<AppState>()(
         reminderEnabled: s.reminderEnabled,
         reminderTime: s.reminderTime,
         weeklyReflectionEnabled: s.weeklyReflectionEnabled,
-        // acharyaDraft + pendingFocus intentionally NOT persisted — one-shot handoffs
+        // acharyaDraft(+Date) + pendingFocus intentionally NOT persisted — one-shot handoffs
       }),
     },
   ),

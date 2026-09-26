@@ -420,5 +420,22 @@
   "letter.printSignature": "— Acharya Abhishek Sharma",
   "dasha.tipNow": "{{d}} days in · {{left}} days remaining",
   "dasha.beginsIn": "Begins in {{n}} days",
-  "dasha.pct": "{{pct}}% complete"
+  "dasha.pct": "{{pct}}% complete",
+  "notifications.letterToastTitle": "A letter from Acharya",
+  "notifications.letterToastBody": "Your weekly reflection is ready — woven from this week's check-ins.",
+  "notifications.letterToastAction": "Read the letter",
+  "notifications.reflectionNew": "Acharya wrote to you",
+  "notifications.reflectionNewBody": "Fresh from this week's entries — tap to read.",
+  "notifications.reflectionNewShort": "NEW",
+  "acharya.viewJournal": "View journal entry",
+  "home.promptLabel": "Need words? A prompt from your {{maha}} period:",
+  "home.prompt.Su": "Where did leadership, praise or vitality show up today?",
+  "home.prompt.Mo": "How did home, rest and feelings feel today?",
+  "home.prompt.Ma": "What demanded courage — or drained my spark — today?",
+  "home.prompt.Me": "What did I read, write, say or trade today?",
+  "home.prompt.Ju": "Where did I learn, teach or grow a little today?",
+  "home.prompt.Ve": "What beautiful or loving moment crossed my path today?",
+  "home.prompt.Sa": "What tested my patience or discipline today?",
+  "home.prompt.Ra": "What new craving or ambition pulled at me today?",
+  "home.prompt.Ke": "What did I let go of — or want to — today?"
 }

@@ -8,6 +8,8 @@ import { GlassCard, SectionHeader, GoldButton, ErrorState } from '../ui-primitiv
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
 import { api, useSession } from '../session-context';
 import { useAppStore } from '@/store/app';
 import { cn, choghName } from '@/lib/utils';
@@ -130,6 +132,7 @@ function LiveNowStrip({ choghadiya, rahuKaal, tz, locale }: {
 export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journal' | 'acharya' | 'profile', view?: string) => void }) {
   const { t, i18n } = useTranslation();
   const { chart, user } = useSession();
+  const { toast } = useToast();
   const language = useAppStore((s) => s.language);
   const reminderTime = useAppStore((s) => s.reminderTime);
   const locale = language === 'hi' ? 'hi-IN' : 'en-IN';
@@ -147,7 +150,9 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
   const [audioState, setAudioState] = useState<'idle' | 'loading' | 'playing'>('idle');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [reminderAlert, setReminderAlert] = useState(false);
+  const [letterAlert, setLetterAlert] = useState(false); // a new letter just landed
   const [flashCheckin, setFlashCheckin] = useState(false);
+  const [flashLetter, setFlashLetter] = useState(false);
   const pendingFocus = useAppStore((s) => s.pendingFocus);
 
   // Scroll to the check-in card and pulse it (used by the bell item and the
@@ -158,14 +163,27 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
     window.setTimeout(() => setFlashCheckin(false), 1800);
   }, []);
 
+  // Scroll to the weekly letter, open it and pulse it ("Read the letter"
+  // toast action / bell item). Clears the "new letter" bell dot.
+  const focusLetter = React.useCallback(() => {
+    document.getElementById('weekly-letter')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setLetterOpen(true);
+    setLetterAlert(false);
+    setFlashLetter(true);
+    window.setTimeout(() => setFlashLetter(false), 1800);
+  }, []);
+
   // One-shot focus handoff from the reminder toast (works even if Home was
   // not mounted when the toast action fired).
   useEffect(() => {
     if (pendingFocus === 'checkin') {
       useAppStore.getState().consumePendingFocus();
       focusCheckin();
+    } else if (pendingFocus === 'letter') {
+      useAppStore.getState().consumePendingFocus();
+      focusLetter();
     }
-  }, [pendingFocus, focusCheckin]);
+  }, [pendingFocus, focusCheckin, focusLetter]);
 
   // Reminder scheduler handshake → bell dot + wiggle
   useEffect(() => {
@@ -176,6 +194,10 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
   useEffect(() => {
     if (checkin?.checkedInToday) setReminderAlert(false);
   }, [checkin?.checkedInToday]);
+  // Reading the letter by any route clears the "new letter" bell dot
+  useEffect(() => {
+    if (letterOpen && letterAlert) setLetterAlert(false);
+  }, [letterOpen, letterAlert]);
 
   const toggleLetterAudio = async () => {
     if (audioState === 'playing') {
@@ -239,10 +261,16 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
   // Lazy weekly-letter warm-up: when this week has ≥3 check-ins but no letter
   // in the ACTIVE language yet, ask the API to generate one, then reload.
   // (The generation route is a lazy scheduled job — it must be requested.)
+  // When a NEW letter actually lands, celebrate it once: bell dot + a toast
+  // with a "Read the letter" action (in-app notification, no push needed).
   const letterTriedRef = useRef<Set<string>>(new Set());
+  const hadLetterRef = useRef(false);
   useEffect(() => {
     if (!checkin || checkin.weekEntryCount < 3) return;
-    if (checkin.reflection && checkin.reflection.language === language) return;
+    if (checkin.reflection && checkin.reflection.language === language) {
+      hadLetterRef.current = true; // letter existed before this mount — no celebration
+      return;
+    }
     const key = `${language}|${checkin.reflection?.weekStartDate ?? 'none'}`;
     if (letterTriedRef.current.has(key)) return; // one attempt per language per mount
     letterTriedRef.current.add(key);
@@ -250,7 +278,29 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
     const run = async () => {
       try {
         await api(`/api/weekly-reflection?lang=${language}`);
-        if (!cancelled) void loadCheckin();
+        if (!cancelled) {
+          void loadCheckin();
+          if (!hadLetterRef.current) {
+            hadLetterRef.current = true; // fire exactly once per mount
+            setLetterAlert(true);
+            toast({
+              title: t('notifications.letterToastTitle'),
+              description: t('notifications.letterToastBody'),
+              duration: 12000,
+              action: (
+                <ToastAction
+                  altText={t('notifications.letterToastAction')}
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent('ss:navigate', { detail: { tab: 'home' } }));
+                    useAppStore.getState().pushPendingFocus('letter');
+                  }}
+                >
+                  {t('notifications.letterToastAction')}
+                </ToastAction>
+              ),
+            });
+          }
+        }
       } catch {
         /* letter simply stays absent until next visit */
       }
@@ -259,7 +309,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
     return () => {
       cancelled = true;
     };
-  }, [checkin, language, loadCheckin]);
+  }, [checkin, language, loadCheckin, toast, t]);
 
   useEffect(() => {
     if (!chart) return;
@@ -367,7 +417,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
               )}
             >
               <Icon name="bell" size={20} />
-              {((checkin && !checkin.checkedInToday) || checkin?.reflection || reminderAlert) && (
+              {((checkin && !checkin.checkedInToday) || letterAlert || reminderAlert) && (
                 <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-maroon animate-pulse" />
               )}
             </button>
@@ -400,14 +450,23 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setLetterOpen(true);
                     document.body.click();
+                    focusLetter();
                   }}
-                  className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-gold-soft/50 transition-colors duration-150 border-b border-gold/10 animate-in fade-in-0 slide-in-from-bottom-1 duration-300"
+                  className={cn(
+                    'w-full text-left px-4 py-3 flex items-start gap-3 transition-colors duration-150 border-b border-gold/10 animate-in fade-in-0 slide-in-from-bottom-1 duration-300',
+                    letterAlert ? 'bg-gold-soft/70 hover:bg-gold-soft' : 'hover:bg-gold-soft/50',
+                  )}
                   style={{ animationDelay: '50ms', animationFillMode: 'backwards' }}
                 >
-                  <span className="mt-0.5 text-gold"><Icon name="journal" size={15} /></span>
-                  <span className="text-t14 text-charcoal">{t('notifications.reflectionReady')}</span>
+                  <span className={cn('mt-0.5', letterAlert ? 'text-gold' : 'text-gold/80')}><Icon name="journal" size={15} /></span>
+                  <span className="min-w-0">
+                    <span className={cn('block text-t14', letterAlert ? 'font-semibold text-charcoal' : 'text-charcoal')}>
+                      {t(letterAlert ? 'notifications.reflectionNew' : 'notifications.reflectionReady')}
+                    </span>
+                    {letterAlert && <span className="block text-t12 text-muted-foreground">{t('notifications.reflectionNewBody')}</span>}
+                  </span>
+                  {letterAlert && <span className="ml-auto shrink-0 mt-0.5 w-2 h-2 rounded-full bg-gold animate-pulse" aria-hidden />}
                 </button>
               )}
               {dashaNow?.next.lord && dashaNow.next.daysLeft <= 7 && dashaNow.next.daysLeft >= 0 && (
@@ -618,6 +677,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                   highLabel={language === 'hi' ? 'जोश' : 'Charged'}
                 />
                 <Textarea
+                  id="checkin-note"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder={t('home.notePlaceholder')}
@@ -625,6 +685,31 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                   className="resize-none rounded-xl border-gold/25 bg-white/70 text-t14 focus-visible:ring-gold/30 max-h-24"
                   maxLength={280}
                 />
+                {/* Dasha-grounded note prompts — one per maha lord, tap to insert */}
+                {dashaNow?.mahaLord && !note && (
+                  <div className="rounded-xl bg-gold-faint/40 border border-gold/20 px-3 py-2.5">
+                    <p className="text-t12 text-muted-foreground flex items-center gap-1.5">
+                      <Icon name="sparkle" size={12} className="text-gold" />
+                      {t('home.promptLabel', { maha: t(`planet.${dashaNow.mahaLord}`) })}
+                    </p>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {(PROMPT_LORDS[dashaNow.mahaLord] ?? ['Su', 'Mo', 'Ju']).map((lord) => (
+                        <button
+                          key={lord}
+                          type="button"
+                          onClick={() => {
+                            setNote(t(`home.prompt.${lord}`));
+                            document.getElementById('checkin-note')?.focus();
+                          }}
+                          className="inline-flex items-center gap-1 rounded-full bg-white/70 border border-gold/30 px-2.5 py-1 text-t12 text-charcoal/80 hover:border-gold/60 hover:bg-gold-faint active:scale-95 transition-all duration-250"
+                        >
+                          <span className="text-gold font-semibold">{t(`planet.${lord}`)}</span>
+                          <span className="max-w-52 truncate">{t(`home.prompt.${lord}`)}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {mood <= 2 && <p className="text-t12 text-maroon/80 italic">{t('home.checkinLow')}</p>}
                 <GoldButton onClick={submitCheckin} disabled={saving} className="w-full">
                   {saving ? t('common.loading') : justSaved ? t('common.saved') : t('home.checkinSubmit')}
@@ -639,13 +724,21 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
       {/* Weekly reflection letter (ink card) */}
       <div>
         <SectionHeader title={t('home.weeklyTitle')} icon="journal" />
-        <GlassCard ink className="sheen-sweep p-5 sm:p-6">
+        <GlassCard id="weekly-letter" ink className={cn('sheen-sweep p-5 sm:p-6', flashLetter && 'focus-flash')}>
           {checkin?.reflection ? (
             <>
               <button type="button" onClick={() => setLetterOpen((v) => !v)} className="w-full text-left">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-t12 uppercase tracking-wider text-gold font-semibold">{t('home.weeklyReady')}</p>
+                    <p className="text-t12 uppercase tracking-wider text-gold font-semibold flex items-center gap-1.5">
+                      {t('home.weeklyReady')}
+                      {letterAlert && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-gold/20 border border-gold/40 px-1.5 py-0.5 text-[9px] font-bold tracking-normal text-gold-light animate-pulse">
+                          <span className="w-1 h-1 rounded-full bg-gold-light" />
+                          {t('notifications.reflectionNewShort')}
+                        </span>
+                      )}
+                    </p>
                     <p className="font-serif text-t20 mt-1 text-[#f0e4c3] truncate">
                       {checkin.reflection.reflectionText.split('\n')[0].slice(0, 80)}…
                     </p>
@@ -771,6 +864,23 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
     </div>
   );
 }
+
+/**
+ * Journal note prompts per maha-dasha lord (localized via `home.prompt.<lord>`).
+ * Three prompts are offered at a time — the current lord first, then two
+ * neighbours in the classic Navagraha order — so the suggestion row stays small.
+ */
+const PROMPT_LORDS: Record<string, string[]> = {
+  Su: ['Su', 'Mo', 'Ma'],
+  Mo: ['Mo', 'Ma', 'Me'],
+  Ma: ['Ma', 'Me', 'Ju'],
+  Me: ['Me', 'Ju', 'Ve'],
+  Ju: ['Ju', 'Ve', 'Sa'],
+  Ve: ['Ve', 'Sa', 'Ra'],
+  Sa: ['Sa', 'Ra', 'Ke'],
+  Ra: ['Ra', 'Ke', 'Su'],
+  Ke: ['Ke', 'Su', 'Mo'],
+};
 
 function MoodSlider({
   label,

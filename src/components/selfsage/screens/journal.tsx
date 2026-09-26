@@ -84,7 +84,8 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
     [language, microLoading],
   );
 
-  /** Hand the day's entry + Acharya note to the Acharya chat as a pre-filled question. */
+  /** Hand the day's entry + Acharya note to the Acharya chat as a pre-filled question.
+   *  The entry's date rides along so the Acharya reply can link back here. */
   const discussNote = useCallback(
     (e: Entry, note: string) => {
       const draft = t('journal.discussDraft', {
@@ -94,7 +95,7 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
         note: e.note ?? '—',
         acharyaNote: note,
       });
-      pushAcharyaDraft(draft);
+      pushAcharyaDraft(draft, e.date);
       onNavigate?.('acharya');
     },
     [onNavigate, pushAcharyaDraft, t],
@@ -128,6 +129,23 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
   useEffect(() => {
     void load();
   }, [load]);
+
+  // One-shot focus handoff: pendingFocus 'journal:<date>' (from the Acharya
+  // reply's "View journal entry" pill) scrolls to that entry and pulses it.
+  const [flashDate, setFlashDate] = useState<string | null>(null);
+  useEffect(() => {
+    if (!data) return;
+    const pf = useAppStore.getState().pendingFocus;
+    if (!pf || !pf.startsWith('journal:')) return;
+    useAppStore.getState().consumePendingFocus();
+    const date = pf.slice('journal:'.length);
+    const timer = window.setTimeout(() => {
+      document.getElementById(`entry-${date}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setFlashDate(date);
+      window.setTimeout(() => setFlashDate(null), 1800);
+    }, 350); // let the history list finish mounting
+    return () => window.clearTimeout(timer);
+  }, [data]);
 
   return (
     <div className="space-y-5">
@@ -250,7 +268,14 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
               {data.entries.map((e) => {
                 const note = microNotes[e.id] ?? e.microNote ?? null;
                 return (
-                  <div key={e.id} className="rounded-xl bg-white/50 border border-gold/15 px-3.5 py-3 transition-colors duration-250 hover:border-gold/35">
+                  <div
+                    key={e.id}
+                    id={`entry-${e.date}`}
+                    className={cn(
+                      'rounded-xl bg-white/50 border border-gold/15 px-3.5 py-3 transition-colors duration-250 hover:border-gold/35',
+                      flashDate === e.date && 'focus-flash',
+                    )}
+                  >
                     <div className="flex items-start gap-3">
                       <MoodDot value={e.moodScore} />
                       <div className="flex-1 min-w-0">

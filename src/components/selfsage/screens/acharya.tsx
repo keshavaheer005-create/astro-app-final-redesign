@@ -14,12 +14,14 @@ interface Msg {
   role: 'user' | 'assistant';
   content: string;
   streaming?: boolean;
+  /** Journal entry date this exchange refers to ("discuss this note" thread). */
+  journalRef?: string;
 }
 
 const SUGGESTION_KEYS = ['acharya.suggested1', 'acharya.suggested2', 'acharya.suggested3', 'acharya.suggested4'];
 
 export function AcharyaScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { chart } = useSession();
   const language = useAppStore((s) => s.language);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -95,11 +97,15 @@ export function AcharyaScreen() {
 
   // One-shot handoff: a draft pushed by another screen (e.g. "discuss this
   // journal note" on the Journal tab) lands in the composer and gets focus.
+  // The draft's journal date is kept so the NEXT exchange is threaded — the
+  // Acharya reply then offers a "View journal entry" jump back to Journal.
   const inputRef = useRef<HTMLInputElement>(null);
+  const journalRefDate = useRef<string | null>(null);
   useEffect(() => {
     const draft = useAppStore.getState().consumeAcharyaDraft();
     if (draft) {
-      setInput(draft.slice(0, 600));
+      setInput(draft.text.slice(0, 600));
+      journalRefDate.current = draft.journalDate;
       requestAnimationFrame(() => inputRef.current?.focus());
     }
   }, []);
@@ -131,8 +137,11 @@ export function AcharyaScreen() {
         return;
       }
       setLoadError(false);
+      // Thread this exchange to the journal entry if it came from "discuss note"
+      const reDate = journalRefDate.current;
+      journalRefDate.current = null;
       setInput('');
-      const userMsg: Msg = { id: `u-${Date.now()}`, role: 'user', content: q };
+      const userMsg: Msg = { id: `u-${Date.now()}`, role: 'user', content: q, journalRef: reDate ?? undefined };
       const assistantId = `a-${Date.now()}-s`;
       setMessages((m) => [...m, userMsg]);
       setLoading(true);
@@ -141,12 +150,12 @@ export function AcharyaScreen() {
       const appendDelta = (full: string) => {
         setMessages((m) => {
           const existing = m.find((x) => x.id === assistantId);
-          if (!existing) return [...m, { id: assistantId, role: 'assistant', content: full, streaming: true }];
+          if (!existing) return [...m, { id: assistantId, role: 'assistant', content: full, streaming: true, journalRef: reDate ?? undefined }];
           return m.map((x) => (x.id === assistantId ? { ...x, content: full } : x));
         });
       };
       const finishBubble = () => {
-        setMessages((m) => m.map((x) => (x.id === assistantId ? { ...x, streaming: false } : x)));
+        setMessages((m) => m.map((x) => (x.id === assistantId ? { ...x, streaming: false, journalRef: reDate ?? undefined } : x)));
       };
 
       try {
@@ -198,7 +207,7 @@ export function AcharyaScreen() {
             method: 'POST',
             body: JSON.stringify({ question: q, language }),
           });
-          setMessages((m) => m.map((x) => (x.id === assistantId ? { ...x, content: r2.answer } : x)));
+          setMessages((m) => m.map((x) => (x.id === assistantId ? { ...x, content: r2.answer, journalRef: reDate ?? undefined } : x)));
         }
         await reconcileAssistantId(assistantId, full.trim());
       } catch (e) {
@@ -210,8 +219,8 @@ export function AcharyaScreen() {
           });
           setMessages((m) => {
             const existing = m.find((x) => x.id === assistantId);
-            if (existing) return m.map((x) => (x.id === assistantId ? { ...x, content: res.answer, streaming: false } : x));
-            return [...m, { id: assistantId, role: 'assistant' as const, content: res.answer }];
+            if (existing) return m.map((x) => (x.id === assistantId ? { ...x, content: res.answer, streaming: false, journalRef: reDate ?? undefined } : x));
+            return [...m, { id: assistantId, role: 'assistant' as const, content: res.answer, journalRef: reDate ?? undefined }];
           });
           await reconcileAssistantId(assistantId, res.answer);
         } catch {
@@ -367,7 +376,9 @@ export function AcharyaScreen() {
                   className={cn(
                     'rounded-2xl px-4 py-3 text-t14 leading-relaxed',
                     m.role === 'user'
-                      ? 'gold-grad text-charcoal rounded-br-md shadow-[0_2px_10px_rgba(201,162,39,0.25)]'
+                      ? m.journalRef
+                        ? 'gold-grad text-charcoal rounded-br-md shadow-[0_2px_10px_rgba(201,162,39,0.25)] ring-1 ring-charcoal/10'
+                        : 'gold-grad text-charcoal rounded-br-md shadow-[0_2px_10px_rgba(201,162,39,0.25)]'
                       : 'glass text-charcoal rounded-bl-md',
                   )}
                 >
@@ -382,7 +393,7 @@ export function AcharyaScreen() {
                     type="button"
                     onClick={() => void listenToMessage(m)}
                     className={cn(
-                      'mt-1 ml-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-t12 transition-all duration-250 active:scale-95',
+                      'mt-1 ml-1 mr-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-t12 transition-all duration-250 active:scale-95',
                       audioMsgId === m.id
                         ? 'bg-gold/20 border border-gold/50 text-gold'
                         : 'border border-transparent text-muted-foreground/70 hover:text-gold hover:border-gold/30',
@@ -398,6 +409,25 @@ export function AcharyaScreen() {
                       : audioMsgId === m.id
                         ? t('acharya.stopAudio')
                         : t('acharya.listen')}
+                  </button>
+                )}
+                {/* Threaded from a journal note — jump back to the entry */}
+                {m.role === 'assistant' && !m.streaming && m.journalRef && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      useAppStore.getState().pushPendingFocus(`journal:${m.journalRef}`);
+                      window.dispatchEvent(new CustomEvent('ss:navigate', { detail: { tab: 'journal' } }));
+                    }}
+                    title={t('acharya.viewJournal')}
+                    className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-gold-faint/60 border border-gold/30 px-2.5 py-1 text-t12 text-[#8a6d1f] hover:bg-gold-faint hover:border-gold/50 active:scale-95 transition-all duration-250"
+                  >
+                    <Icon name="journal" size={12} />
+                    {t('acharya.viewJournal')}
+                    <span className="opacity-60">
+                      {new Date(`${m.journalRef}T12:00:00Z`).toLocaleDateString(i18n.language === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short', timeZone: 'UTC' })}
+                    </span>
+                    <Icon name="arrow-right" size={11} className="opacity-60" />
                   </button>
                 )}
               </div>

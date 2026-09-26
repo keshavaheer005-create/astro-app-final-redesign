@@ -420,5 +420,22 @@
   "letter.printSignature": "— आचार्य अभिषेक शर्मा",
   "dasha.tipNow": "{{d}} दिन बीते · {{left}} दिन शेष",
   "dasha.beginsIn": "{{n}} दिनों में शुरू",
-  "dasha.pct": "{{pct}}% पूर्ण"
+  "dasha.pct": "{{pct}}% पूर्ण",
+  "notifications.letterToastTitle": "आचार्य का पत्र",
+  "notifications.letterToastBody": "आपका साप्ताहिक चिंतन तैयार है — इस सप्ताह की चेक-इन से बुना हुआ।",
+  "notifications.letterToastAction": "पत्र पढ़ें",
+  "notifications.reflectionNew": "आचार्य ने आपके लिए लिखा है",
+  "notifications.reflectionNewBody": "इस सप्ताह की प्रविष्टियों से ताज़ा — पढ़ने के लिए दबाएँ।",
+  "notifications.reflectionNewShort": "नया",
+  "acharya.viewJournal": "जर्नल प्रविष्टि देखें",
+  "home.promptLabel": "शब्द नहीं आ रहे? आपकी {{maha}} दशा से संकेत:",
+  "home.prompt.Su": "आज नेतृत्व, सम्मान या ऊर्जा कहाँ झलकी?",
+  "home.prompt.Mo": "आज घर, विश्राम और भावनाओं ने कैसा महसूस कराया?",
+  "home.prompt.Ma": "आज किसने साहस माँगा — या मेरी चमक भीतर तक खींची?",
+  "home.prompt.Me": "आज मैंने क्या पढ़ा, लिखा, कहा या सीखा?",
+  "home.prompt.Ju": "आज मैं कहाँ सीखा, सिखाया या थोड़ा बढ़ा?",
+  "home.prompt.Ve": "आज कोई सुंदर या प्रेमभरा क्षण कहाँ मिला?",
+  "home.prompt.Sa": "आज किसने मेरे धैर्य या अनुशासन की परीक्षा ली?",
+  "home.prompt.Ra": "आज कौन-सी नई चाह या महत्वाकांक्षा ने खिंचाई?",
+  "home.prompt.Ke": "आज मैंने क्या छोड़ा — या छोड़ना चाहा?"
 }

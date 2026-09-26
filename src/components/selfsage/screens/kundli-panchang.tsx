@@ -481,6 +481,24 @@ function MonthGrid({
                   aria-hidden
                 />
               )}
+              {/* Festival tap-badge — opens the Acharya significance dialog
+                  without leaving the month view (keyboard users: the list
+                  below the grid has full-size, fully labelled buttons). */}
+              {festival && (
+                <span
+                  role="button"
+                  tabIndex={-1}
+                  aria-label={`${festName} — ${t('panchang.festDetailHint')}`}
+                  title={t('panchang.festDetailHint')}
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    onInfo(d.date, festival);
+                  }}
+                  className="absolute -top-1 -left-1 w-5 h-5 rounded-full gold-grad shadow-[0_1px_5px_rgba(201,162,39,0.5)] inline-flex items-center justify-center text-charcoal cursor-pointer transition-transform duration-150 hover:scale-110 active:scale-90 animate-in zoom-in-50 fade-in duration-300"
+                >
+                  <Icon name={festival.kind === 'sankranti' ? 'compass' : 'lotus'} size={11} />
+                </span>
+              )}
             </button>
           );
         })}
