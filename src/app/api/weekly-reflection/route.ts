@@ -18,12 +18,17 @@ function weekStartStr(d = new Date()): string {
  * Auto-generates this week's letter when ≥3 check-ins exist and none is stored
  * yet (lazy scheduled job — runs once per week per user, on first load).
  */
-export async function GET() {
+const VALID_LANGS = new Set(['en', 'hi']);
+
+export async function GET(req: Request) {
   try {
     const user = await ensureUser();
+    const url = new URL(req.url);
+    const langParam = url.searchParams.get('lang');
+    const language: 'en' | 'hi' = langParam && VALID_LANGS.has(langParam) ? (langParam as 'en' | 'hi') : 'en';
     const weekStart = weekStartStr();
     const existing = await db.weeklyReflection.findUnique({
-      where: { userId_weekStartDate: { userId: user.id, weekStartDate: weekStart } },
+      where: { userId_weekStartDate_language: { userId: user.id, weekStartDate: weekStart, language } },
     });
     if (existing) {
       return NextResponse.json({
@@ -57,7 +62,7 @@ export async function GET() {
 
     const text = await weeklyReflection({
       name: saved.name,
-      language: 'en',
+      language,
       dashaContext,
       checkins: weekEntries.map((c) => ({
         date: c.date,
@@ -71,7 +76,7 @@ export async function GET() {
     }
 
     const created = await db.weeklyReflection.create({
-      data: { userId: user.id, weekStartDate: weekStart, reflectionText: text },
+      data: { userId: user.id, weekStartDate: weekStart, language, reflectionText: text },
     });
     return NextResponse.json({
       reflection: { weekStartDate: created.weekStartDate, reflectionText: created.reflectionText },

@@ -72,6 +72,8 @@ export function buildWav(pcm: Buffer, sampleRate = 24000, channels = 1, bitsPerS
 /**
  * Synthesize speech → single gapless WAV Buffer.
  * voice: 'tongtong' (warm female) works well for both EN + HI.
+ * Per-chunk retry: the upstream TTS occasionally returns transient network
+ * errors ("请稍后重试") — two attempts with a short backoff absorbs most of them.
  */
 export async function synthesizeWav(
   text: string,
@@ -81,18 +83,32 @@ export async function synthesizeWav(
   const chunks = chunkForTts(text, opts.maxChunks ?? 4);
   if (chunks.length === 0) throw new Error('tts_empty_text');
 
+  const synthChunk = async (chunk: string): Promise<Buffer> => {
+    let lastErr: unknown;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const response = await zai.audio.tts.create({
+          input: chunk,
+          voice: opts.voice ?? 'tongtong',
+          speed: opts.speed ?? 0.95,
+          response_format: 'wav',
+          stream: false,
+        });
+        const arrayBuffer = await response.arrayBuffer();
+        const pcm = extractWavPcm(Buffer.from(new Uint8Array(arrayBuffer)));
+        if (pcm.length > 0) return pcm;
+        lastErr = new Error('tts_returned_no_audio');
+      } catch (e) {
+        lastErr = e;
+      }
+      if (attempt < 2) await new Promise((r) => setTimeout(r, 900 * (attempt + 1)));
+    }
+    throw lastErr instanceof Error ? lastErr : new Error('tts_chunk_failed');
+  };
+
   const pcmParts: Buffer[] = [];
   for (const chunk of chunks) {
-    const response = await zai.audio.tts.create({
-      input: chunk,
-      voice: opts.voice ?? 'tongtong',
-      speed: opts.speed ?? 0.95,
-      response_format: 'wav',
-      stream: false,
-    });
-    const arrayBuffer = await response.arrayBuffer();
-    const pcm = extractWavPcm(Buffer.from(new Uint8Array(arrayBuffer)));
-    if (pcm.length > 0) pcmParts.push(pcm);
+    pcmParts.push(await synthChunk(chunk));
   }
   if (pcmParts.length === 0) throw new Error('tts_returned_no_audio');
 

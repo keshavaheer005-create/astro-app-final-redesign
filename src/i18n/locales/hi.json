@@ -104,6 +104,7 @@
   "home.weeklyReady": "आचार्य ने आपके लिए लिखा है",
   "home.weeklyEmpty": "इस सप्ताह 3 चेक-इन के बाद पहला पत्र आएगा",
   "home.weeklyProgress": "इस सप्ताह 3 में से {{n}} चेक-इन",
+  "home.weekOf": "{{range}} का सप्ताह",
   "home.noChart": "कुंडली नहीं बनी है",
   "home.noChartBody": "अपना जन्म विवरण जोड़ें और कुंडली खोलें।",
   "home.tithi": "तिथि",
@@ -368,6 +369,8 @@
   "weekdaysShort.6": "शनि",
   "journal.askNote": "आचार्य टिप्पणी",
   "journal.noteBy": "आचार्य लिखते हैं:",
+  "journal.discuss": "आचार्य से इस बारे में पूछें",
+  "journal.discussDraft": "मेरी {{date}} की चेक-इन के बारे में (मूड {{mood}}/5{{energy}}), मैंने लिखा था: “{{note}}”। आपकी उस दिन की टिप्पणी: “{{acharyaNote}}”। कृपया समझाइए कि वह दिन ऐसा क्यों लगा और आगे मैं क्या कर सकता हूँ।",
   "match.share": "परिणाम साझा करें",
   "match.shareCopied": "कॉपी हुआ ✓",
   "match.shareTitle": "गुण मिलान: {{boy}} × {{girl}}",
@@ -404,5 +407,6 @@
   "panchang.festLoading": "आचार्य परंपरा का स्मरण कर रहे हैं…",
   "panchang.festBy": "पारंपरिक महत्व",
   "reports.savTapHint": "प्रत्येक राशि के बिंदु योगदान देखने के लिए उस पर टैप करें।",
-  "reports.savContribution": "{{sign}} में ग्रहों का योगदान:"
+  "reports.savContribution": "{{sign}} में ग्रहों का योगदान:",
+  "panchang.festListen": "इसे सुनें"
 }

@@ -8,7 +8,7 @@ export const runtime = 'nodejs';
 
 /** DaySummary + classical observance layer for the requested window. */
 type RichDay = DaySummary & {
-  lunarMonth: { key: string; en: string; hi: string } | null;
+  lunarMonth: { key: string; en: string; hi: string; adhika?: boolean } | null;
   festivals: FestivalInfo[];
 };
 

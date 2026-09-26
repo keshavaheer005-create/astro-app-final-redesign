@@ -93,6 +93,17 @@ export function AcharyaScreen() {
     void loadHistory();
   }, []);
 
+  // One-shot handoff: a draft pushed by another screen (e.g. "discuss this
+  // journal note" on the Journal tab) lands in the composer and gets focus.
+  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const draft = useAppStore.getState().consumeAcharyaDraft();
+    if (draft) {
+      setInput(draft.slice(0, 600));
+      requestAnimationFrame(() => inputRef.current?.focus());
+    }
+  }, []);
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, loading]);
@@ -455,6 +466,7 @@ export function AcharyaScreen() {
             </button>
           )}
           <input
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={chart ? (voiceState === 'transcribing' ? t('acharya.voiceHint') : t('acharya.placeholder')) : t('acharya.needChart')}

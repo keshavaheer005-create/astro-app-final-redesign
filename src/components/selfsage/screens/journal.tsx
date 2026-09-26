@@ -54,6 +54,7 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
   const { t } = useTranslation();
   const { chart } = useSession();
   const language = useAppStore((s) => s.language);
+  const pushAcharyaDraft = useAppStore((s) => s.pushAcharyaDraft);
   const [data, setData] = useState<CheckinData | null>(null);
   const [insights, setInsights] = useState<Insights | null>(null);
   const [insightsNarrative, setInsightsNarrative] = useState<string | null>(null);
@@ -81,6 +82,22 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
       }
     },
     [language, microLoading],
+  );
+
+  /** Hand the day's entry + Acharya note to the Acharya chat as a pre-filled question. */
+  const discussNote = useCallback(
+    (e: Entry, note: string) => {
+      const draft = t('journal.discussDraft', {
+        date: e.date,
+        mood: e.moodScore,
+        energy: e.energyScore != null ? ` · ${t('home.energy')} ${e.energyScore}/5` : '',
+        note: e.note ?? '—',
+        acharyaNote: note,
+      });
+      pushAcharyaDraft(draft);
+      onNavigate?.('acharya');
+    },
+    [onNavigate, pushAcharyaDraft, t],
   );
 
   const load = useCallback(async () => {
@@ -270,10 +287,21 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
                             <div className="h-2.5 w-3/5 rounded-full bg-gold/20 shimmer" />
                           </div>
                         ) : (
-                          <p className="mt-2 ml-11 text-t12 italic text-charcoal/80 leading-relaxed border-l-2 border-gold/50 pl-2.5">
-                            <span className="text-gold font-semibold not-italic">{t('journal.noteBy')} </span>
-                            {note}
-                          </p>
+                          <>
+                            <p className="mt-2 ml-11 text-t12 italic text-charcoal/80 leading-relaxed border-l-2 border-gold/50 pl-2.5">
+                              <span className="text-gold font-semibold not-italic">{t('journal.noteBy')} </span>
+                              {note}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => discussNote(e, note as string)}
+                              className="mt-2 ml-11 inline-flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold-faint/50 px-2.5 py-1 text-t12 text-gold hover:bg-gold-faint hover:border-gold/50 active:scale-95 transition-all duration-250"
+                              title={t('journal.discuss')}
+                            >
+                              <Icon name="chat" size={12} />
+                              {t('journal.discuss')}
+                            </button>
+                          </>
                         )}
                       </motion.div>
                     )}

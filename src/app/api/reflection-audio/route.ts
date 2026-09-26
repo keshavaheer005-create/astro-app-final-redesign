@@ -11,11 +11,20 @@ export const maxDuration = 120;
  * Generates (and caches in DB) a spoken WAV of this week's Acharya letter.
  * → { audioDataUri } playable directly in <audio src=…>
  */
-export async function POST() {
+export async function POST(req: Request) {
   try {
     const user = await ensureUser();
+    // Optional language filter — the Home letter card shows the letter matching
+    // the active UI language; audio must match what is displayed.
+    let language: string | null = null;
+    try {
+      const body = await req.json();
+      if (body?.language === 'hi' || body?.language === 'en') language = body.language;
+    } catch {
+      /* no body — pick latest */
+    }
     const reflection = await db.weeklyReflection.findFirst({
-      where: { userId: user.id },
+      where: { userId: user.id, ...(language ? { language } : {}) },
       orderBy: { weekStartDate: 'desc' },
     });
     if (!reflection) {

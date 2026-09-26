@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Icon, AcharyaAvatar } from '../icons';
 import { GlassCard, SectionHeader, EmptyState, PageLoader, ErrorState } from '../ui-primitives';
@@ -324,7 +324,11 @@ export function PanchangScreen() {
       )}
 
       {/* Festival significance dialog (Acharya) */}
-      <FestivalDetailDialog detail={festDetail} onClose={() => setFestDetail(null)} />
+      <FestivalDetailDialog
+        key={festDetail ? `${festDetail.kind}-${festDetail.en}-${festDetail.date}` : 'none'}
+        detail={festDetail}
+        onClose={() => setFestDetail(null)}
+      />
     </div>
   );
 }
@@ -371,6 +375,21 @@ function MonthGrid({
   const [y, m] = month.split('-').map(Number);
   const firstWeekday = days[0]?.weekday ?? new Date(Date.UTC(y, m - 1, 1)).getUTCDay();
 
+  // Dominant purnimanta lunar month across the displayed days + adhika flag
+  // (a leap month repeats the previous name — any day marked adhika wins).
+  const lunarInfo = (() => {
+    const counts = new Map<string, { n: number; name: NonNullable<MonthDay['lunarMonth']> }>();
+    for (const d of days) {
+      if (!d.lunarMonth) continue;
+      const cur = counts.get(d.lunarMonth.key) ?? { n: 0, name: d.lunarMonth };
+      cur.n += 1;
+      if (d.lunarMonth.adhika) cur.name = d.lunarMonth;
+      counts.set(d.lunarMonth.key, cur);
+    }
+    const dominant = [...counts.values()].sort((a, b) => b.n - a.n)[0];
+    return dominant ? { name: dominant.name, adhika: dominant.name.adhika === true } : null;
+  })();
+
   return (
     <div>
       {/* Month navigation */}
@@ -393,6 +412,22 @@ function MonthGrid({
           <Icon name="chevron-right" size={16} />
         </button>
       </div>
+
+      {/* Lunar month + adhika strip */}
+      {lunarInfo && (
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/60 border border-gold/25 px-2.5 py-1 text-t12 text-muted-foreground">
+            <Icon name="moon" size={13} className="text-gold" />
+            {t('panchang.lunarMonth')}:{' '}
+            <span className="text-charcoal font-medium">{language === 'hi' ? lunarInfo.name.hi : lunarInfo.name.en}</span>
+          </span>
+          {lunarInfo.adhika && (
+            <span className="inline-flex items-center rounded-full bg-gold-faint/80 border border-gold/40 px-2.5 py-1 text-t12 font-semibold text-[#8a6d1f]">
+              {t('panchang.adhika')}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Weekday header */}
       <div className="grid grid-cols-7 gap-1 mb-1.5">
@@ -583,6 +618,65 @@ function FestivalDetailDialog({ detail, onClose }: { detail: FestDetail | null; 
   const locale = language === 'hi' ? 'hi-IN' : 'en-IN';
   const [text, setText] = useState<string | null>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
+  // spoken version of the note — cached in localStorage (quota-guarded)
+  const [audioState, setAudioState] = useState<'idle' | 'loading' | 'playing'>('idle');
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const audioCacheKey = detail ? `ss-fest-audio-${language}-${detail.kind}-${detail.en}` : null;
+
+  const stopAudio = useCallback(() => {
+    audioRef.current?.pause();
+    audioRef.current = null;
+    setAudioState('idle');
+  }, []);
+
+  // The dialog is remounted per detail (keyed by parent), so audio state and
+  // playback reset naturally on change; stop on unmount only.
+  useEffect(() => () => stopAudio(), [stopAudio]);
+
+  const toggleAudio = async () => {
+    if (audioState === 'playing') {
+      stopAudio();
+      return;
+    }
+    if (audioRef.current) {
+      void audioRef.current.play().catch(() => setAudioState('idle'));
+      setAudioState('playing');
+      return;
+    }
+    if (!text || !audioCacheKey) return;
+    setAudioState('loading');
+    try {
+      let uri: string | null = null;
+      try {
+        uri = localStorage.getItem(audioCacheKey);
+      } catch {
+        /* private mode */
+      }
+      if (!uri) {
+        const res = await api<{ audioDataUri: string }>('/api/festival-audio', {
+          method: 'POST',
+          body: JSON.stringify({ kind: detail?.kind, name: detail?.en, language, text }),
+        });
+        uri = res.audioDataUri;
+        try {
+          localStorage.setItem(audioCacheKey, uri);
+        } catch {
+          /* quota — skip caching */
+        }
+      }
+      const audio = new Audio(uri);
+      audio.onended = () => {
+        setAudioState('idle');
+        audioRef.current = null;
+      };
+      audioRef.current = audio;
+      void audio.play().catch(() => setAudioState('idle'));
+      setAudioState('playing');
+    } catch {
+      setAudioState('idle');
+    }
+  };
 
   useEffect(() => {
     if (!detail) return;
@@ -674,6 +768,18 @@ function FestivalDetailDialog({ detail, onClose }: { detail: FestDetail | null; 
                   </div>
                   <p className="text-t14 leading-relaxed text-[#e8ddc8] whitespace-pre-line">{text}</p>
                 </div>
+              )}
+              {state === 'ready' && text && (
+                <button
+                  type="button"
+                  onClick={() => void toggleAudio()}
+                  disabled={audioState === 'loading'}
+                  title={t('panchang.festListen')}
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold-faint/50 px-3 py-1.5 text-t12 text-gold hover:bg-gold-faint hover:border-gold/50 active:scale-95 transition-all duration-250 disabled:opacity-60"
+                >
+                  <Icon name="speaker" size={13} className={audioState === 'playing' ? 'animate-pulse' : undefined} />
+                  {audioState === 'loading' ? t('acharya.preparingAudio') : audioState === 'playing' ? t('acharya.stopAudio') : t('acharya.listen')}
+                </button>
               )}
             </div>
           </>

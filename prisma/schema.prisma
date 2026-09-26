@@ -74,11 +74,12 @@ model WeeklyReflection {
   userId          String
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   weekStartDate   String // YYYY-MM-DD (Monday)
+  language        String   @default("en") // letter language — one letter per week per language
   reflectionText  String
   audioUrl        String?
   createdAt       DateTime @default(now())
 
-  @@unique([userId, weekStartDate])
+  @@unique([userId, weekStartDate, language])
 }
 
 model DecisionCheck {

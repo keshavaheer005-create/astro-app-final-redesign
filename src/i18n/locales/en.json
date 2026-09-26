@@ -104,6 +104,7 @@
   "home.weeklyReady": "Acharya wrote to you",
   "home.weeklyEmpty": "Your first letter arrives after 3 check-ins this week",
   "home.weeklyProgress": "{{n}} of 3 check-ins this week",
+  "home.weekOf": "Week of {{range}}",
   "home.noChart": "No chart yet",
   "home.noChartBody": "Add your birth details to unlock your kundli.",
   "home.tithi": "Tithi",
@@ -368,6 +369,8 @@
   "weekdaysShort.6": "Sa",
   "journal.askNote": "Acharya note",
   "journal.noteBy": "Acharya notes:",
+  "journal.discuss": "Ask Acharya about this",
+  "journal.discussDraft": "About my check-in on {{date}} (mood {{mood}}/5{{energy}}), I wrote: “{{note}}”. Your note on that day: “{{acharyaNote}}”. Please help me understand why the day felt that way and what I can do next.",
   "match.share": "Share result",
   "match.shareCopied": "Copied ✓",
   "match.shareTitle": "Guna Milan: {{boy}} × {{girl}}",
@@ -404,5 +407,6 @@
   "panchang.festLoading": "Acharya is recalling the tradition…",
   "panchang.festBy": "classical significance",
   "reports.savTapHint": "Tap a sign to see which planets contribute its bindus.",
-  "reports.savContribution": "Planet contributions in {{sign}}:"
+  "reports.savContribution": "Planet contributions in {{sign}}:",
+  "panchang.festListen": "Listen to this"
 }

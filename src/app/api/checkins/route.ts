@@ -33,10 +33,13 @@ async function snapshotForUser(userId: string) {
   return { snapshot: dashaSnapshot(c.dashas), moonSign: c.moonSign, moonLon: moon.lon, dashas: c.dashas };
 }
 
-/** GET /api/checkins — entries + streak + insights + this week's reflection status */
-export async function GET() {
+/** GET /api/checkins?lang=en|hi — entries + streak + insights + this week's reflection status */
+export async function GET(req: Request) {
   try {
     const user = await ensureUser();
+    const url = new URL(req.url);
+    const langParam = url.searchParams.get('lang');
+    const language = langParam === 'hi' ? 'hi' : 'en';
     const entries = await db.dailyCheckIn.findMany({
       where: { userId: user.id },
       orderBy: { date: 'desc' },
@@ -55,9 +58,17 @@ export async function GET() {
 
     const weekStart = weekStartStr();
     const weekEntries = entries.filter((e) => e.date >= weekStart);
-    const reflection = await db.weeklyReflection.findUnique({
-      where: { userId_weekStartDate: { userId: user.id, weekStartDate: weekStart } },
-    });
+    // Letter for the requested language; fall back to the week's English letter
+    // so pre-migration / not-yet-translated weeks still show something.
+    const reflection =
+      (await db.weeklyReflection.findUnique({
+        where: { userId_weekStartDate_language: { userId: user.id, weekStartDate: weekStart, language } },
+      })) ??
+      (language === 'hi'
+        ? await db.weeklyReflection.findUnique({
+            where: { userId_weekStartDate_language: { userId: user.id, weekStartDate: weekStart, language: 'en' } },
+          })
+        : null);
 
     return NextResponse.json({
       streak,
@@ -74,7 +85,7 @@ export async function GET() {
       })),
       weekEntryCount: weekEntries.length,
       reflection: reflection
-        ? { weekStartDate: reflection.weekStartDate, reflectionText: reflection.reflectionText }
+        ? { weekStartDate: reflection.weekStartDate, reflectionText: reflection.reflectionText, language: reflection.language }
         : null,
     });
   } catch (e) {

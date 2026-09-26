@@ -17,7 +17,7 @@ interface CheckinState {
   checkedInToday: boolean;
   total: number;
   weekEntryCount: number;
-  reflection: { weekStartDate: string; reflectionText: string } | null;
+  reflection: { weekStartDate: string; reflectionText: string; language?: string } | null;
 }
 
 interface TodayPanchang {
@@ -160,7 +160,10 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
     }
     setAudioState('loading');
     try {
-      const res = await api<{ audioDataUri: string }>('/api/reflection-audio', { method: 'POST' });
+      const res = await api<{ audioDataUri: string }>('/api/reflection-audio', {
+        method: 'POST',
+        body: JSON.stringify({ language }),
+      });
       const audio = new Audio(res.audioDataUri);
       audio.onended = () => setAudioState('idle');
       audioRef.current = audio;
@@ -179,19 +182,54 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
     return t('greeting.night');
   })();
 
+  // Letterhead: localized "Week of Mon – Sun" range for the current letter
+  const weekRangeLabel = (() => {
+    if (!checkin?.reflection) return '';
+    const start = new Date(`${checkin.reflection.weekStartDate}T12:00:00Z`);
+    const end = new Date(start);
+    end.setUTCDate(start.getUTCDate() + 6);
+    const fmt = (d: Date) => d.toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' });
+    return t('home.weekOf', { range: `${fmt(start)} – ${fmt(end)}` });
+  })();
+
   const loadCheckin = useCallback(async () => {
     setCheckinError(false);
     try {
-      const res = await api<CheckinState>('/api/checkins');
+      const res = await api<CheckinState>(`/api/checkins?lang=${language}`);
       setCheckin(res);
     } catch {
       setCheckinError(true);
     }
-  }, []);
+  }, [language]);
 
   useEffect(() => {
     void loadCheckin();
   }, [loadCheckin]);
+
+  // Lazy weekly-letter warm-up: when this week has ≥3 check-ins but no letter
+  // in the ACTIVE language yet, ask the API to generate one, then reload.
+  // (The generation route is a lazy scheduled job — it must be requested.)
+  const letterTriedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!checkin || checkin.weekEntryCount < 3) return;
+    if (checkin.reflection && checkin.reflection.language === language) return;
+    const key = `${language}|${checkin.reflection?.weekStartDate ?? 'none'}`;
+    if (letterTriedRef.current.has(key)) return; // one attempt per language per mount
+    letterTriedRef.current.add(key);
+    let cancelled = false;
+    const run = async () => {
+      try {
+        await api(`/api/weekly-reflection?lang=${language}`);
+        if (!cancelled) void loadCheckin();
+      } catch {
+        /* letter simply stays absent until next visit */
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [checkin, language, loadCheckin]);
 
   useEffect(() => {
     if (!chart) return;
@@ -553,8 +591,14 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                     <p className="font-serif text-t20 mt-1 text-[#f0e4c3] truncate">
                       {checkin.reflection.reflectionText.split('\n')[0].slice(0, 80)}…
                     </p>
+                    {weekRangeLabel && <p className="mt-1 text-t12 text-[#a5947a] italic">{weekRangeLabel}</p>}
                   </div>
-                  <Icon name="chevron-down" size={20} className={cn('text-gold transition-transform duration-250 shrink-0', letterOpen && 'rotate-180')} />
+                  <span className="shrink-0 flex flex-col items-center gap-1" aria-hidden>
+                    <span className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gold/40 bg-gold/10 rotate-45">
+                      <span className="block w-3.5 h-3.5 rounded-[2px] bg-gradient-to-br from-[#E8C568] to-[#C9A227] shadow-[0_0_10px_rgba(232,197,104,0.45)]" />
+                    </span>
+                    <Icon name="chevron-down" size={16} className={cn('text-gold transition-transform duration-250', letterOpen && 'rotate-180')} />
+                  </span>
                 </div>
               </button>
               <AnimatePresence>
@@ -569,10 +613,11 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                     <p className="mt-4 whitespace-pre-wrap text-t14 leading-relaxed text-[#e8dcbf] letter-body">
                       {checkin.reflection.reflectionText}
                     </p>
+                    <div className="ornament-divider mt-4" style={{ color: 'rgba(232,197,104,0.45)' }} aria-hidden>✦</div>
                     <button
                       type="button"
                       onClick={toggleLetterAudio}
-                      className="mt-4 inline-flex items-center gap-2 rounded-full bg-gold/15 border border-gold/40 px-4 py-1.5 text-t12 font-medium text-gold-light hover:bg-gold/25 active:scale-95 transition-all duration-250"
+                      className="mt-3 inline-flex items-center gap-2 rounded-full bg-gold/15 border border-gold/40 px-4 py-1.5 text-t12 font-medium text-gold-light hover:bg-gold/25 active:scale-95 transition-all duration-250"
                     >
                       <Icon name={audioState === 'playing' ? 'pause' : 'speaker'} size={14} />
                       {audioState === 'loading' ? t('letter.loadingAudio') : audioState === 'playing' ? t('letter.stop') : t('letter.listen')}

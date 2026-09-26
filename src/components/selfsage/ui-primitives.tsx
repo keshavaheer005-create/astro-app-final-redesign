@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { Icon, LogoMark, type IconName } from './icons';
 import { cn } from '@/lib/utils';
 
@@ -180,7 +180,20 @@ export function SlidingPillTabs<T extends string>({
   compact?: boolean;
 }) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [pill, setPill] = useState({ left: 0, width: 0, ready: false });
+  const [fade, setFade] = useState({ left: false, right: false });
+
+  // Edge fades appear only while the strip actually overflows — signals that
+  // more tabs are reachable by swiping (mobile) without truncating labels.
+  const updateFade = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setFade({
+      left: el.scrollLeft > 4,
+      right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4,
+    });
+  }, []);
 
   useLayoutEffect(() => {
     const idx = tabs.findIndex((t) => t.id === active);
@@ -191,42 +204,50 @@ export function SlidingPillTabs<T extends string>({
       // the strip is its own horizontal scroll container and the page clips overflow-x).
       el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
     }
-  }, [active, tabs]);
+    updateFade();
+  }, [active, tabs, updateFade]);
 
   return (
-    <div
-      className={cn(
-        'relative flex rounded-full bg-white/55 border border-gold/25 p-1 backdrop-blur-md overflow-x-auto no-scrollbar',
-        className,
-      )}
-    >
-      <span
-        className="absolute top-1 bottom-1 rounded-full gold-grad shadow-[0_2px_10px_rgba(201,162,39,0.4)]"
-        style={{
-          transform: `translateX(${pill.left}px)`,
-          width: pill.width,
-          opacity: pill.ready ? 1 : 0,
-          transition: 'transform 250ms ease, width 250ms ease',
-        }}
-      />
-      {tabs.map((t, i) => (
-        <button
-          key={t.id}
-          ref={(el) => {
-            refs.current[i] = el;
+    <div className={cn('relative', className)}>
+      <div
+        ref={scrollRef}
+        onScroll={updateFade}
+        className="relative flex rounded-full bg-white/55 border border-gold/25 p-1 backdrop-blur-md overflow-x-auto no-scrollbar"
+      >
+        <span
+          className="absolute top-1 bottom-1 rounded-full gold-grad shadow-[0_2px_10px_rgba(201,162,39,0.4)]"
+          style={{
+            transform: `translateX(${pill.left}px)`,
+            width: pill.width,
+            opacity: pill.ready ? 1 : 0,
+            transition: 'transform 250ms ease, width 250ms ease',
           }}
-          type="button"
-          onClick={() => onChange(t.id)}
-          className={cn(
-            'relative z-10 flex-1 flex items-center justify-center gap-1.5 rounded-full font-medium transition-colors duration-250 ease-out active:scale-[0.97]',
-            compact ? 'h-8 px-2 text-t12' : 'h-9 px-3 text-t14',
-            active === t.id ? 'text-charcoal' : 'text-muted-foreground hover:text-charcoal',
-          )}
-        >
-          {t.icon && <Icon name={t.icon} size={compact ? 14 : 16} />}
-          <span className="truncate">{t.label}</span>
-        </button>
-      ))}
+        />
+        {tabs.map((t, i) => (
+          <button
+            key={t.id}
+            ref={(el) => {
+              refs.current[i] = el;
+            }}
+            type="button"
+            onClick={() => onChange(t.id)}
+            className={cn(
+              'relative z-10 flex-1 min-w-fit flex items-center justify-center gap-1.5 rounded-full font-medium transition-colors duration-250 ease-out active:scale-[0.97]',
+              compact ? 'h-8 px-2.5 text-t12' : 'h-9 px-3.5 text-t14',
+              active === t.id ? 'text-charcoal' : 'text-muted-foreground hover:text-charcoal',
+            )}
+          >
+            {t.icon && <Icon name={t.icon} size={compact ? 14 : 16} />}
+            <span className="whitespace-nowrap">{t.label}</span>
+          </button>
+        ))}
+      </div>
+      {fade.left && (
+        <div className="absolute left-0 top-0 bottom-0 w-7 rounded-l-full bg-gradient-to-r from-[#FAF7F0] to-transparent pointer-events-none transition-opacity duration-250" aria-hidden />
+      )}
+      {fade.right && (
+        <div className="absolute right-0 top-0 bottom-0 w-7 rounded-r-full bg-gradient-to-l from-[#FAF7F0] to-transparent pointer-events-none transition-opacity duration-250" aria-hidden />
+      )}
     </div>
   );
 }
