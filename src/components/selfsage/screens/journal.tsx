@@ -17,6 +17,7 @@ interface Entry {
   moodScore: number;
   energyScore: number | null;
   note: string | null;
+  microNote: string | null;
   dashaPeriodSnapshot: { mahaLord?: string; antarLord?: string } | null;
 }
 
@@ -52,12 +53,35 @@ interface DecisionResult {
 export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDecisionOpen?: boolean; onNavigate?: (tab: 'home' | 'kundli' | 'journal' | 'acharya' | 'profile', view?: string) => void }) {
   const { t } = useTranslation();
   const { chart } = useSession();
+  const language = useAppStore((s) => s.language);
   const [data, setData] = useState<CheckinData | null>(null);
   const [insights, setInsights] = useState<Insights | null>(null);
   const [insightsNarrative, setInsightsNarrative] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [decisionOpen, setDecisionOpen] = useState(!!initialDecisionOpen);
+  // per-entry Acharya micro-notes (id → note), seeded from the server cache
+  const [microNotes, setMicroNotes] = useState<Record<string, string>>({});
+  const [microLoading, setMicroLoading] = useState<string | null>(null);
+
+  const askMicroNote = useCallback(
+    async (e: Entry) => {
+      if (microLoading) return;
+      setMicroLoading(e.id);
+      try {
+        const res = await api<{ microNote: string }>('/api/checkins/micro-note', {
+          method: 'POST',
+          body: JSON.stringify({ id: e.id, language }),
+        });
+        setMicroNotes((n) => ({ ...n, [e.id]: res.microNote }));
+      } catch {
+        /* keep silent — the row simply shows no note */
+      } finally {
+        setMicroLoading(null);
+      }
+    },
+    [language, microLoading],
+  );
 
   const load = useCallback(async () => {
     setError(false);
@@ -97,7 +121,7 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
         </div>
         {data && data.streak > 0 && (
           <span className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-maroon-soft text-maroon px-3.5 py-1.5 text-t14 font-semibold">
-            <Icon name="flame" size={16} /> {t('journal.streak', { n: data.streak })}
+            <Icon name="flame" size={16} className="flame-pulse" /> {t('journal.streak', { n: data.streak })}
           </span>
         )}
       </header>
@@ -206,19 +230,56 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
           <GlassCard className="p-4 sm:p-5">
             <SectionHeader title={t('journal.history')} icon="list" />
             <div className="space-y-2.5 max-h-96 overflow-y-auto scroll-slim pr-1">
-              {data.entries.map((e) => (
-                <div key={e.id} className="flex items-start gap-3 rounded-xl bg-white/50 border border-gold/15 px-3.5 py-3">
-                  <MoodDot value={e.moodScore} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-t12 text-muted-foreground">
-                      {e.date}
-                      {e.dashaPeriodSnapshot?.mahaLord ? ` · ${t('journal.during', { maha: t(`planet.${e.dashaPeriodSnapshot.mahaLord}`) })}` : ''}
-                      {e.energyScore != null ? ` · ${t('home.energy')} ${e.energyScore}/5` : ''}
-                    </p>
-                    {e.note && <p className="text-t14 text-charcoal mt-0.5 break-words">{e.note}</p>}
+              {data.entries.map((e) => {
+                const note = microNotes[e.id] ?? e.microNote ?? null;
+                return (
+                  <div key={e.id} className="rounded-xl bg-white/50 border border-gold/15 px-3.5 py-3 transition-colors duration-250 hover:border-gold/35">
+                    <div className="flex items-start gap-3">
+                      <MoodDot value={e.moodScore} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-t12 text-muted-foreground">
+                          {e.date}
+                          {e.dashaPeriodSnapshot?.mahaLord ? ` · ${t('journal.during', { maha: t(`planet.${e.dashaPeriodSnapshot.mahaLord}`) })}` : ''}
+                          {e.energyScore != null ? ` · ${t('home.energy')} ${e.energyScore}/5` : ''}
+                        </p>
+                        {e.note && <p className="text-t14 text-charcoal mt-0.5 break-words">{e.note}</p>}
+                      </div>
+                      {!note && (
+                        <button
+                          type="button"
+                          onClick={() => void askMicroNote(e)}
+                          disabled={microLoading != null}
+                          className="shrink-0 inline-flex items-center gap-1 rounded-full border border-gold/30 bg-gold-faint/50 px-2.5 py-1 text-t12 text-gold hover:bg-gold-faint hover:border-gold/50 active:scale-95 transition-all duration-250 disabled:opacity-50"
+                          title={t('journal.askNote')}
+                        >
+                          <Icon name="sparkle" size={12} className={microLoading === e.id ? 'animate-spin-slow' : undefined} />
+                          {t('journal.askNote')}
+                        </button>
+                      )}
+                    </div>
+                    {(microLoading === e.id || note) && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        transition={{ duration: 0.28, ease: 'easeOut' }}
+                        className="overflow-hidden"
+                      >
+                        {microLoading === e.id ? (
+                          <div className="mt-2 ml-11 space-y-1.5" aria-hidden>
+                            <div className="h-2.5 w-4/5 rounded-full bg-gold/20 shimmer" />
+                            <div className="h-2.5 w-3/5 rounded-full bg-gold/20 shimmer" />
+                          </div>
+                        ) : (
+                          <p className="mt-2 ml-11 text-t12 italic text-charcoal/80 leading-relaxed border-l-2 border-gold/50 pl-2.5">
+                            <span className="text-gold font-semibold not-italic">{t('journal.noteBy')} </span>
+                            {note}
+                          </p>
+                        )}
+                      </motion.div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </GlassCard>
         </>
@@ -265,6 +326,8 @@ function MoodTimeline({ entries }: { entries: Entry[] }) {
   const y = (m: number) => H - ((m - 1) / 4) * (H - 8) - 4;
 
   const path = entries.map((e, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(2)},${y(e.moodScore).toFixed(2)}`).join(' ');
+  // area fill under the mood line
+  const area = `${path} L${x(n - 1).toFixed(2)},${H} L${x(0).toFixed(2)},${H} Z`;
 
   // dasha bands: group consecutive entries by mahaLord
   const bands: { start: number; end: number; lord: string }[] = [];
@@ -280,7 +343,14 @@ function MoodTimeline({ entries }: { entries: Entry[] }) {
   return (
     <div>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-28" preserveAspectRatio="none" role="img" aria-label="Mood timeline">
+        <defs>
+          <linearGradient id="moodFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#c9a227" stopOpacity="0.28" />
+            <stop offset="100%" stopColor="#c9a227" stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
         <line x1="0" y1={y(3)} x2={W} y2={y(3)} stroke="rgba(201,162,39,0.2)" strokeWidth="0.4" strokeDasharray="1.5 1.5" />
+        <path d={area} fill="url(#moodFill)" stroke="none" />
         <path d={path} fill="none" stroke="#c9a227" strokeWidth="0.8" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
         {entries.map((e, i) => (
           <circle key={e.id} cx={x(i)} cy={y(e.moodScore)} r="1.1" fill={MOOD_COLORS[e.moodScore - 1]} stroke="#faf7f0" strokeWidth="0.35" />

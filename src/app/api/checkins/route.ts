@@ -69,6 +69,7 @@ export async function GET() {
         moodScore: e.moodScore,
         energyScore: e.energyScore,
         note: e.note,
+        microNote: e.microNote,
         dashaPeriodSnapshot: e.dashaPeriodSnapshot ? JSON.parse(e.dashaPeriodSnapshot) : null,
       })),
       weekEntryCount: weekEntries.length,

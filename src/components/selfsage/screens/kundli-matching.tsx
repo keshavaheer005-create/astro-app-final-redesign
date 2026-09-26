@@ -100,6 +100,33 @@ export function MatchingScreen() {
     }
   }, []);
 
+  // Share the current result via Web Share API (clipboard fallback)
+  const [shareState, setShareState] = useState<'idle' | 'done'>('idle');
+  const shareResult = useCallback(async () => {
+    if (!result) return;
+    const lines = [
+      t('match.shareTitle', { boy: result.boySummary.name, girl: result.girlSummary.name }),
+      `${result.boySummary.name} × ${result.girlSummary.name} — ${result.match.total}/36 · ${t('match.verdict.' + result.match.verdict)}`,
+      '',
+      ...result.match.kootas.map((k) => `• ${k.key}: ${k.score}/${k.max}`),
+      '',
+      t('match.shareFooter'),
+    ];
+    const text = lines.join('\n');
+    try {
+      if (typeof navigator.share === 'function') {
+        await navigator.share({ title: t('match.title'), text });
+        setShareState('done');
+        return;
+      }
+      await navigator.clipboard.writeText(text);
+      setShareState('done');
+      setTimeout(() => setShareState('idle'), 2400);
+    } catch {
+      /* user cancelled — ignore */
+    }
+  }, [result, t]);
+
   useEffect(() => {
     if (chart) {
       setBoy({
@@ -251,6 +278,14 @@ export function MatchingScreen() {
                   {result.match.bhakootDosha && <DoshaTag label="Bhakoot Dosha" />}
                   {result.match.ganaDosha && <DoshaTag label="Gana Dosha" />}
                 </div>
+                <button
+                  type="button"
+                  onClick={() => void shareResult()}
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gold/15 border border-gold/40 px-3.5 py-1.5 text-t12 font-medium text-gold-light hover:bg-gold/25 active:scale-95 transition-all duration-250"
+                >
+                  <Icon name="share" size={13} />
+                  {shareState === 'done' ? t('match.shareCopied') : t('match.share')}
+                </button>
               </div>
             </div>
           </GlassCard>

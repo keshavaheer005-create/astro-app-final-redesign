@@ -9,7 +9,7 @@ export type IconName =
   | 'chevron-left' | 'arrow-right' | 'arrow-left' | 'send' | 'plus'
   | 'edit' | 'lotus' | 'om' | 'compass' | 'list' | 'download' | 'refresh'
   | 'book' | 'scale' | 'handshake' | 'timeline' | 'grid' | 'eye' | 'logout'
-  | 'speaker' | 'pause';
+  | 'speaker' | 'pause' | 'share';
 
 const PATHS: Record<IconName, React.ReactNode> = {
   home: <path d="M4 11.2 12 4l8 7.2M6 9.8V20h4.5v-5.2h3V20H18V9.8" />,
@@ -172,6 +172,14 @@ const PATHS: Record<IconName, React.ReactNode> = {
   ),
   list: <path d="M8.5 6.5H20M8.5 12H20M8.5 17.5H20M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01" />,
   download: <path d="M12 4v11m0 0 4.5-4.5M12 15l-4.5-4.5M4.5 19.5h15" />,
+  share: (
+    <>
+      <circle cx="6.5" cy="12" r="2.6" />
+      <circle cx="17" cy="5.8" r="2.6" />
+      <circle cx="17" cy="18.2" r="2.6" />
+      <path d="m8.9 10.7 5.8-3.5M8.9 13.3l5.8 3.5" />
+    </>
+  ),
   refresh: <path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3L20 9.5M20 4.5v5h-5" />,
   book: (
     <>

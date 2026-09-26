@@ -299,6 +299,53 @@
     pointer-events: none;
   }
 
+  /* ── Ink card sheen sweep (slow diagonal light band) ───────────────── */
+  .sheen-sweep {
+    position: relative;
+  }
+  .sheen-sweep::before {
+    content: "";
+    position: absolute;
+    inset: -40% -20%;
+    background: linear-gradient(115deg, transparent 42%, rgba(255, 240, 200, 0.09) 50%, transparent 58%);
+    transform: translateX(-120%);
+    animation: sheen 6.5s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+  @keyframes sheen {
+    0%, 55% {
+      transform: translateX(-120%);
+    }
+    75%, 100% {
+      transform: translateX(120%);
+    }
+  }
+
+  /* ── Streak flame heartbeat ────────────────────────────────────────── */
+  .flame-pulse {
+    animation: flame-pulse 2.4s ease-in-out infinite;
+    transform-origin: 50% 90%;
+  }
+  @keyframes flame-pulse {
+    0%, 100% {
+      transform: scale(1) rotate(0deg);
+    }
+    35% {
+      transform: scale(1.12) rotate(-2.5deg);
+    }
+    65% {
+      transform: scale(1.04) rotate(2deg);
+    }
+  }
+
+  /* ── Gold focus ring for keyboard users ────────────────────────────── */
+  :where(button, [role="tab"], a, input, textarea, [tabindex]):focus-visible {
+    outline: 2px solid rgba(201, 162, 39, 0.75);
+    outline-offset: 2px;
+    border-radius: 10px;
+  }
+
   /* ── Drop cap for the weekly letter ────────────────────────────────── */
   .letter-body::first-letter {
     font-family: var(--font-playfair), Georgia, serif;

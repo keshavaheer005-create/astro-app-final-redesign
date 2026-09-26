@@ -27,6 +27,53 @@ export function AcharyaScreen() {
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // TTS playback — one message at a time
+  const [audioMsgId, setAudioMsgId] = useState<string | null>(null);
+  const [audioLoadingId, setLoadingId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const stopAudio = useCallback(() => {
+    audioRef.current?.pause();
+    audioRef.current = null;
+    setAudioMsgId(null);
+  }, []);
+
+  // stop audio when leaving the screen
+  useEffect(() => () => stopAudio(), [stopAudio]);
+
+  const listenToMessage = useCallback(
+    async (m: Msg) => {
+      if (audioMsgId === m.id) {
+        stopAudio();
+        return;
+      }
+      stopAudio();
+      if (audioRef.current && audioMsgId === m.id && !audioRef.current.paused) {
+        // resume — unreachable here (handled above) but kept for safety
+        return;
+      }
+      setLoadingId(m.id);
+      try {
+        const res = await api<{ audioDataUri: string }>('/api/acharya-audio', {
+          method: 'POST',
+          body: JSON.stringify({ messageId: m.id }),
+        });
+        const audio = new Audio(res.audioDataUri);
+        audio.onended = () => {
+          setAudioMsgId(null);
+          audioRef.current = null;
+        };
+        audioRef.current = audio;
+        setAudioMsgId(m.id);
+        void audio.play().catch(() => setAudioMsgId(null));
+      } catch {
+        setAudioMsgId(null);
+      } finally {
+        setLoadingId(null);
+      }
+    },
+    [audioMsgId, stopAudio],
+  );
 
   useEffect(() => {
     const loadHistory = async () => {
@@ -43,6 +90,20 @@ export function AcharyaScreen() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, loading]);
+
+  // Swap a just-streamed client temp id for the persisted DB id (enables per-message TTS)
+  const reconcileAssistantId = useCallback(async (tempId: string, content: string) => {
+    if (!content) return;
+    try {
+      const h = await api<{ messages: Msg[] }>('/api/ask-acharya');
+      const match = [...h.messages].reverse().find((x) => x.role === 'assistant' && x.content === content);
+      if (match) {
+        setMessages((m) => m.map((x) => (x.id === tempId ? { ...x, id: match.id } : x)));
+      }
+    } catch {
+      /* TTS simply won't be offered for this turn */
+    }
+  }, []);
 
   const ask = useCallback(
     async (question: string) => {
@@ -122,6 +183,7 @@ export function AcharyaScreen() {
           });
           setMessages((m) => m.map((x) => (x.id === assistantId ? { ...x, content: r2.answer } : x)));
         }
+        await reconcileAssistantId(assistantId, full.trim());
       } catch (e) {
         // Fallback path: classic JSON answer (covers SSE-unsupported gateways)
         try {
@@ -134,6 +196,7 @@ export function AcharyaScreen() {
             if (existing) return m.map((x) => (x.id === assistantId ? { ...x, content: res.answer, streaming: false } : x));
             return [...m, { id: assistantId, role: 'assistant' as const, content: res.answer }];
           });
+          await reconcileAssistantId(assistantId, res.answer);
         } catch {
           setLoadError(true);
           console.error('[acharya]', e);
@@ -144,8 +207,9 @@ export function AcharyaScreen() {
         setLoading(false);
       }
     },
-    [chart, language, loading],
+    [chart, language, loading, reconcileAssistantId],
   );
+
 
   const clearChat = async () => {
     // Note: history is server-side; clear visually (server retains record for grounding)
@@ -209,17 +273,43 @@ export function AcharyaScreen() {
               className={cn('flex gap-2.5', m.role === 'user' ? 'justify-end' : 'justify-start')}
             >
               {m.role === 'assistant' && <AcharyaAvatar size={30} className="shrink-0 mt-1 hidden sm:block" />}
-              <div
-                className={cn(
-                  'max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-t14 leading-relaxed',
-                  m.role === 'user'
-                    ? 'gold-grad text-charcoal rounded-br-md shadow-[0_2px_10px_rgba(201,162,39,0.25)]'
-                    : 'glass text-charcoal rounded-bl-md',
-                )}
-              >
-                {m.content}
-                {m.streaming && (
-                  <span className="inline-block w-2 h-4 ml-1 align-middle rounded-sm bg-gold animate-pulse" aria-hidden />
+              <div className="max-w-[85%] sm:max-w-[75%] min-w-0">
+                <div
+                  className={cn(
+                    'rounded-2xl px-4 py-3 text-t14 leading-relaxed',
+                    m.role === 'user'
+                      ? 'gold-grad text-charcoal rounded-br-md shadow-[0_2px_10px_rgba(201,162,39,0.25)]'
+                      : 'glass text-charcoal rounded-bl-md',
+                  )}
+                >
+                  {m.content}
+                  {m.streaming && (
+                    <span className="inline-block w-2 h-4 ml-1 align-middle rounded-sm bg-gold animate-pulse" aria-hidden />
+                  )}
+                </div>
+                {/* Listen to this reply — TTS */}
+                {m.role === 'assistant' && !m.streaming && m.content.length > 40 && (
+                  <button
+                    type="button"
+                    onClick={() => void listenToMessage(m)}
+                    className={cn(
+                      'mt-1 ml-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-t12 transition-all duration-250 active:scale-95',
+                      audioMsgId === m.id
+                        ? 'bg-gold/20 border border-gold/50 text-gold'
+                        : 'border border-transparent text-muted-foreground/70 hover:text-gold hover:border-gold/30',
+                    )}
+                  >
+                    <Icon
+                      name={audioLoadingId === m.id ? 'sparkle' : audioMsgId === m.id ? 'pause' : 'speaker'}
+                      size={13}
+                      className={audioLoadingId === m.id ? 'animate-spin-slow' : undefined}
+                    />
+                    {audioLoadingId === m.id
+                      ? t('acharya.preparingAudio')
+                      : audioMsgId === m.id
+                        ? t('acharya.stopAudio')
+                        : t('acharya.listen')}
+                  </button>
                 )}
               </div>
             </motion.div>

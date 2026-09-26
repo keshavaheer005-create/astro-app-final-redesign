@@ -302,7 +302,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
         <button
           type="button"
           onClick={() => onNavigate('acharya')}
-          className="mt-4 w-full glass-ink rounded-2xl px-4 py-3.5 flex items-center gap-3 text-left transition-transform duration-250 ease-out hover:-translate-y-0.5 active:scale-[0.99] group"
+          className="mt-4 w-full glass-ink sheen-sweep rounded-2xl px-4 py-3.5 flex items-center gap-3 text-left transition-transform duration-250 ease-out hover:-translate-y-0.5 active:scale-[0.99] group"
         >
           <AcharyaAvatar size={44} className="shrink-0" />
           <span className="flex-1 min-w-0">
@@ -333,7 +333,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
               </div>
               <div className="text-right shrink-0">
                 <span className="inline-flex items-center gap-1 text-maroon font-semibold text-t16">
-                  <Icon name="flame" size={18} />
+                  <Icon name="flame" size={18} className="flame-pulse" />
                   {checkin.streak}
                 </span>
                 <p className="text-t12 text-muted-foreground">{t('home.streak', { n: checkin.streak })}</p>
@@ -394,7 +394,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
       {/* Weekly reflection letter (ink card) */}
       <div>
         <SectionHeader title={t('home.weeklyTitle')} icon="journal" />
-        <GlassCard ink className="p-5 sm:p-6">
+        <GlassCard ink className="sheen-sweep p-5 sm:p-6">
           {checkin?.reflection ? (
             <>
               <button type="button" onClick={() => setLetterOpen((v) => !v)} className="w-full text-left">

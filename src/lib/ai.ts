@@ -264,3 +264,38 @@ export async function patternNarrative(opts: {
   const system = `You are ${ACHARYA_NAME}. Write a 3-5 sentence pattern insight for the Karma Journal dashboard, using ONLY the aggregate statistics provided (they are computed from the user's real check-ins — do not invent numbers). Tone: warm, precise, empowering. ${langRule}`;
   return complete([{ role: 'user', content: JSON.stringify(opts.aggregates) }], system);
 }
+
+/**
+ * One-line Acharya micro-note for a single daily check-in.
+ * Interprets the logged mood/energy through the dasha period recorded that day.
+ * Strictly grounded in the provided data; 1-2 sentences max.
+ */
+export async function checkinMicroNote(opts: {
+  language: 'en' | 'hi';
+  date: string;
+  mood: number;
+  energy: number | null;
+  note: string | null;
+  mahaLord: string;
+  antarLord?: string;
+  moonSign?: string;
+}): Promise<string | null> {
+  const langRule = opts.language === 'hi'
+    ? 'Respond in warm natural Hindi (Devanagari).'
+    : 'Respond in English.';
+  const system = `You are ${ACHARYA_NAME}. Write a ONE to TWO sentence micro-reflection connecting the user's logged day to its astrological weather. Use ONLY the data provided — never invent placements. Tone: warm, specific, gently empowering; optionally one tiny practical nudge. No greetings, no sign-off, no bullet points. ${langRule}`;
+  const user = `DATE: ${opts.date}
+MAHA DASHA LORD: ${opts.mahaLord}
+ANTARDASHA LORD: ${opts.antarLord ?? 'unknown'}
+MOON SIGN THAT DAY: ${opts.moonSign ?? 'unknown'}
+MOOD: ${opts.mood}/5
+ENERGY: ${opts.energy != null ? `${opts.energy}/5` : 'not logged'}
+USER NOTE: ${opts.note?.trim() || 'none'}`;
+  const llm = await complete([{ role: 'user', content: user }], system);
+  if (llm) return llm;
+  // Deterministic fallback
+  const lord = opts.mahaLord;
+  return opts.language === 'hi'
+    ? `${lord} की दशा में आपकी मन:शक्ति धीरे-धीरे लौट रही है — आज एक छोटा, स्थिर कदम पर्याप्त है।`
+    : `Under ${lord}'s dasha your inner weather is slowly settling — one small, steady step today is enough.`;
+}

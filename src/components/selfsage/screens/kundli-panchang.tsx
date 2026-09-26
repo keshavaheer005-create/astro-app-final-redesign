@@ -30,17 +30,32 @@ interface PanchangPayload {
   muhurtas: { name: string; startISO: string; endISO: string; note: 'auspicious' | 'caution' }[];
 }
 
+interface MonthDay {
+  date: string;
+  weekday: number;
+  tithi: { index: number; name: string; nameHi: string; paksha: 'Shukla' | 'Krishna' };
+  nakshatra: { name: string; nameHi: string };
+  sunriseISO: string | null;
+  special: 'purnima' | 'amavasya' | 'ekadashi' | null;
+}
+
 export function PanchangScreen() {
   const { t, i18n } = useTranslation();
   const { chart } = useSession();
   const language = useAppStore((s) => s.language);
   const locale = language === 'hi' ? 'hi-IN' : 'en-IN';
 
+  const [mode, setMode] = useState<'day' | 'month'>('day');
   const [date, setDate] = useState(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   });
+  const [month, setMonth] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  });
   const [data, setData] = useState<PanchangPayload | null>(null);
+  const [monthData, setMonthData] = useState<MonthDay[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
@@ -49,17 +64,25 @@ export function PanchangScreen() {
     setLoading(true);
     setError(false);
     try {
-      const res = await api<{ panchang: PanchangPayload }>('/api/panchang', {
-        method: 'POST',
-        body: JSON.stringify({ date, lat: chart.input.lat, lng: chart.input.lng, timezone: chart.input.timezone }),
-      });
-      setData(res.panchang);
+      if (mode === 'month') {
+        const res = await api<{ days: MonthDay[] }>('/api/panchang', {
+          method: 'POST',
+          body: JSON.stringify({ month, lat: chart.input.lat, lng: chart.input.lng, timezone: chart.input.timezone }),
+        });
+        setMonthData(res.days);
+      } else {
+        const res = await api<{ panchang: PanchangPayload }>('/api/panchang', {
+          method: 'POST',
+          body: JSON.stringify({ date, lat: chart.input.lat, lng: chart.input.lng, timezone: chart.input.timezone }),
+        });
+        setData(res.panchang);
+      }
     } catch {
       setError(true);
     } finally {
       setLoading(false);
     }
-  }, [chart, date]);
+  }, [chart, date, mode, month]);
 
   useEffect(() => {
     void load();
@@ -68,6 +91,13 @@ export function PanchangScreen() {
   if (!chart) return <EmptyState icon="sun" title={t('home.noChart')} body={t('home.noChartBody')} />;
 
   const fmtTime = (iso: string | null) => (iso ? new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: chart.input.timezone }) : '—');
+  const todayStr = (() => {
+    try {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: chart.input.timezone }).format(new Date());
+    } catch {
+      return '';
+    }
+  })();
 
   const limbs = data
     ? [
@@ -80,15 +110,36 @@ export function PanchangScreen() {
 
   return (
     <div className="space-y-5">
-      <header>
-        <h1 className="font-serif text-t28 font-bold text-charcoal">{t('panchang.title')}</h1>
-        <p className="text-t14 text-muted-foreground">{t('panchang.subtitle')} · {chart.input.placeName}</p>
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-serif text-t28 font-bold text-charcoal">{t('panchang.title')}</h1>
+          <p className="text-t14 text-muted-foreground">{t('panchang.subtitle')} · {chart.input.placeName}</p>
+        </div>
+        {/* Day / Month segmented toggle */}
+        <div className="glass rounded-full p-1 flex items-center gap-1" role="tablist" aria-label={t('panchang.modeAria')}>
+          {(['day', 'month'] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              role="tab"
+              aria-selected={mode === m}
+              onClick={() => setMode(m)}
+              className={cn(
+                'rounded-full px-4 py-1.5 text-t14 font-medium transition-all duration-250 active:scale-95',
+                mode === m ? 'gold-grad text-charcoal shadow-[0_2px_8px_rgba(201,162,39,0.35)]' : 'text-muted-foreground hover:text-charcoal',
+              )}
+            >
+              {t(`panchang.mode.${m}`)}
+            </button>
+          ))}
+        </div>
       </header>
 
-      <div className="grid lg:grid-cols-[300px_1fr] gap-4 items-start">
-        <GlassCard className="p-4">
-          <CalendarPicker value={date} onChange={setDate} />
-        </GlassCard>
+      {mode === 'day' ? (
+        <div className="grid lg:grid-cols-[300px_1fr] gap-4 items-start">
+          <GlassCard className="p-4">
+            <CalendarPicker value={date} onChange={setDate} />
+          </GlassCard>
 
         <div className="space-y-4 min-w-0">
           {loading && !data && <PageLoader label={t('common.loading')} />}
@@ -171,6 +222,158 @@ export function PanchangScreen() {
             </>
           )}
         </div>
+      </div>
+      ) : (
+        /* ── Month view ── */
+        <GlassCard className="p-4 sm:p-5">
+          {loading && !monthData && <PageLoader label={t('common.loading')} />}
+          {error && monthData && <ErrorState onRetry={load} message={t('common.networkError')} />}
+          {monthData && monthData.length > 0 && (
+            <MonthGrid
+              month={month}
+              days={monthData}
+              today={todayStr}
+              locale={locale}
+              language={language}
+              onPrev={() => shiftMonth(month, -1, setMonth)}
+              onNext={() => shiftMonth(month, 1, setMonth)}
+              onPickDay={(d) => {
+                setDate(d);
+                setMode('day');
+              }}
+              prevLabel={t('common.previousMonth')}
+              nextLabel={t('common.nextMonth')}
+            />
+          )}
+        </GlassCard>
+      )}
+    </div>
+  );
+}
+
+function shiftMonth(month: string, delta: number, set: (v: string) => void) {
+  const [y, m] = month.split('-').map(Number);
+  const d = new Date(Date.UTC(y, m - 1 + delta, 1));
+  set(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`);
+}
+
+function monthLabel(month: string, locale: string): string {
+  const [y, m] = month.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString(locale, { month: 'long', year: 'numeric', timeZone: 'UTC' });
+}
+
+const WEEKDAY_MIN = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+function MonthGrid({
+  month,
+  days,
+  today,
+  locale,
+  language,
+  onPrev,
+  onNext,
+  onPickDay,
+  prevLabel,
+  nextLabel,
+}: {
+  month: string;
+  days: MonthDay[];
+  today: string;
+  locale: string;
+  language: 'en' | 'hi';
+  onPrev: () => void;
+  onNext: () => void;
+  onPickDay: (date: string) => void;
+  prevLabel: string;
+  nextLabel: string;
+}) {
+  const { t } = useTranslation();
+  const [y, m] = month.split('-').map(Number);
+  const firstWeekday = days[0]?.weekday ?? new Date(Date.UTC(y, m - 1, 1)).getUTCDay();
+
+  return (
+    <div>
+      {/* Month navigation */}
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <button
+          type="button"
+          onClick={onPrev}
+          aria-label={prevLabel}
+          className="w-9 h-9 rounded-full glass inline-flex items-center justify-center text-gold hover:border-gold/50 active:scale-90 transition-all duration-200"
+        >
+          <Icon name="chevron-left" size={16} />
+        </button>
+        <p className="font-serif text-t20 text-charcoal">{monthLabel(month, locale)}</p>
+        <button
+          type="button"
+          onClick={onNext}
+          aria-label={nextLabel}
+          className="w-9 h-9 rounded-full glass inline-flex items-center justify-center text-gold hover:border-gold/50 active:scale-90 transition-all duration-200"
+        >
+          <Icon name="chevron-right" size={16} />
+        </button>
+      </div>
+
+      {/* Weekday header */}
+      <div className="grid grid-cols-7 gap-1 mb-1.5">
+        {WEEKDAY_MIN.map((w, i) => (
+          <div key={w} className={cn('text-center text-t12 font-semibold', i === 0 || i === 6 ? 'text-maroon/70' : 'text-muted-foreground')}>
+            {t(`weekdaysShort.${i}`)}
+          </div>
+        ))}
+      </div>
+
+      {/* Day grid */}
+      <div className="grid grid-cols-7 gap-1" role="grid" aria-label={monthLabel(month, locale)}>
+        {Array.from({ length: firstWeekday }).map((_, i) => (
+          <div key={`pad-${i}`} aria-hidden />
+        ))}
+        {days.map((d) => {
+          const dayNum = Number(d.date.slice(8, 10));
+          const isToday = d.date === today;
+          return (
+            <button
+              key={d.date}
+              type="button"
+              onClick={() => onPickDay(d.date)}
+              title={`${d.date} · ${language === 'hi' ? `${d.tithi.paksha === 'Shukla' ? 'शुक्ल' : 'कृष्ण'} ${d.tithi.nameHi}` : `${d.tithi.paksha} ${d.tithi.name}`} · ${language === 'hi' ? d.nakshatra.nameHi : d.nakshatra.name}`}
+              className={cn(
+                'relative rounded-lg border px-0.5 py-1.5 text-center transition-all duration-200 active:scale-90 hover:border-gold/50',
+                d.tithi.paksha === 'Shukla' ? 'bg-gold-faint/60 border-gold/25' : 'bg-white/50 border-gold/15',
+                d.special === 'purnima' && 'bg-gold-soft/80 border-gold/60 shadow-[0_1px_8px_rgba(201,162,39,0.35)]',
+                d.special === 'amavasya' && 'bg-maroon-soft border-maroon/35',
+                d.special === 'ekadashi' && 'bg-sage/15 border-sage/40',
+                isToday && 'ring-2 ring-gold ring-offset-1 ring-offset-[#FAF7F0]',
+              )}
+            >
+              <span className={cn('block text-t12 font-semibold leading-none', d.special === 'amavasya' ? 'text-maroon' : 'text-charcoal')}>
+                {dayNum}
+              </span>
+              <span className={cn('block text-[10px] leading-tight truncate', d.special === 'amavasya' ? 'text-maroon/80' : 'text-muted-foreground/90')}>
+                {language === 'hi' ? d.tithi.nameHi : d.tithi.name}
+              </span>
+              {d.special && (
+                <span
+                  className={cn(
+                    'absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full',
+                    d.special === 'purnima' && 'bg-gold',
+                    d.special === 'amavasya' && 'bg-maroon',
+                    d.special === 'ekadashi' && 'bg-sage',
+                  )}
+                  aria-hidden
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Legend */}
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-t12 text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-gold" /> {t('panchang.purnima')}</span>
+        <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-maroon" /> {t('panchang.amavasya')}</span>
+        <span className="inline-flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-sage" /> {t('panchang.ekadashi')}</span>
+        <span className="text-muted-foreground/70">{t('panchang.monthHint')}</span>
       </div>
     </div>
   );

@@ -47,6 +47,7 @@ model ChatMessage {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   role      String // "user" | "assistant"
   content   String
+  audioUrl  String? // cached TTS data URI for assistant messages
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
@@ -60,6 +61,7 @@ model DailyCheckIn {
   moodScore            Int // 1-5
   energyScore          Int? // 1-5
   note                 String?
+  microNote            String? // cached one-line Acharya interpretation
   dashaPeriodSnapshot  String // JSON {mahaLord, antarLord, mahaStart, mahaEnd, moonSign}
   createdAt            DateTime @default(now())
 

@@ -222,3 +222,54 @@ export function panchangFor(
     ayanamsa: ayanamsa(jd),
   };
 }
+
+// ── Month scan (lightweight) ─────────────────────────────────────────────────
+// Only tithi + nakshatra + sunrise per day — no rise-of-moon, choghadiya or
+// end-time crossings — so a whole month costs ~30 cheap ephemeris reads.
+
+export interface DaySummary {
+  date: string; // local YYYY-MM-DD
+  weekday: number;
+  tithi: { index: number; name: string; nameHi: string; paksha: 'Shukla' | 'Krishna' };
+  nakshatra: { name: string; nameHi: string };
+  sunriseISO: string | null;
+  /** 'purnima' | 'amavasya' | 'ekadashi' when the day carries a classical marker */
+  special: 'purnima' | 'amavasya' | 'ekadashi' | null;
+}
+
+export function daySummaryFor(dateUTC: Date, localDate: string, weekday: number, lat: number, lng: number): DaySummary {
+  const jd = juldayFromUTC(dateUTC);
+  const sun = calcPlanet('Su', jd, false);
+  const moon = calcPlanet('Mo', jd, false);
+
+  const elong = norm360(moon.lon - sun.lon);
+  const tithiIdx0 = Math.floor(elong / 12);
+  const paksha: 'Shukla' | 'Krishna' = tithiIdx0 < 15 ? 'Shukla' : 'Krishna';
+  const nameIdx = tithiIdx0 % 15;
+  const tName = paksha === 'Krishna' && nameIdx === 14 ? 'Amavasya' : TITHIS[nameIdx];
+  const tNameHi = paksha === 'Krishna' && nameIdx === 14 ? 'अमावस्या' : TITHIS_HI[nameIdx];
+
+  const moonS = norm360(moon.lon - ayanamsa(jd));
+  const nakIdx = nakshatraIndex(moonS);
+
+  const sr = riseTrans(jd - 0.6, 'Su', true, lat, lng);
+
+  // Classical day markers: Purnima (Shukla 15), Amavasya (Krishna 15), Ekadashi (11th tithi, either paksha)
+  const special: DaySummary['special'] =
+    paksha === 'Krishna' && nameIdx === 14
+      ? 'amavasya'
+      : nameIdx === 14
+        ? 'purnima'
+        : nameIdx === 10
+          ? 'ekadashi'
+          : null;
+
+  return {
+    date: localDate,
+    weekday,
+    tithi: { index: tithiIdx0 + 1, name: tName, nameHi: tNameHi, paksha },
+    nakshatra: { name: NAKSHATRAS[nakIdx], nameHi: NAKSHATRAS_HI[nakIdx] },
+    sunriseISO: sr ? utcFromJulday(sr).toISOString() : null,
+    special,
+  };
+}

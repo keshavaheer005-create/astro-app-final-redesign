@@ -11,3 +11,4 @@ export const db =
   })
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
+// prisma client revalidated (schema: ChatMessage.audioUrl, DailyCheckIn.microNote)
