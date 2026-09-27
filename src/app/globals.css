@@ -648,6 +648,68 @@
     background-clip: text;
     color: transparent;
   }
+
+  /* ── Tinted glass panels (atmospheric colour per screen domain) ─────────
+     Compose over .glass: soft tinted fill + matching hairline border. The
+     top sheen from .glass::before still shows through. Gold stays the sole
+     CTA colour — these are secondary, calm surfaces. */
+  .glass-tint-gold {
+    background: rgba(245, 233, 201, 0.5);
+    border-color: rgba(201, 162, 39, 0.32);
+  }
+  .glass-tint-emerald {
+    background: rgba(227, 240, 233, 0.55);
+    border-color: rgba(62, 142, 110, 0.28);
+  }
+  .glass-tint-violet {
+    background: rgba(238, 232, 246, 0.55);
+    border-color: rgba(110, 74, 158, 0.28);
+  }
+  .glass-tint-rose {
+    background: rgba(249, 231, 234, 0.55);
+    border-color: rgba(194, 69, 90, 0.26);
+  }
+  .glass-tint-burgundy {
+    background: rgba(243, 226, 229, 0.55);
+    border-color: rgba(92, 26, 40, 0.28);
+  }
+
+  /* ── Screen washes (restrained per-screen colour atmosphere) ────────────
+     Position as the FIRST child of a `relative` screen root — content after
+     it paints above; pointer-events stay off; never causes overflow. */
+  .wash {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .wash-gold {
+    background:
+      radial-gradient(85% 42% at 84% -4%, rgba(201, 162, 39, 0.09), transparent 62%),
+      radial-gradient(70% 38% at 4% 20%, rgba(232, 197, 104, 0.07), transparent 58%);
+  }
+  .wash-emerald {
+    background:
+      radial-gradient(85% 42% at 86% -4%, rgba(62, 142, 110, 0.10), transparent 62%),
+      radial-gradient(70% 38% at 2% 22%, rgba(62, 142, 110, 0.06), transparent 58%);
+  }
+  .wash-violet {
+    background:
+      radial-gradient(85% 42% at 86% -4%, rgba(110, 74, 158, 0.10), transparent 62%),
+      radial-gradient(70% 38% at 2% 22%, rgba(110, 74, 158, 0.06), transparent 58%);
+  }
+  .wash-rose {
+    background:
+      radial-gradient(85% 42% at 86% -4%, rgba(194, 69, 90, 0.09), transparent 62%),
+      radial-gradient(70% 38% at 2% 22%, rgba(194, 69, 90, 0.055), transparent 58%);
+  }
+
+  /* ── Elevation (hero cards that should read a step above plain glass) ── */
+  .glass-elev {
+    box-shadow:
+      0 18px 48px -18px rgba(42, 36, 32, 0.18),
+      0 4px 14px rgba(42, 36, 32, 0.07),
+      inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  }
 }
 
 @keyframes fade-rise {

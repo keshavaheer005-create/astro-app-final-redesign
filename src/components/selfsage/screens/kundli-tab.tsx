@@ -3,6 +3,7 @@
 import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
+import { MandalaAccent } from '../chakra';
 import { KundliChartScreen } from './kundli-chart';
 import { PanchangScreen } from './kundli-panchang';
 import { HoroscopeScreen } from './kundli-horoscope';
@@ -10,6 +11,17 @@ import { MatchingScreen } from './kundli-matching';
 import { ReportsScreen } from './kundli-reports';
 
 export type KundliView = 'chart' | 'panchang' | 'horoscope' | 'matching' | 'reports';
+
+/* Per-view atmosphere — secondary tint domains (gold stays the CTA colour):
+   chart/panchang sit in the golden daylight band, horoscope/reports in
+   violet insight, matching in rose harmony. */
+const VIEW_TONE: Record<KundliView, { wash: string; accent: string }> = {
+  chart: { wash: 'wash-gold', accent: 'text-gold' },
+  panchang: { wash: 'wash-gold', accent: 'text-gold' },
+  horoscope: { wash: 'wash-violet', accent: 'text-violet' },
+  matching: { wash: 'wash-rose', accent: 'text-rose' },
+  reports: { wash: 'wash-violet', accent: 'text-violet' },
+};
 
 export function KundliTab({ initialView }: { initialView?: KundliView }) {
   const { t } = useTranslation();
@@ -58,7 +70,16 @@ export function KundliTab({ initialView }: { initialView?: KundliView }) {
   }, [view, tabs, updateFade]);
 
   return (
-    <div className="space-y-4">
+    <div className="relative space-y-4">
+      {/* Per-view atmosphere: soft colour wash + a slowly turning corner
+          mandala that cross-fades its tint with the active view */}
+      <div className={cn('wash -z-10', VIEW_TONE[view].wash)} aria-hidden="true" />
+      <div
+        className="pointer-events-none absolute -top-10 -right-4 opacity-[0.12] transition-colors duration-700"
+        aria-hidden="true"
+      >
+        <MandalaAccent size={190} className={cn('chakra-spin-zodiac', VIEW_TONE[view].accent)} />
+      </div>
       <div className="relative">
         <div
           ref={scrollRef}

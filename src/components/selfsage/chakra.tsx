@@ -164,6 +164,136 @@ const CHAKRA_ORBS: { color: string; top: string }[] = [
   { color: '#8F6CC0', top: '90%' }, // Sahasrara — violet light
 ];
 
+/* MandalaAccent geometry (precomputed & rounded for SSR hydration) */
+const MANDALA_PETAL = 'M50 10 C55 16 55 24 50 28 C45 24 45 16 50 10 Z';
+const MANDALA_TICKS: [number, number, number, number][] = Array.from({ length: 24 }, (_, i) => {
+  const a = (i * Math.PI) / 12;
+  return [
+    r3(50 + Math.cos(a) * 40),
+    r3(50 + Math.sin(a) * 40),
+    r3(50 + Math.cos(a) * 47.5),
+    r3(50 + Math.sin(a) * 47.5),
+  ];
+});
+const MANDALA_DOTS: [number, number][] = Array.from({ length: 16 }, (_, i) => {
+  const a = (i * Math.PI) / 8 + Math.PI / 16;
+  return [r3(50 + Math.cos(a) * 34), r3(50 + Math.sin(a) * 34)];
+});
+
+/**
+ * Corner mandala — small, elegant line-art meant to peek into margins and
+ * corners (half of it sits outside the viewport edge). Complements the fixed
+ * ChakraBackdrop with per-screen accents; inherits currentColor so the caller
+ * chooses the tint (text-emerald, text-rose, …) and keeps opacity low.
+ */
+export function MandalaAccent({
+  size = 190,
+  className,
+  strokeWidth = 1,
+}: {
+  size?: number | string;
+  className?: string;
+  strokeWidth?: number;
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 100 100"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      focusable="false"
+    >
+      {/* outer ring + tick rays */}
+      <circle cx="50" cy="50" r="47.5" />
+      <g opacity="0.55">
+        {MANDALA_TICKS.map(([x1, y1, x2, y2], i) => (
+          <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} />
+        ))}
+      </g>
+      {/* petal ring */}
+      <g opacity="0.8">
+        {Array.from({ length: 12 }, (_, i) => (
+          <path key={i} d={MANDALA_PETAL} transform={`rotate(${i * 30} 50 50)`} />
+        ))}
+      </g>
+      {/* mid ring + dot constellation */}
+      <circle cx="50" cy="50" r="28" opacity="0.85" />
+      <g opacity="0.7">
+        {MANDALA_DOTS.map(([cx, cy], i) => (
+          <circle key={i} cx={cx} cy={cy} r="0.9" />
+        ))}
+      </g>
+      {/* inner ring + heart lotus + bindu */}
+      <circle cx="50" cy="50" r="12" />
+      <circle cx="50" cy="50" r="6.5" opacity="0.7" />
+      <path d="M50 50h0" strokeWidth={strokeWidth * 2} />
+    </svg>
+  );
+}
+
+/**
+ * Om emblem — a refined line-art mark: an authentic ॐ glyph held inside a
+ * thin, slowly counter-revolving ring (the glyph itself stays still and
+ * breathes gently). Used sparingly: Acharya's empty state, onboarding,
+ * contemplative loading moments.
+ */
+export function OmEmblem({
+  size = 84,
+  className,
+  strokeWidth = 1.4,
+}: {
+  size?: number | string;
+  className?: string;
+  strokeWidth?: number;
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 100 100"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      focusable="false"
+    >
+      {/* slowly revolving double ring + fine ticks */}
+      <g className="chakra-spin-slow-rev">
+        <circle cx="50" cy="50" r="48.5" />
+        <circle cx="50" cy="50" r="44.5" />
+        <g opacity="0.55">
+          {TICKS.map(([x1, y1, x2, y2], i) => (
+            <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} strokeWidth={strokeWidth * 0.8} />
+          ))}
+        </g>
+      </g>
+      {/* the glyph — authentic Devanagari Om, rendered still (font of the
+          device renders it; universally available on target platforms) */}
+      <text
+        x="50"
+        y="63.5"
+        textAnchor="middle"
+        fontSize="44"
+        fill="currentColor"
+        stroke="none"
+        style={{ fontFamily: "'Noto Sans Devanagari', 'Nirmala UI', 'Mangal', serif" }}
+        className="chakra-breathe"
+      >
+        ॐ
+      </text>
+    </svg>
+  );
+}
+
 /**
  * Global fixed full-viewport decoration: a suspended, slowly breathing
  * composition of sacred geometry that fills the empty background on every

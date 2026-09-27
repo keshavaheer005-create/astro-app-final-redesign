@@ -132,7 +132,9 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
   };
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="relative space-y-6 max-w-3xl">
+      {/* Soft gold atmosphere behind the settings stack */}
+      <div className="wash wash-gold -z-10" aria-hidden="true" />
       <header className="flex items-center justify-between">
         <h1 className="font-serif text-t28 font-bold text-charcoal">{t('profile.title')}</h1>
         <LogoMark size={34} className="opacity-80" />

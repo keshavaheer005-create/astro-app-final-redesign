@@ -7,7 +7,7 @@ import { Icon, LogoMark } from '../icons';
 import { GlassCard, GoldButton, GhostButton } from '../ui-primitives';
 import { GlassDatePicker, TimeWheel } from '../pickers';
 import { LocationCombobox, type LocationResult } from '../location-combobox';
-import { ChakraBackdrop, ChakraSpinner, ChakraWheel } from '../chakra';
+import { ChakraBackdrop, ChakraSpinner, ChakraWheel, OmEmblem } from '../chakra';
 import { api, useSession, type ChartData } from '../session-context';
 
 type Step = 'welcome' | 'name' | 'birth' | 'computing' | 'ready';
@@ -239,7 +239,11 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
                 </div>
                 <h2 className="font-serif text-t28 font-bold text-charcoal">{t('onboarding.ready')}</h2>
                 <p className="mt-3 text-t14 text-muted-foreground leading-relaxed">{t('onboarding.readyBody')}</p>
-                <div className="mt-7">
+                {/* A quiet Om seal — the birth chart is received, not just built */}
+                <div className="mt-4 flex justify-center text-violet/70">
+                  <OmEmblem size={54} strokeWidth={1.5} />
+                </div>
+                <div className="mt-5">
                   <GoldButton onClick={() => setStep('welcome')}>
                     {t('onboarding.enter')} <Icon name="sun" size={16} />
                   </GoldButton>

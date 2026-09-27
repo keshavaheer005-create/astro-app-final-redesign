@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Icon, AcharyaAvatar } from '../icons';
+import { OmEmblem } from '../chakra';
 import { GoldButton } from '../ui-primitives';
 import { api, useSession } from '../session-context';
 import { apiUrl } from '@/lib/api';
@@ -336,13 +337,15 @@ export function AcharyaScreen() {
 
   return (
     <div className="flex flex-col h-[calc(100dvh-11rem)] lg:h-[calc(100dvh-9rem)]">
-      {/* Chat header — inverted ink card with violet intuition aura */}
-      <div className="glass-ink px-4 py-3 flex items-center gap-3 shrink-0 relative overflow-hidden">
-        <div className="absolute -top-12 -right-12 w-36 h-36 rounded-full bg-violet/25 blur-2xl pointer-events-none" aria-hidden="true" />
-        <AcharyaAvatar size={44} />
+      {/* Chat header — calm emerald-tinted glass (matches the light app) with
+          a single violet pulse as Acharya's intuition signature */}
+      <div className="glass glass-tint-emerald bar-texture px-4 py-3 flex items-center gap-3 shrink-0 relative overflow-hidden">
+        <div className="absolute -top-12 -right-12 w-36 h-36 rounded-full bg-emerald/20 blur-2xl pointer-events-none" aria-hidden="true" />
+        <div className="absolute -bottom-14 -left-10 w-28 h-28 rounded-full bg-violet/15 blur-2xl pointer-events-none" aria-hidden="true" />
+        <AcharyaAvatar size={44} className="relative" />
         <div className="flex-1 min-w-0 relative">
-          <p className="font-serif text-t16 font-semibold text-gold-grad truncate">{t('acharya.title')}</p>
-          <p className="text-t12 text-[#a5947a] flex items-center gap-1.5">
+          <p className="font-serif text-t16 font-semibold text-emerald-grad truncate">{t('acharya.title')}</p>
+          <p className="text-t12 text-muted-foreground flex items-center gap-1.5">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-violet animate-pulse" />
             {t('acharya.subtitle')}
           </p>
@@ -352,7 +355,7 @@ export function AcharyaScreen() {
             type="button"
             onClick={clearChat}
             aria-label={t('acharya.clear')}
-            className="relative text-[#a5947a] hover:text-gold-light transition-colors duration-200 p-2"
+            className="relative text-muted-foreground hover:text-emerald-deep transition-colors duration-200 p-2"
           >
             <Icon name="refresh" size={17} />
           </button>
@@ -363,7 +366,7 @@ export function AcharyaScreen() {
       <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-slim px-1 py-4 space-y-4">
         {messages.length === 0 && (
           <div className="text-center px-4 pt-6">
-            <AcharyaAvatar size={84} className="mx-auto mb-4 opacity-90" />
+            <OmEmblem size={92} strokeWidth={1.3} className="mx-auto mb-3 text-emerald opacity-80" />
             <p className="text-t14 text-charcoal/80 leading-relaxed max-w-md mx-auto">{chart ? t('acharya.welcome') : t('acharya.needChart')}</p>
             {chart && (
               <div className="mt-5 flex flex-wrap justify-center gap-2">
@@ -372,7 +375,7 @@ export function AcharyaScreen() {
                     key={k}
                     type="button"
                     onClick={() => ask(t(k))}
-                    className="tap-sm inline-flex min-h-[44px] items-center rounded-full border border-violet/30 bg-violet-soft/80 px-4 py-2 text-t12 font-medium text-violet-deep hover:border-violet/55 hover:bg-violet-soft transition-colors duration-250"
+                    className="tap-sm inline-flex min-h-[44px] items-center rounded-full border border-emerald/30 bg-emerald-soft/80 px-4 py-2 text-t12 font-medium text-emerald-deep hover:border-emerald/55 hover:bg-emerald-soft transition-colors duration-250"
                   >
                     {t(k)}
                   </button>
@@ -400,12 +403,12 @@ export function AcharyaScreen() {
                       ? m.journalRef
                         ? 'gold-grad text-charcoal rounded-br-md shadow-[0_2px_10px_rgba(201,162,39,0.25)] ring-1 ring-charcoal/10'
                         : 'gold-grad text-charcoal rounded-br-md shadow-[0_2px_10px_rgba(201,162,39,0.25)]'
-                      : 'glass text-charcoal rounded-bl-md',
+                      : 'glass glass-tint-emerald text-charcoal rounded-bl-md',
                   )}
                 >
                   {m.content}
                   {m.streaming && (
-                    <span className="inline-block w-2 h-4 ml-1 align-middle rounded-sm bg-violet animate-pulse" aria-hidden />
+                    <span className="inline-block w-2 h-4 ml-1 align-middle rounded-sm bg-emerald animate-pulse" aria-hidden />
                   )}
                 </div>
                 {/* Listen to this reply — TTS */}
@@ -459,13 +462,13 @@ export function AcharyaScreen() {
         {loading && !messages.some((m) => m.streaming) && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2.5">
             <AcharyaAvatar size={30} className="shrink-0 hidden sm:block" />
-            <div className="glass rounded-2xl rounded-bl-md px-4 py-3">
+            <div className="glass glass-tint-emerald rounded-2xl rounded-bl-md px-4 py-3">
               <p className="text-t12 text-muted-foreground mb-1.5">{t('acharya.thinking')}</p>
               <div className="flex gap-1.5">
                 {[0, 1, 2].map((i) => (
                   <span
                     key={i}
-                    className="w-2 h-2 rounded-full bg-violet animate-bounce"
+                    className="w-2 h-2 rounded-full bg-emerald animate-bounce"
                     style={{ animationDelay: `${i * 140}ms` }}
                   />
                 ))}
@@ -494,7 +497,7 @@ export function AcharyaScreen() {
               <Icon name={voiceState === 'recording' ? 'mic' : 'sparkle'} size={13} className={voiceState === 'recording' ? 'mic-pulse' : 'animate-spin-slow'} />
               {voiceState === 'recording' ? t('acharya.listening') : t('acharya.transcribing')}
             </span>
-            {voiceState === 'recording' && <span className="flex-1 h-px bg-gradient-to-r from-violet/40 to-transparent" />}
+            {voiceState === 'recording' && <span className="flex-1 h-px bg-gradient-to-r from-violet/40 via-emerald/30 to-transparent" />}
           </div>
         )}
         {voiceError && <p className="px-2 text-t12 text-maroon">{t('acharya.micError')}</p>}

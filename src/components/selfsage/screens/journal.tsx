@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Icon } from '../icons';
+import { MandalaAccent } from '../chakra';
 import { GlassCard, SectionHeader, GoldButton, EmptyState, PageLoader, ErrorState } from '../ui-primitives';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
@@ -148,7 +149,12 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
   }, [data]);
 
   return (
-    <div className="space-y-5">
+    <div className="relative space-y-5">
+      {/* Emerald atmosphere — the journal is growth/reflection territory */}
+      <div className="wash wash-emerald -z-10" aria-hidden="true" />
+      <div className="pointer-events-none absolute -top-10 -right-4 text-emerald opacity-[0.12]" aria-hidden="true">
+        <MandalaAccent size={180} className="chakra-spin-zodiac" />
+      </div>
       <header className="flex items-start justify-between gap-3">
         <div>
           <h1 className="font-serif text-t28 font-bold text-charcoal">{t('journal.title')}</h1>

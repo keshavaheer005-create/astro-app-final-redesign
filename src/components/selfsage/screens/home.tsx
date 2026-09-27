@@ -451,11 +451,22 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
 
   const dateLine = new Date().toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
   const displayName = chart?.input?.name || user?.name || 'Seeker';
+  // Moon phase 0→1 for the at-a-glance strip (same formula as the hero glyph)
+  const moonPhase = panchang ? ((panchang.tithi.index - 1) + panchang.tithi.percent / 100) / 30 : null;
 
-  const features: { sections: { titleKey: string; items: { icon: IconName; titleKey: string; bodyKey: string; view: string }[] }[] } = {
+  // One-tap shortcuts to the most-used destinations (no new backend calls)
+  const quickActions: { icon: IconName; labelKey: string; go: () => void }[] = [
+    { icon: 'chat', labelKey: 'home.quick.acharya', go: () => onNavigate('acharya') },
+    { icon: 'sun', labelKey: 'home.quick.panchang', go: () => onNavigate('kundli', 'panchang') },
+    { icon: 'compass', labelKey: 'home.quick.decision', go: () => onNavigate('kundli', 'decision') },
+    { icon: 'journal', labelKey: 'home.quick.journal', go: () => onNavigate('journal') },
+  ];
+
+  const features: { sections: { titleKey: string; tone: 'gold' | 'rose' | 'violet'; items: { icon: IconName; titleKey: string; bodyKey: string; view: string }[] }[] } = {
     sections: [
       {
         titleKey: 'home.section.chart',
+        tone: 'gold',
         items: [
           { icon: 'chart', titleKey: 'home.feature.chart', bodyKey: 'home.feature.chartBody', view: 'chart' },
           { icon: 'timeline', titleKey: 'home.feature.reports', bodyKey: 'home.feature.reportsBody', view: 'reports' },
@@ -464,6 +475,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
       },
       {
         titleKey: 'home.section.predictions',
+        tone: 'rose',
         items: [
           { icon: 'sparkle', titleKey: 'home.feature.horoscope', bodyKey: 'home.feature.horoscopeBody', view: 'horoscope' },
           { icon: 'handshake', titleKey: 'home.feature.matching', bodyKey: 'home.feature.matchingBody', view: 'matching' },
@@ -471,6 +483,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
       },
       {
         titleKey: 'home.section.tools',
+        tone: 'violet',
         items: [
           { icon: 'sun', titleKey: 'home.feature.panchang', bodyKey: 'home.feature.panchangBody', view: 'panchang' },
           { icon: 'compass', titleKey: 'home.feature.decision', bodyKey: 'home.feature.decisionBody', view: 'decision' },
@@ -480,7 +493,30 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
   };
 
   return (
-    <div className="space-y-6">
+    <div className="relative space-y-6">
+      {/* Soft gold atmosphere — Home's base wash, painted beneath all content */}
+      <div className="wash wash-gold -z-10" aria-hidden="true" />
+
+      {/* Quick actions — one-tap shortcuts to the most-used features */}
+      <div
+        role="toolbar"
+        aria-label={t('home.quick.aria')}
+        className="no-scrollbar flex gap-2 overflow-x-auto pb-0.5 stagger-in"
+        style={{ animationDelay: '15ms', animationFillMode: 'backwards' }}
+      >
+        {quickActions.map((qa) => (
+          <button
+            key={qa.labelKey}
+            type="button"
+            onClick={qa.go}
+            className="tap-sm glass inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-t12 font-medium text-charcoal/85 transition-colors duration-250 hover:border-gold/50 hover:text-charcoal"
+          >
+            <Icon name={qa.icon} size={15} className="text-gold" />
+            {t(qa.labelKey)}
+          </button>
+        ))}
+      </div>
+
       {/* Header */}
       <header className="flex items-center justify-between gap-3 pt-1">
         <div className="min-w-0">
@@ -625,8 +661,40 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
         </Popover>
       </header>
 
+      {/* At a glance — streak · antardasha · moon phase (all locally computed) */}
+      <section
+        aria-label={t('home.glance.aria')}
+        className="glass rounded-2xl flex items-stretch px-4 py-2.5 stagger-in"
+        style={{ animationDelay: '30ms', animationFillMode: 'backwards' }}
+      >
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 px-1">
+          <p className="truncate text-t12 text-muted-foreground">{t('home.glance.streak')}</p>
+          <p className="inline-flex items-center gap-1 text-t16 font-semibold text-emerald-deep">
+            <Icon name="flame" size={14} className="flame-pulse" />
+            {checkin ? checkin.streak : '—'}
+          </p>
+        </div>
+        <div className="mx-1 w-px bg-gold/15" aria-hidden="true" />
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 px-1">
+          <p className="truncate text-t12 text-muted-foreground">{t('home.glance.dasha')}</p>
+          <p className="text-t16 font-semibold text-gold tabular-nums">{dashaNow ? `${dashaNow.antarPercent}%` : '—'}</p>
+        </div>
+        <div className="mx-1 w-px bg-gold/15" aria-hidden="true" />
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 px-1">
+          <p className="truncate text-t12 text-muted-foreground">{t('home.glance.moon')}</p>
+          {moonPhase !== null ? (
+            <p className="inline-flex items-center gap-1 text-t12 font-semibold text-violet-deep">
+              <MoonPhaseGlyph phase={moonPhase} size={16} className="shrink-0" />
+              <span className="truncate">{t(phaseKeyOf(moonPhase))}</span>
+            </p>
+          ) : (
+            <p className="text-t16 font-semibold text-muted-foreground">—</p>
+          )}
+        </div>
+      </section>
+
       {/* Hero: today's panchang + Acharya CTA */}
-      <GlassCard className="p-5 sm:p-6">
+      <GlassCard className="glass-elev p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <p className="text-t12 uppercase tracking-wider text-gold font-semibold">{t('home.heroTitle')}</p>
@@ -699,6 +767,28 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
           <Icon name="chevron-right" size={18} className="text-gold transition-transform duration-250 group-hover:translate-x-0.5" />
         </button>
       </GlassCard>
+
+      {/* Daily affirmation — grounded in the running maha-dasha lord */}
+      {dashaNow?.mahaLord && (
+        <div
+          className="glass glass-tint-emerald relative overflow-hidden p-4 sm:p-5 stagger-in"
+          style={{ animationDelay: '45ms', animationFillMode: 'backwards' }}
+        >
+          <div className="pointer-events-none absolute -top-9 -right-7 w-28 h-28 rounded-full bg-emerald/15 blur-2xl" aria-hidden="true" />
+          <p className="text-t12 font-semibold uppercase tracking-wider text-emerald-deep flex items-center gap-1.5">
+            <Icon name="sparkle" size={12} />
+            {t('home.affirm.title')}
+          </p>
+          <p className="mt-1.5 font-serif text-t16 italic leading-relaxed text-charcoal">
+            {t(`home.affirm.${dashaNow.mahaLord}`)}
+          </p>
+          {panchang && (
+            <p className="mt-2 text-t12 text-muted-foreground">
+              {t('home.affirm.season', { maha: t(`planet.${dashaNow.mahaLord}`), nakshatra: language === 'hi' ? panchang.nakshatra.nameHi : panchang.nakshatra.name })}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Sky ahead — upcoming purnima / ekadashi / sankranti / festivals */}
       {sky && sky.length > 0 && (
@@ -1033,7 +1123,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
       {features.sections.map((section, si) => (
         <section key={section.titleKey} aria-label={t(section.titleKey)}>
           {si > 0 && <div className="ornament-divider my-6">✦</div>}
-          <SectionHeader title={t(section.titleKey)} />
+          <SectionHeader title={t(section.titleKey)} tone={section.tone} />
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {section.items.map((item) => (
               <GlassCard
@@ -1041,7 +1131,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                 onClick={() => onNavigate('kundli', item.view)}
                 className="p-4 sm:p-5 group ripple"
               >
-                <span className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gold-soft/80 text-gold transition-all duration-250 group-hover:gold-grad group-hover:text-charcoal">
+                <span className={cn('inline-flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-250', SECTION_CHIP_TONES[section.tone])}>
                   <Icon name={item.icon} size={20} />
                 </span>
                 <p className="mt-3 text-t14 font-semibold text-charcoal">{t(item.titleKey)}</p>
@@ -1054,6 +1144,16 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
     </div>
   );
 }
+
+/**
+ * Per-section icon chip tints — gold stays primary; predictions lean rose,
+ * tools lean violet (secondary atmospheric colours only, never CTA).
+ */
+const SECTION_CHIP_TONES: Record<'gold' | 'rose' | 'violet', string> = {
+  gold: 'bg-gold-soft/80 text-gold group-hover:gold-grad group-hover:text-charcoal',
+  rose: 'bg-rose-soft text-rose-deep group-hover:rose-grad group-hover:text-white',
+  violet: 'bg-violet-soft text-violet-deep group-hover:violet-grad group-hover:text-white',
+};
 
 /**
  * Journal note prompts per maha-dasha lord (localized via `home.prompt.<lord>`).
