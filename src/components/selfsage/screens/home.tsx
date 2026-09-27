@@ -675,7 +675,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
           className="relative mt-4 flex items-stretch gap-1 border-t border-gold/20 pt-3"
         >
           <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-1">
-            <p className="truncate text-[11px] uppercase tracking-wide text-muted-foreground/85">{t('home.glance.streak')}</p>
+            <p className="text-[9.5px] sm:text-[10.5px] uppercase tracking-[0.03em] leading-[1.25] text-muted-foreground/85 [overflow-wrap:anywhere]">{t('home.glance.streak')}</p>
             <p className="inline-flex items-center gap-1.5 text-t16 font-semibold text-emerald-deep">
               <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-soft/90">
                 <Icon name="flame" size={12} className="flame-pulse" />
@@ -685,7 +685,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
           </div>
           <div className="w-px bg-gold/20" aria-hidden="true" />
           <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-1">
-            <p className="truncate text-[11px] uppercase tracking-wide text-muted-foreground/85">{t('home.glance.dasha')}</p>
+            <p className="text-[9.5px] sm:text-[10.5px] uppercase tracking-[0.03em] leading-[1.25] text-muted-foreground/85 [overflow-wrap:anywhere]">{t('home.glance.dasha')}</p>
             <p className="inline-flex items-center gap-1.5 text-t16 font-semibold text-gold tabular-nums">
               <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-gold-soft/90">
                 <Icon name="timeline" size={12} />
@@ -695,11 +695,11 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
           </div>
           <div className="w-px bg-gold/20" aria-hidden="true" />
           <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-1">
-            <p className="truncate text-[11px] uppercase tracking-wide text-muted-foreground/85">{t('home.glance.moon')}</p>
+            <p className="text-[9.5px] sm:text-[10.5px] uppercase tracking-[0.03em] leading-[1.25] text-muted-foreground/85 [overflow-wrap:anywhere]">{t('home.glance.moon')}</p>
             {moonPhase !== null ? (
               <p className="inline-flex items-center gap-1 text-t12 font-semibold text-violet-deep">
                 <MoonPhaseGlyph phase={moonPhase} size={16} className="shrink-0" />
-                <span className="truncate">{t(phaseKeyOf(moonPhase))}</span>
+                <span className="min-w-0 leading-[1.2]">{t(phaseKeyOf(moonPhase))}</span>
               </p>
             ) : (
               <p className="text-t16 font-semibold text-muted-foreground">—</p>
@@ -722,7 +722,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
             onClick={qa.go}
             style={{ animationDelay: `${30 + i * 45}ms`, animationFillMode: 'backwards' }}
             className={cn(
-              'tap-sm glass glass-liquid stagger-in group relative flex min-h-[104px] sm:min-h-[112px] flex-col items-start justify-between gap-3 rounded-[22px] p-4 text-left',
+              'tap-sm glass glass-liquid stagger-in group relative flex min-h-[88px] sm:min-h-[112px] flex-col items-start justify-between gap-2.5 rounded-[22px] p-3.5 sm:p-4 text-left',
               'transition-all duration-250 ease-out hover:-translate-y-1 hover:shadow-[0_24px_48px_-16px_rgba(42,36,32,0.28)] active:scale-[0.98]',
               QUICK_TONES[i % QUICK_TONES.length].tint,
             )}
@@ -920,7 +920,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
             <button
               type="button"
               onClick={() => onNavigate('kundli', 'reports')}
-              className="shrink-0 text-t12 text-gold hover:text-gold-light underline underline-offset-4 decoration-gold/30 transition-colors duration-200"
+              className="tap-sm -m-2 shrink-0 inline-flex h-9 items-center rounded-full px-2 text-t12 font-medium text-gold hover:text-gold-light underline underline-offset-4 decoration-gold/30 transition-colors duration-200"
             >
               {t('dasha.viewReports')}
             </button>

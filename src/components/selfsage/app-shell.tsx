@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Icon, LogoMark, type IconName } from './icons';
 import { MandalaBackdrop } from './ui-primitives';
 import { ChakraBackdrop, ScreenGradient } from './chakra';
@@ -9,33 +9,8 @@ import { cn } from '@/lib/utils';
 
 export type TabId = 'home' | 'kundli' | 'journal' | 'acharya' | 'profile';
 
-/**
- * Immersive scroll behaviour for the floating pill nav: slides out of the way
- * while scrolling down, returns the moment you scroll up (or near the top).
- * Only transform/opacity are animated; keyboard focus forces it visible.
- */
-function useHideOnScroll() {
-  const [hidden, setHidden] = useState(false);
-  useEffect(() => {
-    let lastY = window.scrollY;
-    let ticking = false;
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        const y = window.scrollY;
-        const dy = y - lastY;
-        if (y > 140 && dy > 6) setHidden(true);
-        else if (dy < -6 || y <= 140) setHidden(false);
-        lastY = y;
-        ticking = false;
-      });
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-  return hidden;
-}
+/* NOTE: The scroll-away nav was REVERTED by user request — the bottom menu
+   bar is now PERMANENTLY visible on mobile (never hides, never fades). */
 
 export const TABS: { id: TabId; icon: IconName; labelKey: string }[] = [
   { id: 'home', icon: 'home', labelKey: 'tab.home' },
@@ -87,12 +62,17 @@ function NavItems({
               'relative z-10 flex items-center rounded-full transition-colors duration-250 ease-out active:scale-95',
               vertical
                 ? 'flex-col gap-1 w-full h-[58px] justify-center'
-                : 'flex-1 flex-col justify-center gap-0.5 h-full',
-              isActive ? 'text-charcoal' : 'text-gold hover:text-gold-light',
+                : 'flex-1 flex-col justify-center gap-[3px] h-full min-h-[44px]',
+              isActive ? 'text-charcoal' : 'text-charcoal/60 hover:text-charcoal/85',
             )}
           >
-            <Icon name={t.icon} size={vertical ? 22 : 21} />
-            <span className={cn('font-medium', vertical ? 'text-t12' : 'text-[10px] leading-tight')}>
+            <Icon name={t.icon} size={vertical ? 22 : 21} strokeWidth={isActive ? 2.2 : 1.9} />
+            <span
+              className={cn(
+                vertical ? 'text-t12 font-medium' : 'text-[10.5px] leading-tight tracking-[0.01em]',
+                isActive ? 'font-semibold' : 'font-medium',
+              )}
+            >
               {labelOf(t.labelKey)}
             </span>
           </button>
@@ -121,7 +101,6 @@ export function AppShellInner({
   labelOf: (key: string) => string;
   children: React.ReactNode;
 }) {
-  const hidden = useHideOnScroll();
   const tone = useAppStore((s) => s.screenTone);
   const setScreenTone = useAppStore((s) => s.setScreenTone);
 
@@ -165,17 +144,13 @@ export function AppShellInner({
         </div>
       </main>
 
-      {/* Mobile floating pill nav (<1024px) — hides on scroll down, returns on scroll up.
-          Shadow/bevel language matches the liquid-glass feature tiles so the bar feels
-          cut from the same optical system (crisp top highlight, deep float, warm under-edge). */}
+      {/* Mobile floating pill nav (<1024px) — ALWAYS visible (scroll-away
+          behaviour reverted after user feedback). Shadow/bevel language matches
+          the liquid-glass feature tiles: crisp top highlight, deep float, warm
+          gold under-edge. */}
       <nav
         aria-label="Main navigation"
-        aria-hidden={hidden}
-        className={cn(
-          'lg:hidden fixed z-40 bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 right-4 glass bar-texture rounded-full h-16 px-2 flex items-center shadow-[0_18px_44px_-12px_rgba(42,36,32,0.26),0_4px_14px_-4px_rgba(42,36,32,0.12),inset_0_1px_0_rgba(255,255,255,0.9),inset_0_-1px_0_rgba(201,162,39,0.14)]',
-          'transition-all duration-300 ease-out will-change-transform',
-          hidden ? 'translate-y-[160%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100 focus-within:pointer-events-auto focus-within:translate-y-0 focus-within:opacity-100',
-        )}
+        className="lg:hidden fixed z-40 bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 right-4 glass bar-texture rounded-full h-16 px-2 flex items-center shadow-[0_18px_44px_-12px_rgba(42,36,32,0.26),0_4px_14px_-4px_rgba(42,36,32,0.12),inset_0_1px_0_rgba(255,255,255,0.9),inset_0_-1px_0_rgba(201,162,39,0.14)]"
       >
         <NavItems active={activeTab} onChange={onTabChange} labelOf={labelOf} />
       </nav>

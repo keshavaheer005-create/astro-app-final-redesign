@@ -198,8 +198,8 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
           title={t('profile.yourChart')}
           icon="chart"
           action={
-            <GhostButton className="h-8 px-3 text-t12" onClick={() => setForm({ mode: 'add' })}>
-              <Icon name="plus" size={13} /> {t('profile.addChart')}
+            <GhostButton className="h-9 px-3.5 text-t12" onClick={() => setForm({ mode: 'add' })}>
+              <Icon name="plus" size={14} /> {t('profile.addChart')}
             </GhostButton>
           }
         />
@@ -234,17 +234,17 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
                 type="button"
                 onClick={() => setForm({ mode: 'edit', chart: c })}
                 aria-label={t('profile.chartForm.editChart')}
-                className="tap-sm text-muted-foreground/60 hover:text-gold transition-colors duration-200 p-1.5 shrink-0"
+                className="tap-sm text-muted-foreground/60 hover:text-gold transition-colors duration-200 -m-1 p-2.5 shrink-0"
               >
-                <Icon name="edit" size={15} />
+                <Icon name="edit" size={16} />
               </button>
               <button
                 type="button"
                 onClick={() => deleteChart(c.id)}
                 aria-label={t('profile.delete')}
-                className="tap-sm text-muted-foreground/60 hover:text-burgundy transition-colors duration-200 p-1.5 shrink-0"
+                className="tap-sm text-muted-foreground/60 hover:text-burgundy transition-colors duration-200 -m-1 p-2.5 shrink-0"
               >
-                <Icon name="x" size={15} />
+                <Icon name="x" size={16} />
               </button>
             </GlassCard>
           ))}
@@ -390,7 +390,7 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
           <button
             type="button"
             onClick={exportData}
-            className="tap-sm mt-3 inline-flex items-center gap-1.5 text-t12 text-gold hover:text-gold-light transition-colors duration-200"
+            className="tap-sm mt-3 -ml-2 inline-flex h-9 items-center gap-1.5 rounded-full px-2 text-t12 font-medium text-gold hover:bg-gold-faint hover:text-gold-light transition-colors duration-200"
           >
             <Icon name="download" size={14} /> {t('profile.exportData')}
           </button>
