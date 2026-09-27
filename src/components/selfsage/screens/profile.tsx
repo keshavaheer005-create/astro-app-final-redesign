@@ -7,7 +7,9 @@ import { GlassCard, SectionHeader, GoldButton, GhostButton } from '../ui-primiti
 import { Switch } from '@/components/ui/switch';
 import { api, useSession, type ChartData } from '../session-context';
 import { useAppStore } from '@/store/app';
-import { OnboardingScreen } from './onboarding';
+import { AuthCard } from '../auth-card';
+import { ChakraWheel } from '../chakra';
+import { ChartForm } from '../chart-form';
 import { cn } from '@/lib/utils';
 
 interface SavedChart {
@@ -40,8 +42,34 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
   } = useAppStore();
 
   const [charts, setCharts] = useState<SavedChart[]>([]);
-  const [editing, setEditing] = useState(false);
+  // Inline add/edit form — replaces the old replay-onboarding "profile loop".
+  const [form, setForm] = useState<null | { mode: 'add' | 'edit'; chart?: SavedChart }>(null);
   const [authOpen, setAuthOpen] = useState(false);
+  const [flash, setFlash] = useState<'added' | 'updated' | null>(null);
+
+  // Active chart = isPrimary row, else first row; last resort derives from the
+  // session chart so "Edit birth" still opens when the list fetch failed.
+  const activeSaved = charts.find((c) => c.isPrimary) ?? charts[0];
+  const chartFromSession = (): SavedChart | undefined => {
+    if (!chart?.input) return undefined;
+    return {
+      id: '',
+      name: String(chart.input.name ?? ''),
+      dob: String(chart.input.dob),
+      tob: String(chart.input.tob),
+      lat: Number(chart.input.lat),
+      lng: Number(chart.input.lng),
+      timezone: String(chart.input.timezone),
+      placeName: chart.input.placeName ? String(chart.input.placeName) : null,
+      isPrimary: true,
+    };
+  };
+
+  useEffect(() => {
+    if (!flash) return;
+    const id = setTimeout(() => setFlash(null), 6000);
+    return () => clearTimeout(id);
+  }, [flash]);
 
   const loadCharts = useCallback(async () => {
     try {
@@ -98,21 +126,6 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
     URL.revokeObjectURL(url);
   };
 
-  if (editing) {
-    return (
-      <div className="space-y-4">
-        <button
-          type="button"
-          onClick={() => setEditing(false)}
-          className="inline-flex items-center gap-1.5 text-t14 text-gold hover:text-gold-light transition-colors duration-200"
-        >
-          <Icon name="arrow-left" size={16} /> {t('common.back')}
-        </button>
-        <OnboardingScreen onComplete={() => { setEditing(false); onChartUpdated(); }} />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 max-w-3xl">
       <header className="flex items-center justify-between">
@@ -120,10 +133,31 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
         <LogoMark size={34} className="opacity-80" />
       </header>
 
+      {/* Inline add / edit form — renders in place, no onboarding replay */}
+      {form && (
+        <ChartForm
+          mode={form.mode}
+          chart={form.chart}
+          onSaved={() => {
+            setFlash(form.mode === 'add' ? 'added' : 'updated');
+            setForm(null);
+            void loadCharts();
+            onChartUpdated();
+          }}
+          onCancel={() => setForm(null)}
+        />
+      )}
+
       {/* User card */}
       <GlassCard className="p-5 flex items-center gap-4">
-        <div className="w-14 h-14 rounded-full gold-grad flex items-center justify-center text-charcoal font-serif text-t20 font-bold shrink-0 shadow-[0_4px_14px_rgba(201,162,39,0.35)]">
-          {(chart?.input?.name || user?.name || 'S').slice(0, 1).toUpperCase()}
+        <div className="relative flex h-14 w-14 shrink-0 items-center justify-center">
+          {/* decorative chakra behind the avatar — never interactive */}
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-gold/10" aria-hidden="true">
+            <ChakraWheel size={140} speed="slow" />
+          </div>
+          <div className="relative w-14 h-14 rounded-full gold-grad flex items-center justify-center text-charcoal font-serif text-t20 font-bold shadow-[0_4px_14px_rgba(201,162,39,0.35)]">
+            {(chart?.input?.name || user?.name || 'S').slice(0, 1).toUpperCase()}
+          </div>
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-serif text-t20 font-semibold text-charcoal truncate">{chart?.input?.name || user?.name || 'Seeker'}</p>
@@ -139,7 +173,10 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
           )}
         </div>
         {chart && (
-          <GhostButton className="shrink-0 h-9 px-3.5 text-t12" onClick={() => setEditing(true)}>
+          <GhostButton
+            className="shrink-0 h-9 px-3.5 text-t12"
+            onClick={() => setForm({ mode: 'edit', chart: activeSaved ?? chartFromSession() })}
+          >
             <Icon name="edit" size={14} /> {t('profile.editBirth')}
           </GhostButton>
         )}
@@ -151,11 +188,17 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
           title={t('profile.yourChart')}
           icon="chart"
           action={
-            <GhostButton className="h-8 px-3 text-t12" onClick={() => setEditing(true)}>
+            <GhostButton className="h-8 px-3 text-t12" onClick={() => setForm({ mode: 'add' })}>
               <Icon name="plus" size={13} /> {t('profile.addChart')}
             </GhostButton>
           }
         />
+        {flash && (
+          <p className="mb-2.5 flex items-center gap-1.5 text-t12 text-emerald" role="status">
+            <Icon name="check" size={14} className="shrink-0" />
+            {t(flash === 'added' ? 'profile.chartForm.added' : 'profile.chartForm.updated')}
+          </p>
+        )}
         <div className="space-y-2.5 max-h-80 overflow-y-auto scroll-slim pr-1">
           {charts.length === 0 && <p className="text-t14 text-muted-foreground px-1">{t('home.noChart')}</p>}
           {charts.map((c) => (
@@ -172,11 +215,19 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
                 <button
                   type="button"
                   onClick={() => activateChart(c.id)}
-                  className="text-t12 text-gold hover:text-gold-light transition-colors duration-200 shrink-0"
+                  className="text-t12 text-emerald hover:text-emerald-deep transition-colors duration-200 shrink-0"
                 >
                   {t('profile.setActive')}
                 </button>
               )}
+              <button
+                type="button"
+                onClick={() => setForm({ mode: 'edit', chart: c })}
+                aria-label={t('profile.chartForm.editChart')}
+                className="text-muted-foreground/60 hover:text-gold transition-colors duration-200 p-1.5 shrink-0"
+              >
+                <Icon name="edit" size={15} />
+              </button>
               <button
                 type="button"
                 onClick={() => deleteChart(c.id)}
@@ -295,7 +346,7 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
                   <Icon name="shield" size={15} /> {t('profile.signIn')}
                 </GoldButton>
               ) : (
-                <AuthForm onDone={() => setAuthOpen(false)} />
+                <AuthCard onAuthed={() => setAuthOpen(false)} />
               )}
             </div>
           )}
@@ -324,62 +375,3 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
   );
 }
 
-function AuthForm({ onDone }: { onDone: () => void }) {
-  const { t } = useTranslation();
-  const { setUser } = useSession();
-  const [mode, setMode] = useState<'signup' | 'login'>('signup');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [working, setWorking] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const submit = async () => {
-    setWorking(true);
-    setError(null);
-    try {
-      const res = await api<{ user: { id: string; email: string; isGuest: boolean } }>('/api/auth', {
-        method: 'POST',
-        body: JSON.stringify({ action: mode, email, password }),
-      });
-      setUser({ ...res.user, name: null });
-      onDone();
-    } catch (e) {
-      const msg = (e as Error).message;
-      setError(msg === 'email_taken' ? t('auth.errorTaken') : msg === 'invalid_credentials' ? t('auth.errorCredentials') : t('auth.errorInvalid'));
-    } finally {
-      setWorking(false);
-    }
-  };
-
-  return (
-    <div className="space-y-2.5">
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder={t('auth.email')}
-        className="w-full h-10 rounded-xl border border-gold/30 bg-white/70 px-3.5 text-t14 outline-none focus:border-gold/60 transition-all duration-250"
-      />
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder={t('auth.password')}
-        className="w-full h-10 rounded-xl border border-gold/30 bg-white/70 px-3.5 text-t14 outline-none focus:border-gold/60 transition-all duration-250"
-      />
-      {error && <p className="text-t12 text-maroon">{error}</p>}
-      <div className="flex items-center gap-2">
-        <GoldButton className="h-10 text-t14" onClick={submit} disabled={working || !email || password.length < 6}>
-          {working ? t('auth.working') : mode === 'signup' ? t('auth.signup') : t('auth.login')}
-        </GoldButton>
-        <button
-          type="button"
-          onClick={() => setMode((m) => (m === 'signup' ? 'login' : 'signup'))}
-          className="text-t12 text-gold hover:underline"
-        >
-          {mode === 'signup' ? t('auth.switchToLogin') : t('auth.switchToSignup')}
-        </button>
-      </div>
-    </div>
-  );
-}

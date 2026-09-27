@@ -1,21 +1,14 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Icon, LogoMark } from '../icons';
-import { GlassCard, GoldButton, GhostButton, PageLoader, Chip } from '../ui-primitives';
-import { CalendarPicker, TimeWheel } from '../pickers';
+import { GlassCard, GoldButton, GhostButton } from '../ui-primitives';
+import { GlassDatePicker, TimeWheel } from '../pickers';
+import { LocationCombobox, type LocationResult } from '../location-combobox';
+import { ChakraBackdrop, ChakraSpinner, ChakraWheel } from '../chakra';
 import { api, useSession, type ChartData } from '../session-context';
-
-interface GeoResult {
-  name: string;
-  lat: number;
-  lng: number;
-  timezone: string;
-  country?: string;
-  admin?: string;
-}
 
 type Step = 'welcome' | 'name' | 'birth' | 'computing' | 'ready';
 
@@ -29,14 +22,8 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
     return `${d.getFullYear() - 25}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   });
   const [tob, setTob] = useState('08:30');
-  const [placeQuery, setPlaceQuery] = useState('');
-  const [places, setPlaces] = useState<GeoResult[]>([]);
-  const [selectedPlace, setSelectedPlace] = useState<GeoResult | null>(null);
-  const [searching, setSearching] = useState(false);
-  const [locating, setLocating] = useState(false);
-  const [locationError, setLocationError] = useState<string | null>(null);
+  const [selectedPlace, setSelectedPlace] = useState<LocationResult | null>(null);
   const [computeError, setComputeError] = useState<string | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const locale = i18n.language === 'hi' ? 'hi-IN' : 'en-IN';
 
@@ -53,62 +40,6 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
       return '';
     }
   })();
-
-  const searchPlaces = useCallback((q: string) => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (q.trim().length < 2) {
-      setPlaces([]);
-      return;
-    }
-    debounceRef.current = setTimeout(async () => {
-      setSearching(true);
-      try {
-        const res = await api<{ results: GeoResult[] }>('/api/geocode', {
-          method: 'POST',
-          body: JSON.stringify({ placeName: q }),
-        });
-        setPlaces(res.results);
-      } catch {
-        setPlaces([]);
-      } finally {
-        setSearching(false);
-      }
-    }, 350);
-  }, []);
-
-  const useMyLocation = () => {
-    setLocationError(null);
-    if (!navigator.geolocation) {
-      setLocationError(t('common.locationDenied'));
-      return;
-    }
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const res = await api<{ results: GeoResult[] }>('/api/geocode', {
-            method: 'POST',
-            body: JSON.stringify({ mode: 'reverse', lat: pos.coords.latitude, lng: pos.coords.longitude }),
-          });
-          const r = res.results[0];
-          if (r) {
-            setSelectedPlace(r);
-            setPlaceQuery(r.name);
-            setPlaces([]);
-          }
-        } catch {
-          setLocationError(t('common.networkError'));
-        } finally {
-          setLocating(false);
-        }
-      },
-      () => {
-        setLocating(false);
-        setLocationError(t('common.locationDenied'));
-      },
-      { timeout: 8000 },
-    );
-  };
 
   const computeChart = async () => {
     if (!selectedPlace) return;
@@ -154,7 +85,8 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
   return (
     <div className="min-h-screen flex flex-col bg-cream relative">
       <div className="mandala-bg" aria-hidden="true" />
-      <div className="flex-1 w-full max-w-lg mx-auto px-4 py-8 flex flex-col justify-center">
+      <ChakraBackdrop />
+      <div className="relative z-10 flex-1 w-full max-w-lg mx-auto px-4 py-8 flex flex-col justify-center">
         <AnimatePresence mode="wait">
           {step === 'welcome' && (
             <motion.div
@@ -165,7 +97,15 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
               transition={{ duration: 0.32, ease: 'easeOut' }}
               className="text-center"
             >
-              <LogoMark size={84} className="mx-auto mb-6" />
+              <div className="relative mx-auto mb-6 flex h-[84px] w-[84px] items-center justify-center">
+                <div
+                  className="pointer-events-none absolute inset-0 flex items-center justify-center text-gold/20"
+                  aria-hidden="true"
+                >
+                  <ChakraWheel size={180} speed="slow" strokeWidth={1.5} />
+                </div>
+                <LogoMark size={84} className="relative" />
+              </div>
               <h1 className="font-serif text-t28 font-bold text-charcoal">{t('onboarding.welcome')}</h1>
               <p className="mt-2 text-gold-grad font-serif text-t16 italic">{t('splash.motto')}</p>
               <p className="mt-5 text-t14 text-muted-foreground leading-relaxed">{t('onboarding.welcomeBody')}</p>
@@ -232,8 +172,8 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
                 />
 
                 <label className="text-t12 font-medium text-muted-foreground uppercase tracking-wide">{t('onboarding.dobLabel')}</label>
-                <div className="mt-1.5 mb-4 rounded-xl border border-gold/25 bg-white/55 p-2">
-                  <CalendarPicker value={dob} onChange={setDob} />
+                <div className="mt-1.5 mb-4">
+                  <GlassDatePicker value={dob} onChange={setDob} ariaLabel={t('onboarding.dobLabel')} />
                 </div>
 
                 <label className="text-t12 font-medium text-muted-foreground uppercase tracking-wide">{t('onboarding.tobLabel')}</label>
@@ -242,66 +182,13 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
                 </div>
 
                 <label className="text-t12 font-medium text-muted-foreground uppercase tracking-wide">{t('onboarding.placeLabel')}</label>
-                <div className="mt-1.5 relative">
-                  <input
-                    value={placeQuery}
-                    onChange={(e) => {
-                      setPlaceQuery(e.target.value);
-                      setSelectedPlace(null);
-                      searchPlaces(e.target.value);
-                    }}
-                    placeholder={t('onboarding.placeHint')}
-                    className="w-full h-11 rounded-xl border border-gold/30 bg-white/70 px-4 pr-10 text-t14 outline-none transition-all duration-250 focus:border-gold/60 focus:ring-2 focus:ring-gold/25"
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gold">
-                    {searching ? <Icon name="search" size={16} className="animate-pulse" /> : <Icon name="pin" size={16} />}
-                  </span>
-                </div>
-
-                {places.length > 0 && !selectedPlace && (
-                  <div className="mt-2 rounded-xl border border-gold/25 bg-white/85 overflow-hidden max-h-52 overflow-y-auto scroll-slim">
-                    {places.map((p, i) => (
-                      <button
-                        key={`${p.name}-${i}`}
-                        type="button"
-                        onClick={() => {
-                          setSelectedPlace(p);
-                          setPlaceQuery(p.name);
-                          setPlaces([]);
-                        }}
-                        className="w-full text-left px-4 py-2.5 hover:bg-gold-soft/70 transition-colors duration-150 flex items-center justify-between gap-2"
-                      >
-                        <span className="text-t14 text-charcoal">
-                          {p.name}
-                          {p.admin ? <span className="text-muted-foreground">, {p.admin}</span> : null}
-                          {p.country ? <span className="text-muted-foreground/70"> · {p.country}</span> : null}
-                        </span>
-                        <span className="text-t12 text-muted-foreground/70 shrink-0">{p.timezone}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {!searching && placeQuery.length >= 2 && !selectedPlace && places.length === 0 && (
-                  <p className="mt-2 text-t12 text-muted-foreground">{t('common.noResults')}</p>
-                )}
-
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <Chip onClick={useMyLocation}>
-                    <span className="inline-flex items-center gap-1.5">
-                      <Icon name="locate" size={14} />
-                      {locating ? t('onboarding.locating') : t('onboarding.useLocation')}
-                    </span>
-                  </Chip>
-                  {selectedPlace && (
-                    <span className="text-t12 text-sage inline-flex items-center gap-1">
-                      <Icon name="check" size={14} /> {selectedPlace.name} · {selectedPlace.timezone}
-                    </span>
-                  )}
-                </div>
-                {locationError && <p className="mt-2 text-t12 text-maroon">{locationError}</p>}
-                {!selectedPlace && placeQuery.length > 0 && (
-                  <p className="mt-2 text-t12 text-muted-foreground/80">{t('onboarding.needPlace')}</p>
-                )}
+                <LocationCombobox
+                  className="mt-1.5"
+                  value={selectedPlace?.name ?? ''}
+                  onSelect={setSelectedPlace}
+                  showUseMyLocation
+                  ariaLabel={t('onboarding.placeLabel')}
+                />
               </GlassCard>
 
               {confirmLine && (
@@ -332,7 +219,7 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
 
           {step === 'computing' && (
             <motion.div key="computing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center">
-              <PageLoader label={t('onboarding.computing')} />
+              <ChakraSpinner size={56} label={t('onboarding.computing')} />
               <p className="text-t12 text-muted-foreground mt-2">{t('onboarding.computingHint')}</p>
             </motion.div>
           )}

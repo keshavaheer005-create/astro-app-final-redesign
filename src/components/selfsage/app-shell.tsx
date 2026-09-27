@@ -3,6 +3,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Icon, LogoMark, type IconName } from './icons';
 import { MandalaBackdrop } from './ui-primitives';
+import { ChakraBackdrop } from './chakra';
 import { cn } from '@/lib/utils';
 
 export type TabId = 'home' | 'kundli' | 'journal' | 'acharya' | 'profile';
@@ -133,6 +134,7 @@ export function AppShellInner({
   return (
     <div className="min-h-screen flex flex-col bg-cream text-charcoal">
       <MandalaBackdrop />
+      <ChakraBackdrop />
 
       {/* Desktop sidebar (≥1024px) */}
       <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-[92px] z-40 flex-col items-center py-5">
@@ -152,7 +154,7 @@ export function AppShellInner({
       </aside>
 
       {/* Content */}
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 lg:pl-[120px] pt-4 sm:pt-6 pb-28 lg:pb-10">
+      <main className="relative z-10 flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 lg:pl-[120px] pt-4 sm:pt-6 pb-28 lg:pb-10">
         <div
           key={activeTab}
           className="stagger-in"

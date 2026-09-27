@@ -57,7 +57,6 @@ export async function POST(req: Request) {
 
 async function dbSaveChart(userId: string, chart: import('@/lib/astro/chart').ComputedChart) {
   const { db } = await import('@/lib/db');
-  const existing = await db.birthChart.findFirst({ where: { userId }, orderBy: { createdAt: 'asc' } });
   const data = {
     name: chart.input.name,
     dob: chart.input.dob,
@@ -68,9 +67,22 @@ async function dbSaveChart(userId: string, chart: import('@/lib/astro/chart').Co
     placeName: chart.input.placeName ?? null,
     chartData: JSON.stringify(chart),
   };
+  // Identity match first (same dob/tob/place → update in place, never duplicate);
+  // otherwise create. Either way this becomes the user's single active chart.
+  const existing = await db.birthChart.findFirst({
+    where: {
+      userId,
+      dob: chart.input.dob,
+      tob: chart.input.tob,
+      lat: chart.input.lat,
+      lng: chart.input.lng,
+    },
+  });
   if (existing) {
-    await db.birthChart.update({ where: { id: existing.id }, data });
+    await db.birthChart.updateMany({ where: { userId }, data: { isPrimary: false } });
+    await db.birthChart.update({ where: { id: existing.id }, data: { ...data, isPrimary: true } });
   } else {
+    await db.birthChart.updateMany({ where: { userId }, data: { isPrimary: false } });
     await db.birthChart.create({ data: { userId, isPrimary: true, ...data } });
   }
 }

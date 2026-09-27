@@ -611,7 +611,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
               })}
               {checkin && checkin.streak >= 3 && (
                 <div className="px-4 py-3 flex items-start gap-3 border-b border-gold/10 animate-in fade-in-0 slide-in-from-bottom-1 duration-300" style={{ animationDelay: '150ms', animationFillMode: 'backwards' }}>
-                  <span className="mt-0.5 text-maroon"><Icon name="flame" size={15} /></span>
+                  <span className="mt-0.5 text-emerald-deep"><Icon name="flame" size={15} /></span>
                   <span className="text-t14 text-charcoal">{t('notifications.streak', { n: checkin.streak })}</span>
                 </div>
               )}
@@ -802,7 +802,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                 <p className="text-t12 text-muted-foreground">{t('home.checkinDoneBody')}</p>
               </div>
               <div className="text-right shrink-0">
-                <span className="inline-flex items-center gap-1 text-maroon font-semibold text-t16">
+                <span className="inline-flex items-center gap-1 text-emerald-deep font-semibold text-t16">
                   <Icon name="flame" size={18} className="flame-pulse" />
                   {checkin.streak}
                 </span>

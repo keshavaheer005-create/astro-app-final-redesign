@@ -58,6 +58,22 @@
   --color-maroon-soft: #f4e4e7;
   --color-sage: #7a8b6f;
 
+  /* Extended accent palette (semantic use only — gold remains the sole CTA colour) */
+  --color-emerald: #3e8e6e;
+  --color-emerald-deep: #2e7057;
+  --color-emerald-soft: #e3f0e9;
+  --color-emerald-faint: #f1f7f3;
+  --color-violet: #6e4a9e;
+  --color-violet-deep: #593a82;
+  --color-violet-soft: #eee8f6;
+  --color-violet-faint: #f6f2fa;
+  --color-burgundy: #5c1a28;
+  --color-burgundy-soft: #f3e2e5;
+  --color-rose: #c2455a;
+  --color-rose-deep: #a33347;
+  --color-rose-soft: #f9e7ea;
+  --color-rose-faint: #fcf1f3;
+
   /* Fixed type scale: 12 / 14 / 16 / 20 / 28 */
   --text-t12: 0.75rem;
   --text-t12--line-height: 1.45;
@@ -224,6 +240,59 @@
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+  }
+
+  /* ── Extended accent gradients (semantic: emerald = growth, violet = intuition, rose = harmony) ── */
+  .emerald-grad {
+    background: linear-gradient(135deg, #2e7057 0%, #5aa887 100%);
+  }
+  .violet-grad {
+    background: linear-gradient(135deg, #593a82 0%, #8f6cc0 100%);
+  }
+  .rose-grad {
+    background: linear-gradient(135deg, #a33347 0%, #d9708a 100%);
+  }
+  .text-emerald-grad {
+    background: linear-gradient(135deg, #2e7057 0%, #6cb595 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .text-violet-grad {
+    background: linear-gradient(135deg, #593a82 0%, #a98cd1 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* ── Moving chakras (transform-only, GPU friendly, reduced-motion aware) ── */
+  @keyframes chakra-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes chakra-spin-rev {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0deg); }
+  }
+  @keyframes chakra-breathe {
+    0%, 100% { transform: scale(1); opacity: 0.85; }
+    50% { transform: scale(1.045); opacity: 1; }
+  }
+  .chakra-spin {
+    animation: chakra-spin 120s linear infinite;
+    will-change: transform;
+  }
+  .chakra-spin-mid {
+    animation: chakra-spin 80s linear infinite reverse;
+    will-change: transform;
+  }
+  .chakra-spin-fast {
+    animation: chakra-spin 26s linear infinite;
+    will-change: transform;
+  }
+  .chakra-breathe {
+    animation: chakra-breathe 8s ease-in-out infinite;
+    will-change: transform, opacity;
   }
 
   /* ── Motion ────────────────────────────────────────────────────────── */

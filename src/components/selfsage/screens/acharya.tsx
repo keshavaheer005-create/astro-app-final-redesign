@@ -319,13 +319,14 @@ export function AcharyaScreen() {
 
   return (
     <div className="flex flex-col h-[calc(100dvh-11rem)] lg:h-[calc(100dvh-9rem)]">
-      {/* Chat header — inverted ink card */}
-      <div className="glass-ink px-4 py-3 flex items-center gap-3 shrink-0">
+      {/* Chat header — inverted ink card with violet intuition aura */}
+      <div className="glass-ink px-4 py-3 flex items-center gap-3 shrink-0 relative overflow-hidden">
+        <div className="absolute -top-12 -right-12 w-36 h-36 rounded-full bg-violet/25 blur-2xl pointer-events-none" aria-hidden="true" />
         <AcharyaAvatar size={44} />
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 relative">
           <p className="font-serif text-t16 font-semibold text-gold-grad truncate">{t('acharya.title')}</p>
           <p className="text-t12 text-[#a5947a] flex items-center gap-1.5">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-sage animate-pulse" />
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-violet animate-pulse" />
             {t('acharya.subtitle')}
           </p>
         </div>
@@ -334,7 +335,7 @@ export function AcharyaScreen() {
             type="button"
             onClick={clearChat}
             aria-label={t('acharya.clear')}
-            className="text-[#a5947a] hover:text-gold-light transition-colors duration-200 p-2"
+            className="relative text-[#a5947a] hover:text-gold-light transition-colors duration-200 p-2"
           >
             <Icon name="refresh" size={17} />
           </button>

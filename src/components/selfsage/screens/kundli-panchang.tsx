@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Icon, AcharyaAvatar } from '../icons';
 import { GlassCard, SectionHeader, EmptyState, PageLoader, ErrorState } from '../ui-primitives';
-import { CalendarPicker } from '../pickers';
+import { GlassDatePicker } from '../pickers';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { api, useSession } from '../session-context';
 import { useAppStore } from '@/store/app';
@@ -192,7 +192,7 @@ export function PanchangScreen() {
       {mode === 'day' ? (
         <div className="grid lg:grid-cols-[300px_1fr] gap-4 items-start">
           <GlassCard className="p-4">
-            <CalendarPicker value={date} onChange={setDate} />
+            <GlassDatePicker value={date} onChange={setDate} minYear={1900} maxYear={new Date().getFullYear() + 1} ariaLabel={t('panchang.mode.day')} />
           </GlassCard>
 
         <div className="space-y-4 min-w-0">

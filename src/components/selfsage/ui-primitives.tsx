@@ -8,14 +8,14 @@ import type { Dignity } from '@/lib/astro/dignity';
 
 /* ── Dignity chips (shared by D1 planets table & D9 varga table) ─────────── */
 
-/** Chip styling per classical dignity tier (gold = strong, maroon = strain). */
+/** Chip styling per classical dignity tier (emerald = strength, burgundy = strain). */
 const DIGNITY_STYLE: Record<Dignity, string> = {
-  exalted: 'bg-gold-grad border-gold/60 text-charcoal font-semibold',
-  own: 'bg-gold-soft border-gold/40 text-[#8a6d10] font-semibold',
+  exalted: 'emerald-grad border-emerald-deep/60 text-white font-semibold',
+  own: 'bg-emerald-soft border-emerald/45 text-emerald-deep font-semibold',
   friendly: 'bg-gold-faint/70 border-gold/25 text-charcoal/80',
   neutral: 'bg-white/50 border-charcoal/10 text-charcoal/60',
-  enemy: 'bg-[#6B2737]/8 border-[#6B2737]/25 text-[#6B2737]',
-  debilitated: 'bg-[#6B2737]/12 border-[#6B2737]/35 text-[#6B2737] font-semibold',
+  enemy: 'bg-burgundy/8 border-burgundy/25 text-burgundy',
+  debilitated: 'bg-burgundy/12 border-burgundy/40 text-burgundy font-semibold',
 };
 
 export function DignityChip({ dignity, className }: { dignity: Dignity; className?: string }) {

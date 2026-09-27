@@ -68,7 +68,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       const charts = await api<{
         charts: { chartData: ChartData | null; isPrimary: boolean }[];
       }>('/api/charts', { signal: controller.signal });
-      const primary = charts.charts.find((c) => c.isPrimary) ?? charts.charts[0];
+      // Prefer the active chart, but never let a data-less primary blank the app:
+      // fall back to any chart that carries a computed snapshot.
+      const primary =
+        charts.charts.find((c) => c.isPrimary && c.chartData) ??
+        charts.charts.find((c) => c.chartData) ??
+        charts.charts.find((c) => c.isPrimary) ??
+        charts.charts[0];
       if (primary?.chartData) setChart(primary.chartData);
       else setChart(null);
     } catch (e) {
@@ -88,7 +94,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const refreshChart = useCallback(async () => {
     try {
       const charts = await api<{ charts: { chartData: ChartData | null; isPrimary: boolean }[] }>('/api/charts');
-      const primary = charts.charts.find((c) => c.isPrimary) ?? charts.charts[0];
+      const primary =
+        charts.charts.find((c) => c.isPrimary && c.chartData) ??
+        charts.charts.find((c) => c.chartData) ??
+        charts.charts.find((c) => c.isPrimary) ??
+        charts.charts[0];
       setChart(primary?.chartData ?? null);
     } catch (e) {
       console.error('[refreshChart]', e);
