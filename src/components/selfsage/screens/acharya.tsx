@@ -362,8 +362,10 @@ export function AcharyaScreen() {
         )}
       </div>
 
-      {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-slim px-1 py-4 space-y-4">
+      {/* Messages — one centered conversation column (readable width on
+          desktop, full-bleed on mobile) */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto scroll-slim px-1 py-4">
+        <div className="mx-auto w-full max-w-3xl space-y-4">
         {messages.length === 0 && (
           <div className="text-center px-4 pt-6">
             <OmEmblem size={92} strokeWidth={1.3} className="mx-auto mb-3 text-emerald opacity-80" />
@@ -480,58 +482,72 @@ export function AcharyaScreen() {
         {loadError && chart && (
           <p className="text-center text-t12 text-maroon">{t('acharya.retry')}</p>
         )}
+        </div>
       </div>
 
-      {/* Composer */}
+      {/* Composer — ONE unified glass pill anchored above the nav: mic, field
+          and send live inside a single emerald-tinted bar (focus lights the
+          whole bar), and the voice status is integrated so nothing floats
+          detached above the typing line. */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
           ask(input);
         }}
-        className="shrink-0 space-y-1.5 pt-1"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        className="shrink-0 pt-1.5"
+        style={{ paddingBottom: 'max(0.375rem, env(safe-area-inset-bottom))' }}
       >
-        {voiceState !== 'idle' && (
-          <div className="flex items-center gap-2 px-2" aria-live="polite">
-            <span className={cn('inline-flex items-center gap-1.5 text-t12', voiceState === 'recording' ? 'text-violet-deep' : 'text-muted-foreground')}>
-              <Icon name={voiceState === 'recording' ? 'mic' : 'sparkle'} size={13} className={voiceState === 'recording' ? 'mic-pulse' : 'animate-spin-slow'} />
-              {voiceState === 'recording' ? t('acharya.listening') : t('acharya.transcribing')}
-            </span>
-            {voiceState === 'recording' && <span className="flex-1 h-px bg-gradient-to-r from-violet/40 via-emerald/30 to-transparent" />}
-          </div>
-        )}
-        {voiceError && <p className="px-2 text-t12 text-maroon">{t('acharya.micError')}</p>}
-        <div className="flex items-center gap-2">
-          {micSupported && (
-            <button
-              type="button"
-              onClick={() => void toggleMic()}
-              disabled={!chart || loading}
-              aria-label={t('acharya.micLabel')}
-              aria-pressed={voiceState === 'recording'}
-              className={cn(
-                'w-12 h-12 rounded-full shrink-0 inline-flex items-center justify-center border transition-all duration-250 active:scale-90 disabled:opacity-40',
-                voiceState === 'recording'
-                  ? 'bg-violet text-white border-violet mic-ring-violet'
-                  : 'glass text-gold hover:border-gold/50',
-              )}
-            >
-              <Icon name="mic" size={19} />
-            </button>
+        <div
+          className={cn(
+            'glass glass-tint-emerald mx-auto w-full max-w-3xl rounded-[26px] px-1.5 py-1.5',
+            'shadow-[0_12px_36px_rgba(42,36,32,0.12)] transition-all duration-250',
+            'focus-within:border-emerald/50 focus-within:shadow-[0_14px_40px_rgba(62,142,110,0.18)]',
+            (!chart || loading) && 'opacity-60',
           )}
-          <input
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={chart ? (voiceState === 'transcribing' ? t('acharya.voiceHint') : t('acharya.placeholder')) : t('acharya.needChart')}
-            disabled={!chart || loading}
-            className="flex-1 min-w-0 h-12 rounded-full glass px-5 text-t14 text-charcoal placeholder:text-muted-foreground/60 outline-none transition-all duration-250 focus:border-gold/50 focus:ring-2 focus:ring-gold/25 disabled:opacity-60"
-            maxLength={600}
-          />
-          <GoldButton type="submit" disabled={!input.trim() || loading || !chart} className="w-12 h-12 p-0 !px-0 shrink-0">
-            <Icon name="send" size={18} />
-            <span className="sr-only">{t('acharya.placeholder')}</span>
-          </GoldButton>
+        >
+          {/* live voice status — inside the bar, never detached */}
+          {voiceState !== 'idle' && (
+            <div className="flex items-center gap-2 px-3 pb-1 pt-1.5" aria-live="polite">
+              <span className={cn('inline-flex items-center gap-1.5 text-t12', voiceState === 'recording' ? 'text-violet-deep' : 'text-muted-foreground')}>
+                <Icon name={voiceState === 'recording' ? 'mic' : 'sparkle'} size={13} className={voiceState === 'recording' ? 'mic-pulse' : 'animate-spin-slow'} />
+                {voiceState === 'recording' ? t('acharya.listening') : t('acharya.transcribing')}
+              </span>
+              {voiceState === 'recording' && <span className="h-px flex-1 bg-gradient-to-r from-violet/40 via-emerald/30 to-transparent" />}
+            </div>
+          )}
+          {voiceError && <p className="px-3 pb-0.5 pt-1.5 text-t12 text-maroon">{t('acharya.micError')}</p>}
+          <div className="flex items-center gap-1">
+            {micSupported && (
+              <button
+                type="button"
+                onClick={() => void toggleMic()}
+                disabled={!chart || loading}
+                aria-label={t('acharya.micLabel')}
+                aria-pressed={voiceState === 'recording'}
+                className={cn(
+                  'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-all duration-250 active:scale-90 disabled:opacity-40',
+                  voiceState === 'recording'
+                    ? 'bg-violet text-white mic-ring-violet'
+                    : 'text-gold hover:bg-gold-faint/70',
+                )}
+              >
+                <Icon name="mic" size={19} />
+              </button>
+            )}
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={chart ? (voiceState === 'transcribing' ? t('acharya.voiceHint') : t('acharya.placeholder')) : t('acharya.needChart')}
+              disabled={!chart || loading}
+              className="h-11 min-w-0 flex-1 bg-transparent px-1.5 text-t14 text-charcoal placeholder:text-muted-foreground/60 outline-none"
+              maxLength={600}
+            />
+            <GoldButton type="submit" disabled={!input.trim() || loading || !chart} className="h-11 w-11 shrink-0 !px-0 hover:translate-y-0">
+              <Icon name="send" size={18} />
+              <span className="sr-only">{t('acharya.placeholder')}</span>
+            </GoldButton>
+          </div>
         </div>
       </form>
     </div>

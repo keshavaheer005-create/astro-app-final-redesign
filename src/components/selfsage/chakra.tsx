@@ -152,18 +152,6 @@ export function SriYantra({
   );
 }
 
-/* The seven chakras, mapped onto the Self Sage tint system
-   (gold stays solar-plexus; blues/indigos are intentionally avoided). */
-const CHAKRA_ORBS: { color: string; top: string }[] = [
-  { color: '#A33347', top: '9%' }, // Muladhara — rose deep
-  { color: '#C2455A', top: '22.5%' }, // Svadhisthana — rose
-  { color: '#C9A227', top: '36%' }, // Manipura — gold
-  { color: '#3E8E6E', top: '49.5%' }, // Anahata — emerald
-  { color: '#6E4A9E', top: '63%' }, // Vishuddha — violet
-  { color: '#593A82', top: '76.5%' }, // Ajna — violet deep
-  { color: '#8F6CC0', top: '90%' }, // Sahasrara — violet light
-];
-
 /* MandalaAccent geometry (precomputed & rounded for SSR hydration) */
 const MANDALA_PETAL = 'M50 10 C55 16 55 24 50 28 C45 24 45 16 50 10 Z';
 const MANDALA_TICKS: [number, number, number, number][] = Array.from({ length: 24 }, (_, i) => {
@@ -306,8 +294,6 @@ export function OmEmblem({
  *   6. emerald wheel, left margin (140s reverse)
  *   7. violet lotus wheel, top-left margin
  *   8. rose wheel, bottom-right margin
- *   9. the spine of seven chakra orbs along the right edge, breathing in a
- *      staggered 7s rhythm
  * Transform/opacity only; honours prefers-reduced-motion via global opt-out;
  * never intercepts clicks, never causes overflow.
  */
@@ -362,22 +348,6 @@ export function ChakraBackdrop() {
       {/* 8 — rose wheel, bottom-right margin */}
       <div className="absolute -bottom-[16vmin] -right-[12vmin] text-rose opacity-[0.06]">
         <ChakraWheel size="44vmin" speed="slow" strokeWidth={0.55} />
-      </div>
-
-      {/* 9 — spine of seven, right edge */}
-      <div className="absolute inset-y-0 right-[2.1vmin]">
-        {CHAKRA_ORBS.map((orb, i) => (
-          <span
-            key={orb.top}
-            className="chakra-orb absolute right-0 block h-[1.5vmin] w-[1.5vmin] min-h-[6px] min-w-[6px] rounded-full"
-            style={{
-              top: orb.top,
-              background: orb.color,
-              boxShadow: `0 0 14px 4px ${orb.color}38`,
-              animationDelay: `${i * 1.05}s`,
-            }}
-          />
-        ))}
       </div>
     </div>
   );

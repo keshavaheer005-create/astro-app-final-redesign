@@ -318,16 +318,6 @@
     animation: chakra-drift 22s ease-in-out 3s infinite;
     will-change: transform;
   }
-  /* Chakra-orb glow breathing (spine of seven) */
-  @keyframes chakra-orb {
-    0%, 100% { opacity: 0.45; transform: scale(0.92); }
-    50% { opacity: 0.9; transform: scale(1.1); }
-  }
-  .chakra-orb {
-    animation: chakra-orb 7s ease-in-out infinite;
-    will-change: transform, opacity;
-  }
-
   /* ── Motion ────────────────────────────────────────────────────────── */
   .stagger-in {
     animation: fade-rise 0.32s ease-out both;
@@ -650,33 +640,37 @@
   }
 
   /* ── Tinted glass panels (atmospheric colour per screen domain) ─────────
-     Compose over .glass: soft tinted fill + matching hairline border. The
-     top sheen from .glass::before still shows through. Gold stays the sole
-     CTA colour — these are secondary, calm surfaces. */
+     Compose over .glass: a soft diagonal tint gradient (light sheen at the
+     top-left deepening toward the tint at the bottom-right) + matching
+     hairline border. The .glass::before top sheen still shows through.
+     Gold stays the sole CTA colour — these are secondary, calm surfaces. */
   .glass-tint-gold {
-    background: rgba(245, 233, 201, 0.5);
-    border-color: rgba(201, 162, 39, 0.32);
+    background: linear-gradient(155deg, rgba(255, 252, 240, 0.78) 0%, rgba(245, 233, 201, 0.62) 52%, rgba(236, 216, 158, 0.58) 100%);
+    border-color: rgba(201, 162, 39, 0.34);
   }
   .glass-tint-emerald {
-    background: rgba(227, 240, 233, 0.55);
-    border-color: rgba(62, 142, 110, 0.28);
+    background: linear-gradient(155deg, rgba(241, 249, 245, 0.78) 0%, rgba(227, 240, 233, 0.64) 52%, rgba(206, 230, 219, 0.6) 100%);
+    border-color: rgba(62, 142, 110, 0.3);
   }
   .glass-tint-violet {
-    background: rgba(238, 232, 246, 0.55);
-    border-color: rgba(110, 74, 158, 0.28);
+    background: linear-gradient(155deg, rgba(246, 242, 252, 0.78) 0%, rgba(238, 232, 246, 0.64) 52%, rgba(226, 214, 243, 0.6) 100%);
+    border-color: rgba(110, 74, 158, 0.3);
   }
   .glass-tint-rose {
-    background: rgba(249, 231, 234, 0.55);
-    border-color: rgba(194, 69, 90, 0.26);
+    background: linear-gradient(155deg, rgba(253, 242, 244, 0.78) 0%, rgba(249, 231, 234, 0.64) 52%, rgba(246, 213, 220, 0.6) 100%);
+    border-color: rgba(194, 69, 90, 0.28);
   }
   .glass-tint-burgundy {
-    background: rgba(243, 226, 229, 0.55);
-    border-color: rgba(92, 26, 40, 0.28);
+    background: linear-gradient(155deg, rgba(251, 240, 242, 0.78) 0%, rgba(243, 226, 229, 0.64) 52%, rgba(237, 208, 214, 0.6) 100%);
+    border-color: rgba(92, 26, 40, 0.3);
   }
 
-  /* ── Screen washes (restrained per-screen colour atmosphere) ────────────
-     Position as the FIRST child of a `relative` screen root — content after
-     it paints above; pointer-events stay off; never causes overflow. */
+  /* ── Screen washes (per-screen colour atmosphere) ──────────────────────
+     Four-layer light gradient fields: a top aurora band that melts into the
+     cream base, two corner glows, and a gentle rise from the bottom edge.
+     Clearly colourful yet calm — content always wins. Position as the FIRST
+     child of a `relative` screen root (washes paint beneath via -z-10);
+     pointer-events stay off; never causes overflow. */
   .wash {
     position: absolute;
     inset: 0;
@@ -684,23 +678,38 @@
   }
   .wash-gold {
     background:
-      radial-gradient(85% 42% at 84% -4%, rgba(201, 162, 39, 0.09), transparent 62%),
-      radial-gradient(70% 38% at 4% 20%, rgba(232, 197, 104, 0.07), transparent 58%);
+      linear-gradient(180deg, rgba(201, 162, 39, 0.14) 0%, rgba(201, 162, 39, 0.06) 30%, rgba(201, 162, 39, 0.02) 56%, transparent 76%),
+      radial-gradient(85% 42% at 86% -4%, rgba(201, 162, 39, 0.15), transparent 62%),
+      radial-gradient(70% 38% at 2% 22%, rgba(232, 197, 104, 0.11), transparent 58%),
+      radial-gradient(64% 34% at 50% 108%, rgba(232, 197, 104, 0.12), transparent 66%);
   }
   .wash-emerald {
     background:
-      radial-gradient(85% 42% at 86% -4%, rgba(62, 142, 110, 0.10), transparent 62%),
-      radial-gradient(70% 38% at 2% 22%, rgba(62, 142, 110, 0.06), transparent 58%);
+      linear-gradient(180deg, rgba(62, 142, 110, 0.15) 0%, rgba(62, 142, 110, 0.065) 30%, rgba(62, 142, 110, 0.02) 56%, transparent 76%),
+      radial-gradient(85% 42% at 86% -4%, rgba(62, 142, 110, 0.16), transparent 62%),
+      radial-gradient(70% 38% at 2% 22%, rgba(62, 142, 110, 0.10), transparent 58%),
+      radial-gradient(64% 34% at 50% 108%, rgba(62, 142, 110, 0.11), transparent 66%);
   }
   .wash-violet {
     background:
-      radial-gradient(85% 42% at 86% -4%, rgba(110, 74, 158, 0.10), transparent 62%),
-      radial-gradient(70% 38% at 2% 22%, rgba(110, 74, 158, 0.06), transparent 58%);
+      linear-gradient(180deg, rgba(110, 74, 158, 0.14) 0%, rgba(110, 74, 158, 0.06) 30%, rgba(110, 74, 158, 0.02) 56%, transparent 76%),
+      radial-gradient(85% 42% at 86% -4%, rgba(110, 74, 158, 0.16), transparent 62%),
+      radial-gradient(70% 38% at 2% 22%, rgba(110, 74, 158, 0.10), transparent 58%),
+      radial-gradient(64% 34% at 50% 108%, rgba(143, 108, 192, 0.10), transparent 66%);
   }
   .wash-rose {
     background:
-      radial-gradient(85% 42% at 86% -4%, rgba(194, 69, 90, 0.09), transparent 62%),
-      radial-gradient(70% 38% at 2% 22%, rgba(194, 69, 90, 0.055), transparent 58%);
+      linear-gradient(180deg, rgba(194, 69, 90, 0.13) 0%, rgba(194, 69, 90, 0.055) 30%, rgba(194, 69, 90, 0.018) 56%, transparent 76%),
+      radial-gradient(85% 42% at 86% -4%, rgba(194, 69, 90, 0.15), transparent 62%),
+      radial-gradient(70% 38% at 2% 22%, rgba(194, 69, 90, 0.09), transparent 58%),
+      radial-gradient(64% 34% at 50% 108%, rgba(201, 162, 39, 0.08), transparent 66%);
+  }
+  .wash-burgundy {
+    background:
+      linear-gradient(180deg, rgba(92, 26, 40, 0.12) 0%, rgba(92, 26, 40, 0.05) 30%, rgba(92, 26, 40, 0.016) 56%, transparent 76%),
+      radial-gradient(85% 42% at 86% -4%, rgba(92, 26, 40, 0.14), transparent 62%),
+      radial-gradient(70% 38% at 2% 22%, rgba(92, 26, 40, 0.08), transparent 58%),
+      radial-gradient(64% 34% at 50% 108%, rgba(194, 69, 90, 0.10), transparent 66%);
   }
 
   /* ── Elevation (hero cards that should read a step above plain glass) ── */

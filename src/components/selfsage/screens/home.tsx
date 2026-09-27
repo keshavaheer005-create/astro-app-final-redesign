@@ -693,8 +693,8 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
         </div>
       </section>
 
-      {/* Hero: today's panchang + Acharya CTA */}
-      <GlassCard className="glass-elev p-5 sm:p-6">
+      {/* Hero: today's panchang + Acharya CTA — gold gradient glass elevation */}
+      <GlassCard className="glass-elev glass-tint-gold p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <p className="text-t12 uppercase tracking-wider text-gold font-semibold">{t('home.heroTitle')}</p>
