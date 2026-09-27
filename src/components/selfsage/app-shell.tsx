@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Icon, LogoMark, type IconName } from './icons';
-import { MandalaBackdrop } from './ui-primitives';
+import { MandalaBackdrop, useSlidingIndicator } from './ui-primitives';
 import { ChakraBackdrop } from './chakra';
 import { cn } from '@/lib/utils';
 
@@ -43,27 +43,6 @@ export const TABS: { id: TabId; icon: IconName; labelKey: string }[] = [
   { id: 'acharya', icon: 'chat', labelKey: 'tab.acharya' },
   { id: 'profile', icon: 'user', labelKey: 'tab.profile' },
 ];
-
-function useSlidingIndicator(activeIndex: number, vertical: boolean) {
-  const refs = useRef<(HTMLButtonElement | null)[]>([]);
-  const [style, setStyle] = useState<React.CSSProperties>({ opacity: 0 });
-
-  useLayoutEffect(() => {
-    const el = refs.current[activeIndex];
-    if (!el) return;
-    if (vertical) {
-      setStyle({ transform: `translateY(${el.offsetTop}px)`, height: el.offsetHeight, opacity: 1 });
-    } else {
-      setStyle({ transform: `translateX(${el.offsetLeft}px)`, width: el.offsetWidth, opacity: 1 });
-    }
-  }, [activeIndex, vertical]);
-
-  const bind = (i: number) => (el: HTMLButtonElement | null) => {
-    refs.current[i] = el;
-  };
-
-  return { bind, style };
-}
 
 function NavItems({
   active,
@@ -138,7 +117,7 @@ export function AppShellInner({
 
       {/* Desktop sidebar (≥1024px) */}
       <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-[92px] z-40 flex-col items-center py-5">
-        <div className="glass w-[76px] flex-1 flex flex-col items-center py-5 rounded-3xl">
+        <div className="glass bar-texture w-[76px] flex-1 flex flex-col items-center py-5 rounded-3xl">
           <button
             type="button"
             aria-label="Self Sage home"
@@ -169,7 +148,7 @@ export function AppShellInner({
         aria-label="Main navigation"
         aria-hidden={hidden}
         className={cn(
-          'lg:hidden fixed z-40 bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 right-4 glass rounded-full h-16 px-2 flex items-center shadow-[0_12px_40px_rgba(42,36,32,0.18)]',
+          'lg:hidden fixed z-40 bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 right-4 glass bar-texture rounded-full h-16 px-2 flex items-center shadow-[0_12px_40px_rgba(42,36,32,0.18)]',
           'transition-all duration-300 ease-out will-change-transform',
           hidden ? 'translate-y-[160%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100 focus-within:pointer-events-auto focus-within:translate-y-0 focus-within:opacity-100',
         )}

@@ -5,6 +5,15 @@ import { db } from '@/lib/db';
 const COOKIE = 'selfsage_sid';
 const SECRET = process.env.SESSION_SECRET || 'selfsage-dev-secret-2024';
 
+// Dev fallback is fine locally; scream in production builds so the operator
+// sets a real SESSION_SECRET before shipping (see .env.example).
+if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
+  console.warn(
+    '[security] SESSION_SECRET is not set — using the insecure development fallback. ' +
+      'Generate one with `openssl rand -hex 32` and set it before deploying.',
+  );
+}
+
 function sign(value: string): string {
   return createHmac('sha256', SECRET).update(value).digest('hex').slice(0, 32);
 }

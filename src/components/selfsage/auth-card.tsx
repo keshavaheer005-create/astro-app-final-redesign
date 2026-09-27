@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Icon, LogoMark } from './icons';
-import { GlassCard, GoldButton } from './ui-primitives';
+import { GlassCard, GoldButton, useSlidingIndicator } from './ui-primitives';
 import { ChakraWheel } from './chakra';
 import { useSession } from './session-context';
 import { authGateway } from '@/lib/supabase/client';
@@ -59,6 +59,10 @@ export function AuthCard({ onAuthed }: { onAuthed?: () => void }) {
   // tap reveals the inline hint instead of a dead button.
   const [googleDimmed, setGoogleDimmed] = useState(authGateway.mode !== 'supabase');
   const [googleHint, setGoogleHint] = useState(false);
+
+  // Sliding pill for the signup/login segmented toggle (transform-animated)
+  const modeIndex = mode === 'signup' ? 0 : 1;
+  const { bind: bindMode, style: modePill } = useSlidingIndicator(modeIndex, false);
 
   const mapAuthError = (code?: string) => t((code && ERROR_KEYS[code]) || 'auth.errorInvalid');
 
@@ -128,7 +132,7 @@ export function AuthCard({ onAuthed }: { onAuthed?: () => void }) {
         type="button"
         onClick={handleGoogle}
         className={cn(
-          'relative mt-5 flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-gold/40 bg-white/70',
+          'tap relative mt-5 flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-gold/40 bg-white/70',
           'text-t14 font-semibold text-charcoal transition-all duration-250 ease-out',
           'hover:border-gold/70 hover:bg-white/90 hover:shadow-[0_4px_16px_rgba(201,162,39,0.18)]',
           'active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/25',
@@ -146,11 +150,22 @@ export function AuthCard({ onAuthed }: { onAuthed?: () => void }) {
         <span className="h-px flex-1 bg-gradient-to-l from-transparent via-gold/30 to-gold/30" />
       </div>
 
-      {/* mode toggle */}
-      <div className="relative grid grid-cols-2 gap-1 rounded-xl border border-gold/25 bg-white/50 p-1">
-        {(['signup', 'login'] as const).map((m) => (
+      {/* mode toggle — segmented control with a sliding gold pill (260ms ease) */}
+      <div className="relative grid grid-cols-2 gap-1 rounded-xl border border-gold/25 bg-white/50 p-1" role="group">
+        <span
+          aria-hidden="true"
+          className="absolute rounded-lg gold-grad shadow-[0_2px_10px_rgba(201,162,39,0.35)]"
+          style={{
+            top: 4,
+            bottom: 4,
+            ...modePill,
+            transition: 'transform 260ms ease, width 260ms ease, opacity 200ms ease',
+          }}
+        />
+        {(['signup', 'login'] as const).map((m, i) => (
           <button
             key={m}
+            ref={bindMode(i)}
             type="button"
             aria-pressed={mode === m}
             onClick={() => {
@@ -158,9 +173,9 @@ export function AuthCard({ onAuthed }: { onAuthed?: () => void }) {
               setError(null);
             }}
             className={cn(
-              'h-9 rounded-lg text-t14 font-semibold transition-all duration-250 ease-out active:scale-[0.98]',
+              'tap-sm relative z-10 h-10 rounded-lg text-t14 font-semibold transition-colors duration-250 ease-out',
               mode === m
-                ? 'gold-grad text-charcoal shadow-[0_2px_10px_rgba(201,162,39,0.35)]'
+                ? 'text-charcoal'
                 : 'text-muted-foreground hover:text-charcoal',
             )}
           >
@@ -198,7 +213,7 @@ export function AuthCard({ onAuthed }: { onAuthed?: () => void }) {
           className="w-full h-11 rounded-xl border border-gold/30 bg-white/70 px-3.5 text-t14 text-charcoal placeholder:text-muted-foreground/60 outline-none transition-all duration-250 focus:border-gold/60 focus:ring-2 focus:ring-gold/25"
         />
 
-        {error && <p className="text-t12 text-maroon">{error}</p>}
+        {error && <p className="text-t12 text-burgundy">{error}</p>}
 
         <GoldButton
           className="w-full"
@@ -214,7 +229,7 @@ export function AuthCard({ onAuthed }: { onAuthed?: () => void }) {
             setMode((m) => (m === 'signup' ? 'login' : 'signup'));
             setError(null);
           }}
-          className="block w-full text-center text-t12 text-gold hover:text-gold-light hover:underline transition-colors duration-200"
+          className="tap-sm block w-full text-center text-t12 text-gold hover:text-gold-light hover:underline transition-colors duration-200"
         >
           {mode === 'signup' ? t('auth.switchToLogin') : t('auth.switchToSignup')}
         </button>
@@ -226,7 +241,7 @@ export function AuthCard({ onAuthed }: { onAuthed?: () => void }) {
           type="button"
           onClick={continueWithout}
           disabled={working}
-          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-t14 font-medium text-gold transition-colors duration-200 hover:text-gold-light hover:bg-gold-soft/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/25 disabled:opacity-45 disabled:pointer-events-none"
+          className="tap-sm inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-t14 font-medium text-gold transition-colors duration-200 hover:text-gold-light hover:bg-gold-soft/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/25 disabled:opacity-45 disabled:pointer-events-none"
         >
           <Icon name="user" size={14} />
           {t('auth.continueWithout')}

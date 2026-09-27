@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { api } from '@/lib/api';
 
 export interface SessionUser {
   id: string;
@@ -36,18 +37,7 @@ interface SessionCtx {
 
 const Ctx = createContext<SessionCtx | null>(null);
 
-async function api<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
-    ...init,
-    headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
-  }
-  return res.json() as Promise<T>;
-}
-
+// Re-exported for the many screens that import { api } from './session-context'
 export { api };
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {

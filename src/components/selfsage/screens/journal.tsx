@@ -155,7 +155,7 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
           <p className="text-t14 text-muted-foreground">{t('journal.subtitle')}</p>
         </div>
         {data && data.streak > 0 && (
-          <span className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-maroon-soft text-maroon px-3.5 py-1.5 text-t14 font-semibold">
+          <span className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-emerald-soft text-emerald-deep border border-emerald/35 px-3.5 py-1.5 text-t14 font-semibold">
             <Icon name="flame" size={16} className="flame-pulse" /> {t('journal.streak', { n: data.streak })}
           </span>
         )}
@@ -212,12 +212,14 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
                     value={insights.bestPeriod ? t(`planet.${insights.bestPeriod.label}`) : '—'}
                     sub={insights.bestPeriod ? `${insights.bestPeriod.avgMood}/5 · ${insights.bestPeriod.days}d` : undefined}
                     icon="trending"
+                    tone="emerald"
                   />
                   <InsightTile
                     label={t('journal.worstPeriod')}
                     value={insights.worstPeriod ? t(`planet.${insights.worstPeriod.label}`) : '—'}
                     sub={insights.worstPeriod ? `${insights.worstPeriod.avgMood}/5 · ${insights.worstPeriod.days}d` : undefined}
                     icon="moon"
+                    tone="burgundy"
                   />
                 </div>
                 {insights.correlation != null && (
@@ -356,10 +358,15 @@ function MoodDot({ value }: { value: number }) {
   );
 }
 
-function InsightTile({ label, value, sub, icon }: { label: string; value: string; sub?: string; icon: 'heart' | 'sun' | 'trending' | 'moon' }) {
+function InsightTile({ label, value, sub, icon, tone = 'gold' }: { label: string; value: string; sub?: string; icon: 'heart' | 'sun' | 'trending' | 'moon'; tone?: 'gold' | 'emerald' | 'burgundy' }) {
+  const tones = {
+    gold: 'bg-gold-faint/70 border-gold/20 text-gold',
+    emerald: 'bg-emerald-faint border-emerald/25 text-emerald',
+    burgundy: 'bg-burgundy-soft/70 border-burgundy/20 text-burgundy',
+  } as const;
   return (
-    <div className="rounded-xl bg-gold-faint/70 border border-gold/20 px-3.5 py-3">
-      <div className="flex items-center gap-1.5 text-gold">
+    <div className={cn('rounded-xl border px-3.5 py-3', tones[tone])}>
+      <div className="flex items-center gap-1.5">
         <Icon name={icon} size={14} />
         <span className="text-t12 text-muted-foreground truncate">{label}</span>
       </div>
@@ -483,7 +490,7 @@ function DecisionDialog({ open, onOpenChange, hasChart }: { open: boolean; onOpe
           {loading ? t('common.calculating') : t('decision.compute')} <Icon name="sparkle" size={15} />
         </GoldButton>
 
-        {error && <p className="text-t14 text-maroon">{error}</p>}
+        {error && <p className="text-t14 text-burgundy">{error}</p>}
 
         {result && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="space-y-3">
@@ -491,13 +498,13 @@ function DecisionDialog({ open, onOpenChange, hasChart }: { open: boolean; onOpe
               className={cn(
                 'rounded-2xl px-4 py-3.5 border',
                 result.verdict === 'favorable'
-                  ? 'bg-gold-faint border-gold/40'
+                  ? 'bg-emerald-soft border-emerald/35'
                   : result.verdict === 'mixed'
                     ? 'bg-gold-faint/60 border-gold/30'
-                    : 'bg-maroon-soft border-maroon/30',
+                    : 'bg-burgundy-soft border-burgundy/30',
               )}
             >
-              <p className={cn('font-serif text-t20 font-bold', result.verdict === 'wait' ? 'text-maroon' : 'text-charcoal')}>
+              <p className={cn('font-serif text-t20 font-bold', result.verdict === 'wait' ? 'text-burgundy' : 'text-charcoal')}>
                 {t('decision.verdict.' + result.verdict)}
                 <span className="text-t12 text-muted-foreground font-normal ml-2">{result.score}/100</span>
               </p>

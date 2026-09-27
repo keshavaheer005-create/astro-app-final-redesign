@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Icon, AcharyaAvatar } from '../icons';
-import { GlassCard, SectionHeader, EmptyState, PageLoader, ErrorState } from '../ui-primitives';
+import { GlassCard, SectionHeader, EmptyState, PageLoader, ErrorState, useSlidingIndicator } from '../ui-primitives';
 import { GlassDatePicker } from '../pickers';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { api, useSession } from '../session-context';
@@ -96,6 +96,10 @@ export function PanchangScreen() {
   const [festDetail, setFestDetail] = useState<FestDetail | null>(null);
   const [flashDay, setFlashDay] = useState(false);
 
+  // Sliding pill for the Day/Month segmented toggle (transform-animated, 260ms)
+  const modeIndex = mode === 'day' ? 0 : 1;
+  const { bind: bindMode, style: modePill } = useSlidingIndicator(modeIndex, false);
+
   const load = useCallback(async () => {
     if (!chart) return;
     setLoading(true);
@@ -169,18 +173,29 @@ export function PanchangScreen() {
           <h1 className="font-serif text-t28 font-bold text-charcoal">{t('panchang.title')}</h1>
           <p className="text-t14 text-muted-foreground">{t('panchang.subtitle')} · {chart.input.placeName}</p>
         </div>
-        {/* Day / Month segmented toggle */}
-        <div className="glass rounded-full p-1 flex items-center gap-1" role="tablist" aria-label={t('panchang.modeAria')}>
-          {(['day', 'month'] as const).map((m) => (
+        {/* Day / Month segmented toggle — sliding gold pill indicator */}
+        <div className="glass rounded-full p-1 flex items-center relative" role="tablist" aria-label={t('panchang.modeAria')}>
+          <span
+            aria-hidden="true"
+            className="absolute rounded-full gold-grad shadow-[0_2px_8px_rgba(201,162,39,0.35)]"
+            style={{
+              top: 4,
+              bottom: 4,
+              ...modePill,
+              transition: 'transform 260ms ease, width 260ms ease, opacity 200ms ease',
+            }}
+          />
+          {(['day', 'month'] as const).map((m, i) => (
             <button
               key={m}
+              ref={bindMode(i)}
               type="button"
               role="tab"
               aria-selected={mode === m}
               onClick={() => setMode(m)}
               className={cn(
-                'rounded-full px-4 py-1.5 text-t14 font-medium transition-all duration-250 active:scale-95',
-                mode === m ? 'gold-grad text-charcoal shadow-[0_2px_8px_rgba(201,162,39,0.35)]' : 'text-muted-foreground hover:text-charcoal',
+                'tap-sm relative z-10 rounded-full px-4 py-1.5 text-t14 font-medium transition-colors duration-250 ease-out',
+                mode === m ? 'text-charcoal' : 'text-muted-foreground hover:text-charcoal',
               )}
             >
               {t(`panchang.mode.${m}`)}
@@ -237,7 +252,7 @@ export function PanchangScreen() {
                           ? 'bg-sage/10 border-sage/40 text-[#5c6b52]'
                           : f.kind === 'ekadashi'
                             ? 'bg-gold-faint border-gold/40 text-[#8a6d1f]'
-                            : 'bg-gold-soft/80 border-gold/60 text-[#7a5c10] shadow-[0_1px_6px_rgba(201,162,39,0.25)]',
+                            : 'bg-rose-soft border-rose/45 text-rose-deep shadow-[0_1px_6px_rgba(194,69,90,0.22)]',
                       )}
                     >
                       <Icon name={f.kind === 'sankranti' ? 'compass' : 'lotus'} size={13} />
@@ -268,13 +283,13 @@ export function PanchangScreen() {
                   <TimeTile icon="moon" label={t('panchang.moonset')} value={fmtTime(data.moonsetISO)} />
                 </div>
                 {data.rahuKaal.startISO && data.rahuKaal.endISO && (
-                  <div className="mt-4 rounded-xl bg-maroon-soft border border-maroon/25 px-4 py-3 flex items-start gap-3">
-                    <Icon name="warning" size={18} className="text-maroon mt-0.5" />
+                  <div className="mt-4 rounded-xl bg-burgundy-soft border border-burgundy/25 px-4 py-3 flex items-start gap-3">
+                    <Icon name="warning" size={18} className="text-burgundy mt-0.5" />
                     <div>
-                      <p className="text-t14 font-semibold text-maroon">
+                      <p className="text-t14 font-semibold text-burgundy">
                         {t('panchang.rahuKaal')}: {fmtTime(data.rahuKaal.startISO)} – {fmtTime(data.rahuKaal.endISO)}
                       </p>
-                      <p className="text-t12 text-maroon/75">{t('panchang.avoidWindow')}</p>
+                      <p className="text-t12 text-burgundy/75">{t('panchang.avoidWindow')}</p>
                     </div>
                   </div>
                 )}
@@ -415,7 +430,7 @@ function MonthGrid({
           type="button"
           onClick={onPrev}
           aria-label={prevLabel}
-          className="w-9 h-9 rounded-full glass inline-flex items-center justify-center text-gold hover:border-gold/50 active:scale-90 transition-all duration-200"
+          className="tap-sm w-9 h-9 rounded-full glass inline-flex items-center justify-center text-gold hover:border-gold/50 active:scale-90 transition-all duration-200"
         >
           <Icon name="chevron-left" size={16} />
         </button>
@@ -424,7 +439,7 @@ function MonthGrid({
           type="button"
           onClick={onNext}
           aria-label={nextLabel}
-          className="w-9 h-9 rounded-full glass inline-flex items-center justify-center text-gold hover:border-gold/50 active:scale-90 transition-all duration-200"
+          className="tap-sm w-9 h-9 rounded-full glass inline-flex items-center justify-center text-gold hover:border-gold/50 active:scale-90 transition-all duration-200"
         >
           <Icon name="chevron-right" size={16} />
         </button>
@@ -511,7 +526,7 @@ function MonthGrid({
                     ev.stopPropagation();
                     onInfo(d.date, festival);
                   }}
-                  className="absolute -top-1 -left-1 w-5 h-5 rounded-full gold-grad shadow-[0_1px_5px_rgba(201,162,39,0.5)] inline-flex items-center justify-center text-charcoal cursor-pointer transition-transform duration-150 hover:scale-110 active:scale-90 animate-in zoom-in-50 fade-in duration-300"
+                  className={`absolute -top-1 -left-1 w-5 h-5 rounded-full shadow-[0_1px_5px_rgba(201,162,39,0.5)] inline-flex items-center justify-center cursor-pointer transition-transform duration-150 hover:scale-110 active:scale-90 animate-in zoom-in-50 fade-in duration-300 ${festival.kind === 'festival' ? 'rose-grad text-white' : 'gold-grad text-charcoal'}`}
                 >
                   <Icon name={festival.kind === 'sankranti' ? 'compass' : 'lotus'} size={11} />
                 </span>
@@ -526,21 +541,21 @@ function MonthGrid({
         const festDays = days.filter((d) => d.festivals.length > 0);
         if (festDays.length === 0) return null;
         return (
-          <div className="mt-4 rounded-xl bg-gold-faint/50 border border-gold/25 overflow-hidden">
-            <div className="px-3.5 py-2.5 border-b border-gold/20 flex items-center gap-2">
-              <Icon name="lotus" size={14} className="text-gold" />
-              <p className="text-t12 font-bold uppercase tracking-wider text-gold">{t('panchang.festivalsThisMonth')}</p>
+          <div className="mt-4 rounded-xl bg-rose-faint/80 border border-rose/25 border-l-4 border-l-rose/50 overflow-hidden">
+            <div className="px-3.5 py-2.5 border-b border-rose/20 flex items-center gap-2 bar-texture-solid">
+              <Icon name="lotus" size={14} className="text-rose" />
+              <p className="text-t12 font-bold uppercase tracking-wider text-rose-deep">{t('panchang.festivalsThisMonth')}</p>
             </div>
             <div className="max-h-56 overflow-y-auto scroll-slim">
               {festDays.map((d) =>
                 d.festivals.map((f) => (
-                  <div key={`${d.date}-${f.en}`} className="flex items-center border-b border-gold/10 last:border-b-0 hover:bg-gold-soft/60 transition-colors duration-150">
+                  <div key={`${d.date}-${f.en}`} className="flex items-center border-b border-rose/10 last:border-b-0 hover:bg-rose-soft/50 transition-colors duration-150">
                     <button
                       type="button"
                       onClick={() => onPickDay(d.date)}
-                      className="flex-1 min-w-0 text-left px-3.5 py-2 flex items-center gap-2.5"
+                      className="tap-sm flex-1 min-w-0 text-left px-3.5 py-2 flex items-center gap-2.5"
                     >
-                      <span className="w-9 shrink-0 text-center rounded-md bg-white/70 border border-gold/25 py-0.5 text-t12 font-bold text-charcoal">
+                      <span className="w-9 shrink-0 text-center rounded-md bg-white/80 border border-rose/25 py-0.5 text-t12 font-bold text-charcoal">
                         {Number(d.date.slice(8, 10))}
                       </span>
                       <span className="flex-1 min-w-0 text-t12 text-charcoal truncate">{language === 'hi' ? f.hi : f.en}</span>
@@ -550,14 +565,14 @@ function MonthGrid({
                       onClick={() => onInfo(d.date, f)}
                       aria-label={t('panchang.festDetailHint')}
                       title={t('panchang.festDetailHint')}
-                      className="shrink-0 w-7 h-7 mr-1 rounded-full inline-flex items-center justify-center text-gold/80 hover:text-gold hover:bg-gold-faint active:scale-90 transition-all duration-150"
+                      className="tap-sm shrink-0 w-7 h-7 mr-1 rounded-full inline-flex items-center justify-center text-rose/80 hover:text-rose-deep hover:bg-rose-soft active:scale-90 transition-all duration-150"
                     >
                       <Icon name="info" size={14} />
                     </button>
                     <span
                       className={cn(
                         'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold mr-3.5',
-                        f.kind === 'sankranti' ? 'bg-sage/15 text-[#5c6b52]' : f.kind === 'ekadashi' ? 'bg-gold-faint text-[#8a6d1f]' : 'bg-gold-soft text-[#7a5c10]',
+                        f.kind === 'sankranti' ? 'bg-sage/15 text-[#5c6b52]' : f.kind === 'ekadashi' ? 'bg-gold-faint text-[#8a6d1f]' : 'bg-rose-soft text-rose-deep',
                       )}
                     >
                       {t(`panchang.festKind.${f.kind}`)}
@@ -596,7 +611,7 @@ function TimeTile({ icon, label, value }: { icon: 'sunrise' | 'sunset' | 'moon';
 const QUALITY_STYLE = {
   good: 'bg-gold-faint border-gold/40 text-[#7a8b6f]',
   medium: 'bg-white/55 border-gold/20 text-muted-foreground',
-  bad: 'bg-maroon-soft/70 border-maroon/25 text-maroon',
+  bad: 'bg-burgundy-soft/80 border-burgundy/25 text-burgundy',
 } as const;
 
 function ChoghadiyaGrid({
@@ -765,12 +780,12 @@ function FestivalDetailDialog({ detail, onClose }: { detail: FestDetail | null; 
       <DialogContent className="glass border-gold/30 max-w-md p-0 overflow-hidden gap-0" showCloseButton>
         {detail && (
           <>
-            <DialogHeader className="px-5 pt-5 pb-3 border-b border-gold/15 bg-gold-faint/50">
+            <DialogHeader className="px-5 pt-5 pb-3 border-b border-gold/15 bg-gold-faint/50 bar-texture-solid">
               <div className="flex items-center gap-2">
                 <span
                   className={cn(
                     'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
-                    detail.kind === 'sankranti' ? 'bg-sage/15 text-[#5c6b52]' : detail.kind === 'ekadashi' ? 'bg-gold-faint text-[#8a6d1f]' : 'bg-gold-soft text-[#7a5c10]',
+                    detail.kind === 'sankranti' ? 'bg-sage/15 text-[#5c6b52]' : detail.kind === 'ekadashi' ? 'bg-gold-faint text-[#8a6d1f]' : 'bg-rose-soft text-rose-deep',
                   )}
                 >
                   {kindLabel}

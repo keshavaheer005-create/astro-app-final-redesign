@@ -106,7 +106,7 @@ function LiveNowStrip({ choghadiya, rahuKaal, tz, locale }: {
           <span
             className={cn(
               'rounded-full px-2 py-0.5 text-t12 font-semibold',
-              cur.quality === 'good' ? 'bg-gold-faint text-[#7a8b6f]' : cur.quality === 'medium' ? 'bg-white/60 text-muted-foreground' : 'bg-maroon-soft text-maroon',
+              cur.quality === 'good' ? 'bg-gold-faint text-[#7a8b6f]' : cur.quality === 'medium' ? 'bg-white/60 text-muted-foreground' : 'bg-burgundy-soft text-burgundy',
             )}
           >
             {t(`choghadiya.${cur.quality}`)}
@@ -120,7 +120,7 @@ function LiveNowStrip({ choghadiya, rahuKaal, tz, locale }: {
         </div>
       )}
       {rahuActive && rahuEnd && (
-        <p className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-t12 font-semibold bg-maroon-soft text-maroon border border-maroon/25', cur && 'mt-2')}>
+        <p className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-t12 font-semibold bg-burgundy-soft text-burgundy border border-burgundy/25', cur && 'mt-2')}>
           <Icon name="warning" size={13} />
           {t('home.liveRahu', { time: fmtT(rahuKaal?.endISO as string) })}
         </p>
@@ -505,7 +505,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
             </button>
           </PopoverTrigger>
           <PopoverContent align="end" sideOffset={10} className="w-72 glass border-gold/30 p-0 overflow-hidden">
-            <div className="px-4 pt-3 pb-2 border-b border-gold/15 bg-gold-faint/60">
+            <div className="px-4 pt-3 pb-2 border-b border-gold/15 bg-gold-faint/60 bar-texture-solid">
               <p className="text-t12 font-bold uppercase tracking-wider text-gold">{t('notifications.title')}</p>
             </div>
             <div className="max-h-72 overflow-y-auto scroll-slim">
@@ -520,7 +520,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                   className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-gold-soft/50 transition-colors duration-150 border-b border-gold/10 animate-in fade-in-0 slide-in-from-bottom-1 duration-300"
                   style={{ animationDelay: '0ms', animationFillMode: 'backwards' }}
                 >
-                  <span className="mt-0.5 text-maroon"><Icon name="check" size={15} /></span>
+                  <span className="mt-0.5 text-burgundy"><Icon name="check" size={15} /></span>
                   <span>
                     <span className="block text-t14 text-charcoal">{t('notifications.checkinDue')}</span>
                     <span className="block text-t12 text-muted-foreground">{t('notifications.reminderSet', { time: reminderTime })}</span>
@@ -541,7 +541,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                   )}
                   style={{ animationDelay: '50ms', animationFillMode: 'backwards' }}
                 >
-                  <span className={cn('mt-0.5', letterAlert ? 'text-gold' : 'text-gold/80')}><Icon name="journal" size={15} /></span>
+                  <span className={cn('mt-0.5', letterAlert ? 'text-violet' : 'text-violet/70')}><Icon name="journal" size={15} /></span>
                   <span className="min-w-0">
                     <span className={cn('block text-t14', letterAlert ? 'font-semibold text-charcoal' : 'text-charcoal')}>
                       {t(letterAlert ? 'notifications.reflectionNew' : 'notifications.reflectionReady')}
@@ -689,7 +689,9 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
           onClick={() => onNavigate('acharya')}
           className="mt-4 w-full glass-ink sheen-sweep rounded-2xl px-4 py-3.5 flex items-center gap-3 text-left transition-transform duration-250 ease-out hover:-translate-y-0.5 active:scale-[0.99] group"
         >
-          <AcharyaAvatar size={44} className="shrink-0" />
+          {/* violet intuition aura — Acharya's domain colour */}
+          <span className="pointer-events-none absolute -bottom-10 -left-10 w-32 h-32 rounded-full bg-violet/25 blur-2xl" aria-hidden="true" />
+          <AcharyaAvatar size={44} className="shrink-0 relative" />
           <span className="flex-1 min-w-0">
             <span className="block text-t14 font-semibold text-gold-grad font-serif">{t('home.talkToAcharya')}</span>
             <span className="block text-t12 text-[#cdb98e] truncate">{t('home.acharyaByline')}</span>
@@ -727,8 +729,15 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                     style={{ animationDelay: `${Math.min(i, 8) * 45}ms`, animationFillMode: 'backwards' }}
                   >
                     <span className="flex items-center gap-2">
-                      <span className="shrink-0 w-7 h-7 rounded-full bg-gold-soft/70 border border-gold/25 flex items-center justify-center transition-transform duration-250 group-hover/chip:scale-110">
-                        <Icon name={SKY_ICON[item.kind]} size={14} className="text-gold" />
+                      <span
+                        className={cn(
+                          'shrink-0 w-7 h-7 rounded-full border flex items-center justify-center transition-transform duration-250 group-hover/chip:scale-110',
+                          item.kind === 'festival'
+                            ? 'bg-rose-soft border-rose/35'
+                            : 'bg-gold-soft/70 border-gold/25',
+                        )}
+                      >
+                        <Icon name={SKY_ICON[item.kind]} size={14} className={item.kind === 'festival' ? 'text-rose-deep' : 'text-gold'} />
                       </span>
                       <span className="min-w-0">
                         <span className="block text-t14 font-medium text-charcoal truncate">{language === 'hi' ? item.name.hi : item.name.en}</span>
@@ -794,7 +803,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
               exit={{ opacity: 0, y: -8 }}
               className="flex items-center gap-4"
             >
-              <span className="shrink-0 w-12 h-12 rounded-full gold-grad flex items-center justify-center text-charcoal">
+              <span className="shrink-0 w-12 h-12 rounded-full emerald-grad flex items-center justify-center text-white shadow-[0_4px_14px_rgba(62,142,110,0.35)]">
                 <Icon name="check" size={24} strokeWidth={2} />
               </span>
               <div className="flex-1 min-w-0">
@@ -822,7 +831,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
               <div className="flex items-center justify-between">
                 <h2 className="font-serif text-t20 font-semibold text-charcoal">{t('home.checkinTitle')}</h2>
                 <span className="inline-flex items-center gap-1 text-t12 text-muted-foreground">
-                  <Icon name="flame" size={14} className="text-gold" />
+                  <Icon name="flame" size={14} className="text-emerald-deep" />
                   {checkin.streak > 0 ? t('home.streak', { n: checkin.streak }) : t('home.streakNew')}
                 </span>
               </div>
@@ -902,18 +911,20 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
 
       {/* Weekly reflection letter (ink card) */}
       <div>
-        <SectionHeader title={t('home.weeklyTitle')} icon="journal" />
+        <SectionHeader title={t('home.weeklyTitle')} icon="journal" tone="violet" />
         <GlassCard id="weekly-letter" ink className={cn('sheen-sweep p-5 sm:p-6', flashLetter && 'focus-flash')}>
+          {/* violet intuition vignette — the letter is Acharya's reflective gift */}
+          <div className="pointer-events-none absolute -top-14 -left-14 w-40 h-40 rounded-full bg-violet/30 blur-2xl" aria-hidden="true" />
           {checkin?.reflection ? (
             <>
               <button type="button" onClick={() => setLetterOpen((v) => !v)} className="w-full text-left">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-t12 uppercase tracking-wider text-gold font-semibold flex items-center gap-1.5">
+                    <p className="text-t12 uppercase tracking-wider text-[#c9aee8] font-semibold flex items-center gap-1.5">
                       {t('home.weeklyReady')}
                       {letterAlert && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-gold/20 border border-gold/40 px-1.5 py-0.5 text-[9px] font-bold tracking-normal text-gold-light animate-pulse">
-                          <span className="w-1 h-1 rounded-full bg-gold-light" />
+                        <span className="inline-flex items-center gap-1 rounded-full violet-grad border border-violet-deep/40 px-1.5 py-0.5 text-[9px] font-bold tracking-normal text-white animate-pulse">
+                          <span className="w-1 h-1 rounded-full bg-white" />
                           {t('notifications.reflectionNewShort')}
                         </span>
                       )}
@@ -969,7 +980,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
             </>
           ) : (
             <div className="flex items-center gap-4">
-              <span className="shrink-0 inline-flex items-center justify-center w-12 h-12 rounded-full bg-gold/15 text-gold">
+              <span className="shrink-0 inline-flex items-center justify-center w-12 h-12 rounded-full bg-violet/25 text-[#c9aee8]">
                 <Icon name="journal" size={22} />
               </span>
               <div className="flex-1 min-w-0">
@@ -977,7 +988,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                 {checkin && (
                   <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
                     <div
-                      className="h-full gold-grad rounded-full transition-[width] duration-500"
+                      className="h-full violet-grad rounded-full transition-[width] duration-500"
                       style={{ width: `${Math.min(100, (checkin.weekEntryCount / 3) * 100)}%` }}
                     />
                   </div>
@@ -1007,8 +1018,8 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
 
       {/* Feature grid */}
       {!chart && (
-        <GlassCard className="p-5 flex items-center gap-4 border-maroon/25">
-          <span className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-maroon-soft text-maroon shrink-0">
+        <GlassCard className="p-5 flex items-center gap-4 border-burgundy/25">
+          <span className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-burgundy-soft text-burgundy shrink-0">
             <Icon name="warning" size={20} />
           </span>
           <div className="flex-1 min-w-0">
@@ -1028,7 +1039,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
               <GlassCard
                 key={item.titleKey}
                 onClick={() => onNavigate('kundli', item.view)}
-                className="p-4 sm:p-5 group"
+                className="p-4 sm:p-5 group ripple"
               >
                 <span className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gold-soft/80 text-gold transition-all duration-250 group-hover:gold-grad group-hover:text-charcoal">
                   <Icon name={item.icon} size={20} />

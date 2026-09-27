@@ -50,9 +50,9 @@ export function KundliChartScreen() {
 
       {/* Summary chips */}
       <div className="grid grid-cols-3 gap-3">
-        <SummaryTile label={t('chart.ascSummary')} value={hi ? asc.signNameHi : asc.signName} sub={`${asc.degInSign.toFixed(1)}° · ${asc.nakshatra}`} icon="compass" />
-        <SummaryTile label={t('chart.moonSummary')} value={hi ? chart.moonSign.nameHi : chart.moonSign.name} sub={chart.planets.find((p) => p.key === 'Mo')?.nakshatraName} icon="moon" />
-        <SummaryTile label={t('chart.sunSummary')} value={hi ? chart.sunSign.nameHi : chart.sunSign.name} sub={chart.planets.find((p) => p.key === 'Su')?.nakshatraName} icon="sun" />
+        <SummaryTile label={t('chart.ascSummary')} value={hi ? asc.signNameHi : asc.signName} sub={`${asc.degInSign.toFixed(1)}° · ${asc.nakshatra}`} icon="compass" tone="gold" />
+        <SummaryTile label={t('chart.moonSummary')} value={hi ? chart.moonSign.nameHi : chart.moonSign.name} sub={chart.planets.find((p) => p.key === 'Mo')?.nakshatraName} icon="moon" tone="violet" />
+        <SummaryTile label={t('chart.sunSummary')} value={hi ? chart.sunSign.nameHi : chart.sunSign.name} sub={chart.planets.find((p) => p.key === 'Su')?.nakshatraName} icon="sun" tone="gold" />
       </div>
 
       {/* Toggles — labelled segmented controls (no loose chip wrapping) */}
@@ -142,7 +142,7 @@ export function KundliChartScreen() {
                   <td className="py-2.5">
                     <span className="inline-flex items-center gap-1.5 font-semibold text-charcoal">
                       {t(`planet.${p.key}`)}
-                      {p.retrograde && <span className="text-t12 text-maroon font-bold">℞</span>}
+                      {p.retrograde && <span className="text-t12 text-burgundy font-bold">℞</span>}
                     </span>
                   </td>
                   <td className="py-2.5 text-charcoal/85">
@@ -178,10 +178,10 @@ function signIndexOfTropicalAsc(chart: NonNullable<ReturnType<typeof useSession>
   return Math.floor(lon / 30) % 12;
 }
 
-function SummaryTile({ label, value, sub, icon }: { label: string; value: string; sub?: string; icon: 'compass' | 'moon' | 'sun' }) {
+function SummaryTile({ label, value, sub, icon, tone = 'gold' }: { label: string; value: string; sub?: string; icon: 'compass' | 'moon' | 'sun'; tone?: 'gold' | 'violet' }) {
   return (
     <GlassCard className="p-3.5 sm:p-4">
-      <div className="flex items-center gap-2 text-gold">
+      <div className={cn('flex items-center gap-2', tone === 'violet' ? 'text-violet' : 'text-gold')}>
         <Icon name={icon} size={16} className="shrink-0" />
         <span className="text-t12 text-muted-foreground leading-tight">{label}</span>
       </div>

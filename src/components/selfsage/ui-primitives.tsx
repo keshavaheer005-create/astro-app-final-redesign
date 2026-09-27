@@ -6,6 +6,31 @@ import { Icon, LogoMark, type IconName } from './icons';
 import { cn } from '@/lib/utils';
 import type { Dignity } from '@/lib/astro/dignity';
 
+/* ── Sliding indicator hook (shared by nav, tabs, segmented controls) ─────
+   Measures the active item and returns a transform-animated pill style so
+   active states SLIDE (250ms ease) instead of popping. Consumers place the
+   returned style on an absolutely-positioned span inside a relative parent. */
+export function useSlidingIndicator(activeIndex: number, vertical: boolean) {
+  const refs = useRef<(HTMLElement | null)[]>([]);
+  const [style, setStyle] = useState<React.CSSProperties>({ opacity: 0 });
+
+  useLayoutEffect(() => {
+    const el = refs.current[activeIndex];
+    if (!el) return;
+    if (vertical) {
+      setStyle({ transform: `translateY(${el.offsetTop}px)`, height: el.offsetHeight, opacity: 1 });
+    } else {
+      setStyle({ transform: `translateX(${el.offsetLeft}px)`, width: el.offsetWidth, opacity: 1 });
+    }
+  }, [activeIndex, vertical]);
+
+  const bind = (i: number) => (el: HTMLElement | null) => {
+    refs.current[i] = el;
+  };
+
+  return { bind, style };
+}
+
 /* ── Dignity chips (shared by D1 planets table & D9 varga table) ─────────── */
 
 /** Chip styling per classical dignity tier (emerald = strength, burgundy = strain). */
@@ -46,33 +71,54 @@ export function GlassCard({
   id?: string;
 }) {
   return (
-    <div id={id} onClick={onClick} className={cn(ink ? 'glass-ink' : 'glass', onClick && 'cursor-pointer transition-transform duration-300 ease-out hover:-translate-y-0.5', className)}>
+    <div
+      id={id}
+      onClick={onClick}
+      className={cn(
+        ink ? 'glass-ink' : 'glass',
+        // Clickable cards get Android-style press feedback (scale-in on touch)
+        onClick && 'cursor-pointer tap transition-transform duration-300 ease-out hover:-translate-y-0.5 active:scale-[0.98]',
+        className,
+      )}
+    >
       {children}
     </div>
   );
 }
 
+/* Semantic section-header tones — gold is the default; accents mark domain. */
+const HEADER_TONES = {
+  gold: { icon: 'text-gold', rule: 'from-gold/35' },
+  rose: { icon: 'text-rose', rule: 'from-rose/35' },
+  violet: { icon: 'text-violet', rule: 'from-violet/35' },
+  emerald: { icon: 'text-emerald', rule: 'from-emerald/35' },
+  burgundy: { icon: 'text-burgundy', rule: 'from-burgundy/35' },
+} as const;
+
 export function SectionHeader({
   title,
   icon,
   action,
+  tone = 'gold',
 }: {
   title: string;
   icon?: IconName;
   action?: React.ReactNode;
+  tone?: keyof typeof HEADER_TONES;
 }) {
+  const t = HEADER_TONES[tone];
   return (
     <div className="flex items-center justify-between gap-3 mb-3 mt-1">
       <div className="flex items-center gap-2.5 min-w-0">
         {icon && (
-          <span className="text-gold inline-flex shrink-0">
+          <span className={cn(t.icon, 'inline-flex shrink-0')}>
             <Icon name={icon} size={18} />
           </span>
         )}
         <h2 className="font-serif text-t20 font-semibold text-charcoal truncate">{title}</h2>
       </div>
       {action}
-      <div className="hidden sm:block flex-1 h-px bg-gradient-to-r from-gold/35 to-transparent" />
+      <div className={cn('hidden sm:block flex-1 h-px bg-gradient-to-r to-transparent', t.rule)} />
     </div>
   );
 }
@@ -98,7 +144,7 @@ export function GoldButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'gold-grad inline-flex items-center justify-center gap-2 rounded-full px-6 h-11 text-t14 font-semibold text-charcoal',
+        'gold-grad ripple inline-flex items-center justify-center gap-2 rounded-full px-6 h-11 text-t14 font-semibold text-charcoal',
         'shadow-[0_4px_16px_rgba(201,162,39,0.35)] transition-all duration-250 ease-out',
         'hover:-translate-y-px hover:shadow-[0_6px_22px_rgba(201,162,39,0.45)] active:scale-[0.98]',
         'disabled:opacity-45 disabled:pointer-events-none',
@@ -127,7 +173,7 @@ export function GhostButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-full px-5 h-10 text-t14 font-medium text-charcoal',
+        'tap inline-flex items-center justify-center gap-2 rounded-full px-5 h-10 text-t14 font-medium text-charcoal',
         'border border-gold/30 bg-white/40 transition-all duration-250 ease-out',
         'hover:border-gold/60 hover:bg-white/70 active:scale-[0.98] disabled:opacity-45 disabled:pointer-events-none',
         className,
@@ -229,11 +275,21 @@ export function StatPill({ icon, label, value }: { icon: IconName; label: string
   );
 }
 
-export function ProgressBar({ value, className }: { value: number; className?: string }) {
+export function ProgressBar({
+  value,
+  className,
+  tone = 'gold',
+}: {
+  value: number;
+  className?: string;
+  tone?: 'gold' | 'rose' | 'emerald' | 'violet';
+}) {
+  const track = tone === 'rose' ? 'bg-rose/15' : tone === 'emerald' ? 'bg-emerald/15' : tone === 'violet' ? 'bg-violet/15' : 'bg-gold/15';
+  const fill = tone === 'rose' ? 'rose-grad' : tone === 'emerald' ? 'emerald-grad' : tone === 'violet' ? 'violet-grad' : 'gold-grad';
   return (
-    <div className={cn('h-1.5 rounded-full bg-gold/15 overflow-hidden', className)}>
+    <div className={cn('h-1.5 rounded-full overflow-hidden', track, className)}>
       <div
-        className="h-full gold-grad rounded-full transition-[width,transform] duration-300 ease-out"
+        className={cn('h-full rounded-full transition-[width,transform] duration-300 ease-out', fill)}
         style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
       />
     </div>
@@ -345,7 +401,7 @@ export function PageLoader({ label }: { label?: string }) {
 export function ErrorState({ message, onRetry }: { message?: string; onRetry?: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-12 px-6 text-center animate-fade-in">
-      <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-maroon-soft text-maroon">
+      <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-burgundy-soft text-burgundy">
         <Icon name="warning" size={22} />
       </span>
       <p className="text-t14 text-charcoal font-medium">{message ?? 'Something went wrong'}</p>

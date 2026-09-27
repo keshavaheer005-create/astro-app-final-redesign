@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Icon, LogoMark } from '../icons';
-import { GlassCard, SectionHeader, GoldButton, GhostButton } from '../ui-primitives';
+import { GlassCard, SectionHeader, GoldButton, GhostButton, useSlidingIndicator } from '../ui-primitives';
 import { Switch } from '@/components/ui/switch';
 import { api, useSession, type ChartData } from '../session-context';
 import { useAppStore } from '@/store/app';
@@ -115,6 +115,11 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
     setLanguage(lang);
   };
 
+  // Sliding pill for the EN/हिन्दी segmented control (transform-animated,
+  // same pattern as the app-shell nav indicator — no popping states)
+  const langIndex = language === 'en' ? 0 : 1;
+  const { bind: bindLang, style: langPill } = useSlidingIndicator(langIndex, false);
+
   const exportData = () => {
     const payload = { user, chart, charts, exportedAt: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -215,7 +220,7 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
                 <button
                   type="button"
                   onClick={() => activateChart(c.id)}
-                  className="text-t12 text-emerald hover:text-emerald-deep transition-colors duration-200 shrink-0"
+                  className="tap-sm text-t12 text-emerald hover:text-emerald-deep transition-colors duration-200 shrink-0"
                 >
                   {t('profile.setActive')}
                 </button>
@@ -224,7 +229,7 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
                 type="button"
                 onClick={() => setForm({ mode: 'edit', chart: c })}
                 aria-label={t('profile.chartForm.editChart')}
-                className="text-muted-foreground/60 hover:text-gold transition-colors duration-200 p-1.5 shrink-0"
+                className="tap-sm text-muted-foreground/60 hover:text-gold transition-colors duration-200 p-1.5 shrink-0"
               >
                 <Icon name="edit" size={15} />
               </button>
@@ -232,7 +237,7 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
                 type="button"
                 onClick={() => deleteChart(c.id)}
                 aria-label={t('profile.delete')}
-                className="text-muted-foreground/60 hover:text-maroon transition-colors duration-200 p-1.5 shrink-0"
+                className="tap-sm text-muted-foreground/60 hover:text-burgundy transition-colors duration-200 p-1.5 shrink-0"
               >
                 <Icon name="x" size={15} />
               </button>
@@ -246,17 +251,32 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
         <SectionHeader title={t('profile.language')} icon="globe" />
         <GlassCard className="p-4">
           <p className="text-t12 text-muted-foreground mb-3">{t('profile.languageHint')}</p>
-          <div className="flex gap-2.5">
-            {(['en', 'hi'] as const).map((lang) => (
+          {/* Segmented control with a sliding gold pill indicator (260ms ease).
+              48px rows keep the 44px+ Android touch target; each option has
+              press feedback and an aria-pressed state. */}
+          <div className="relative flex rounded-2xl border border-gold/25 bg-white/50 p-1" role="group" aria-label={t('profile.language')}>
+            <span
+              aria-hidden="true"
+              className="absolute rounded-xl gold-grad shadow-[0_2px_12px_rgba(201,162,39,0.35)]"
+              style={{
+                top: 4,
+                bottom: 4,
+                ...langPill,
+                transition: 'transform 260ms ease, width 260ms ease, opacity 200ms ease',
+              }}
+            />
+            {(['en', 'hi'] as const).map((lang, i) => (
               <button
                 key={lang}
+                ref={bindLang(i)}
                 type="button"
+                aria-pressed={language === lang}
                 onClick={() => saveLanguage(lang)}
                 className={cn(
-                  'flex-1 h-12 rounded-2xl border text-t14 font-semibold transition-all duration-250 ease-out active:scale-[0.98]',
+                  'tap-sm relative z-10 flex-1 h-12 rounded-xl text-t14 font-semibold transition-colors duration-250 ease-out',
                   language === lang
-                    ? 'gold-grad border-gold/50 text-charcoal shadow-[0_2px_12px_rgba(201,162,39,0.35)]'
-                    : 'border-gold/25 bg-white/50 text-muted-foreground hover:border-gold/50 hover:text-charcoal',
+                    ? 'text-charcoal'
+                    : 'text-muted-foreground hover:text-charcoal',
                 )}
               >
                 {lang === 'en' ? 'English' : 'हिन्दी'}
@@ -365,7 +385,7 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
           <button
             type="button"
             onClick={exportData}
-            className="mt-3 inline-flex items-center gap-1.5 text-t12 text-gold hover:text-gold-light transition-colors duration-200"
+            className="tap-sm mt-3 inline-flex items-center gap-1.5 text-t12 text-gold hover:text-gold-light transition-colors duration-200"
           >
             <Icon name="download" size={14} /> {t('profile.exportData')}
           </button>

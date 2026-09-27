@@ -169,6 +169,8 @@ export function MatchingScreen() {
         <h1 className="font-serif text-t28 font-bold text-charcoal">{t('match.title')}</h1>
         <p className="text-t14 text-muted-foreground">{t('match.subtitle')}</p>
       </header>
+      {/* rose = the matching/harmony domain colour: a soft tinted hairline under the title */}
+      <div className="-mt-3 h-px bg-gradient-to-r from-rose/40 via-rose/15 to-transparent" aria-hidden="true" />
 
       <div className="grid md:grid-cols-2 gap-4">
         <PersonForm
@@ -199,7 +201,7 @@ export function MatchingScreen() {
         <PersonForm label={t('match.girl')} value={girl} onChange={setGirl} />
       </div>
 
-      {error && <p className="text-t14 text-maroon">{error}</p>}
+      {error && <p className="text-t14 text-burgundy">{error}</p>}
       <GoldButton onClick={compute} disabled={loading} className="w-full">
         {loading ? t('common.calculating') : t('match.compute')} <Icon name="handshake" size={16} />
       </GoldButton>
@@ -207,11 +209,11 @@ export function MatchingScreen() {
       {history.length > 0 && (
         <GlassCard className="p-4">
           <div className="flex items-center justify-between mb-2.5">
-            <p className="text-t12 uppercase tracking-wider text-gold font-semibold">{t('match.history')}</p>
+            <p className="text-t12 uppercase tracking-wider text-rose-deep font-semibold">{t('match.history')}</p>
             <button
               type="button"
               onClick={clearHistory}
-              className="text-t12 text-muted-foreground hover:text-maroon transition-colors duration-200"
+              className="tap-sm text-t12 text-muted-foreground hover:text-burgundy transition-colors duration-200"
             >
               {t('match.clearHistory')}
             </button>
@@ -234,7 +236,7 @@ export function MatchingScreen() {
                   </span>
                   <span className="block text-t12 text-muted-foreground">{new Date(h.at).toLocaleDateString()}</span>
                 </span>
-                <span className="shrink-0 inline-flex items-center rounded-full gold-grad px-2.5 py-1 text-t12 font-bold text-charcoal">
+                <span className="shrink-0 inline-flex items-center rounded-full rose-grad px-2.5 py-1 text-t12 font-bold text-white shadow-[0_2px_8px_rgba(194,69,90,0.3)]">
                   {h.total}/36
                 </span>
               </button>
@@ -247,17 +249,19 @@ export function MatchingScreen() {
 
       {result && (
         <>
-          <GlassCard className="p-5 sm:p-6" ink>
-            <div className="flex flex-col sm:flex-row items-center gap-5">
+          <GlassCard className="p-5 sm:p-6 relative" ink>
+            {/* rose harmony aura — this card celebrates the union */}
+            <div className="pointer-events-none absolute -top-14 -right-14 w-44 h-44 rounded-full bg-rose/25 blur-2xl" aria-hidden="true" />
+            <div className="flex flex-col sm:flex-row items-center gap-5 relative">
               <div className="relative shrink-0">
                 <svg width="120" height="120" viewBox="0 0 120 120">
-                  <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(232,197,104,0.2)" strokeWidth="8" />
+                  <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(217,112,138,0.22)" strokeWidth="8" />
                   <circle
                     cx="60"
                     cy="60"
                     r="52"
                     fill="none"
-                    stroke="#E8C568"
+                    stroke="#D9708A"
                     strokeWidth="8"
                     strokeLinecap="round"
                     strokeDasharray={`${(result.match.total / 36) * 2 * Math.PI * 52} ${2 * Math.PI * 52}`}
@@ -266,7 +270,7 @@ export function MatchingScreen() {
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="font-serif text-t28 font-bold text-gold-light">{result.match.total}</span>
+                  <span className="font-serif text-t28 font-bold text-rose-grad">{result.match.total}</span>
                   <span className="text-t12 text-[#a5947a]">/ 36</span>
                 </div>
               </div>
@@ -291,17 +295,17 @@ export function MatchingScreen() {
           </GlassCard>
 
           <GlassCard className="p-4 sm:p-5">
-            <SectionHeader title={t('match.subtitle')} icon="scale" />
+            <SectionHeader title={t('match.subtitle')} icon="scale" tone="rose" />
             <div className="space-y-3.5">
               {result.match.kootas.map((k) => (
                 <div key={k.key}>
                   <div className="flex items-center justify-between gap-2 mb-1">
                     <span className="text-t14 font-medium text-charcoal">{k.key}</span>
-                    <span className={cn('text-t14 font-bold', k.score >= k.max * 0.6 ? 'text-[#8a6d10]' : k.score === 0 ? 'text-maroon' : 'text-muted-foreground')}>
+                    <span className={cn('text-t14 font-bold', k.score >= k.max * 0.6 ? 'text-rose-deep' : k.score === 0 ? 'text-burgundy' : 'text-muted-foreground')}>
                       {k.score} / {k.max}
                     </span>
                   </div>
-                  <ProgressBar value={(k.score / k.max) * 100} />
+                  <ProgressBar value={(k.score / k.max) * 100} tone={k.score >= k.max * 0.6 ? 'rose' : 'gold'} />
                   <p className="text-t12 text-muted-foreground mt-0.5">{k.note}</p>
                 </div>
               ))}
@@ -332,7 +336,7 @@ export function MatchingScreen() {
 
 function DoshaTag({ label }: { label: string }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-maroon/30 border border-maroon/50 px-2.5 py-0.5 text-t12 text-[#e9c8ce]">
+    <span className="inline-flex items-center gap-1 rounded-full bg-burgundy/30 border border-burgundy/55 px-2.5 py-0.5 text-t12 text-[#ecd0d6]">
       <Icon name="warning" size={11} /> {label}
     </span>
   );
@@ -355,27 +359,27 @@ function SummaryCard({
   const severityKey = dosha.severity === 'none' ? 'none' : dosha.severity;
   return (
     <GlassCard className="p-4 sm:p-5">
-      <p className="text-t12 uppercase tracking-wider text-gold font-semibold">{title}</p>
+      <p className="text-t12 uppercase tracking-wider text-rose-deep font-semibold">{title}</p>
       <div className="mt-2 grid grid-cols-3 gap-2 text-center">
-        <div className="rounded-lg bg-gold-faint/70 px-2 py-1.5">
+        <div className="rounded-lg bg-rose-faint/80 border border-rose/15 px-2 py-1.5">
           <p className="text-t12 text-muted-foreground">{t('match.summaryAsc')}</p>
           <p className="text-t14 font-semibold text-charcoal">{summary.ascendant}</p>
         </div>
-        <div className="rounded-lg bg-gold-faint/70 px-2 py-1.5">
+        <div className="rounded-lg bg-rose-faint/80 border border-rose/15 px-2 py-1.5">
           <p className="text-t12 text-muted-foreground">{t('match.summaryMoon')}</p>
           <p className="text-t14 font-semibold text-charcoal">{summary.moonSign}</p>
         </div>
-        <div className="rounded-lg bg-gold-faint/70 px-2 py-1.5">
+        <div className="rounded-lg bg-rose-faint/80 border border-rose/15 px-2 py-1.5">
           <p className="text-t12 text-muted-foreground">{t('match.summaryNak')}</p>
           <p className="text-t14 font-semibold text-charcoal truncate">{summary.moonNakshatra}</p>
         </div>
       </div>
-      <div className={cn('mt-3 rounded-xl px-3.5 py-3 border', dosha.severity === 'none' ? 'bg-gold-faint/60 border-gold/25' : 'bg-maroon-soft border-maroon/25')}>
+      <div className={cn('mt-3 rounded-xl px-3.5 py-3 border', dosha.severity === 'none' ? 'bg-emerald-soft/70 border-emerald/25' : 'bg-burgundy-soft border-burgundy/25')}>
         <p className="text-t12 uppercase tracking-wide font-semibold text-muted-foreground">{t(titleKey, { name })}</p>
-        <p className={cn('text-t14 font-semibold mt-1', dosha.severity === 'none' ? 'text-[#7a8b6f]' : 'text-maroon')}>
+        <p className={cn('text-t14 font-semibold mt-1', dosha.severity === 'none' ? 'text-emerald-deep' : 'text-burgundy')}>
           {t(`match.dosha.${severityKey}`)}
         </p>
-        {dosha.fromAsc && <p className="text-t12 text-maroon/75 mt-0.5">{t('reports.marsFromAsc', { house: dosha.marsHouseFromAsc })}</p>}
+        {dosha.fromAsc && <p className="text-t12 text-burgundy/75 mt-0.5">{t('reports.marsFromAsc', { house: dosha.marsHouseFromAsc })}</p>}
       </div>
     </GlassCard>
   );
@@ -428,7 +432,7 @@ function PersonForm({
   return (
     <GlassCard className="p-4 sm:p-5">
       <div className="flex items-center justify-between">
-        <p className="text-t12 uppercase tracking-wider text-gold font-semibold">{label}</p>
+        <p className="text-t12 uppercase tracking-wider text-rose-deep font-semibold">{label}</p>
         {extra}
       </div>
       <input
@@ -473,7 +477,7 @@ function PersonForm({
                   setQuery(r.name);
                   setOpen(false);
                 }}
-                className="w-full text-left px-3.5 py-2 hover:bg-gold-soft/70 transition-colors text-t14"
+                className="tap-sm w-full text-left px-3.5 py-2 hover:bg-rose-soft/70 transition-colors text-t14"
               >
                 {r.name} {r.country ? <span className="text-muted-foreground text-t12">· {r.country}</span> : null}
               </button>

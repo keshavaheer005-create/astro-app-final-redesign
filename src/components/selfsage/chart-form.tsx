@@ -132,7 +132,9 @@ export function ChartForm({
         ariaLabel={t('onboarding.placeLabel')}
       />
 
-      {error && <p className="mt-3 text-t12 text-maroon">{error}</p>}
+      {error && (
+        <p className="mt-3 rounded-xl border border-burgundy/30 bg-burgundy-soft/70 px-3 py-2 text-t12 text-burgundy">{error}</p>
+      )}
 
       <div className="mt-5 flex items-center justify-between">
         <GhostButton onClick={onCancel} disabled={saving}>

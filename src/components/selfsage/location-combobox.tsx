@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Icon } from './icons';
 import { api } from './session-context';
+import { getCurrentCoords } from '@/lib/native';
 import { cn } from '@/lib/utils';
 
 export interface LocationResult {
@@ -143,17 +144,14 @@ export function LocationCombobox({
 
   const useMyLocation = () => {
     setLocError(null);
-    if (!navigator.geolocation) {
-      setLocError(t('common.locationDenied'));
-      return;
-    }
     setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
+    // Native (Capacitor plugin) on Android; navigator.geolocation on the web.
+    getCurrentCoords()
+      .then(async ({ lat, lng }) => {
         try {
           const res = await api<{ results: LocationResult[] }>('/api/geocode', {
             method: 'POST',
-            body: JSON.stringify({ mode: 'reverse', lat: pos.coords.latitude, lng: pos.coords.longitude }),
+            body: JSON.stringify({ mode: 'reverse', lat, lng }),
           });
           const r = res.results[0];
           if (r) choose(r);
@@ -163,13 +161,11 @@ export function LocationCombobox({
         } finally {
           setLocating(false);
         }
-      },
-      () => {
+      })
+      .catch(() => {
         setLocating(false);
         setLocError(t('common.locationDenied'));
-      },
-      { timeout: 8000 },
-    );
+      });
   };
 
   const showEmpty = open && !loading && query.trim().length >= 2 && results.length === 0;

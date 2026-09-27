@@ -97,21 +97,157 @@ export function ChakraWheel({
 }
 
 /**
- * Global fixed full-viewport decoration for the app root: one large gold wheel
- * drifting top-right, one smaller counter-rotating violet wheel bottom-left.
- * Sits above the page background / .mandala-bg (z-0) and behind content —
+ * Sri Yantra line-art: bindu, interlocking triangle set, lotus gates and
+ * bhupura squares. Used for the hero backdrop layer and decorative mounts.
+ */
+export function SriYantra({
+  size = 240,
+  className,
+  speed = 'slow',
+  strokeWidth = 1,
+}: {
+  size?: number | string;
+  className?: string;
+  speed?: ChakraSpeed;
+  strokeWidth?: number;
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 100 100"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn(SPEED_CLASS[speed], className)}
+      aria-hidden="true"
+      focusable="false"
+    >
+      {/* outer rings */}
+      <circle cx="50" cy="50" r="48.5" />
+      <circle cx="50" cy="50" r="45" />
+      {/* 16-petal lotus ring */}
+      <g opacity="0.75">
+        {Array.from({ length: 16 }, (_, i) => (
+          <path key={i} d="M50 9.5 C53.4 14 53.4 19.5 50 23 C46.6 19.5 46.6 14 50 9.5 Z" transform={`rotate(${i * 22.5} 50 50)`} />
+        ))}
+      </g>
+      {/* interlocking triangle set (3 ascending + 3 descending) */}
+      <g opacity="0.9">
+        <path d="M50 17 L81 71 L19 71 Z" />
+        <path d="M50 83 L19 29 L81 29 Z" />
+        <path d="M50 30 L68.5 62 L31.5 62 Z" />
+        <path d="M50 70 L31.5 38 L68.5 38 Z" />
+        <path d="M50 41 L59.5 57.5 L40.5 57.5 Z" />
+        <path d="M50 59 L40.5 42.5 L59.5 42.5 Z" />
+      </g>
+      {/* bhupura squares */}
+      <rect x="17" y="17" width="66" height="66" opacity="0.55" />
+      <rect x="13" y="13" width="74" height="74" opacity="0.4" />
+      {/* bindu */}
+      <path d="M50 50h0" strokeWidth={strokeWidth * 2.2} />
+    </svg>
+  );
+}
+
+/* The seven chakras, mapped onto the Self Sage tint system
+   (gold stays solar-plexus; blues/indigos are intentionally avoided). */
+const CHAKRA_ORBS: { color: string; top: string }[] = [
+  { color: '#A33347', top: '9%' }, // Muladhara — rose deep
+  { color: '#C2455A', top: '22.5%' }, // Svadhisthana — rose
+  { color: '#C9A227', top: '36%' }, // Manipura — gold
+  { color: '#3E8E6E', top: '49.5%' }, // Anahata — emerald
+  { color: '#6E4A9E', top: '63%' }, // Vishuddha — violet
+  { color: '#593A82', top: '76.5%' }, // Ajna — violet deep
+  { color: '#8F6CC0', top: '90%' }, // Sahasrara — violet light
+];
+
+/**
+ * Global fixed full-viewport decoration: a suspended, slowly breathing
+ * composition of sacred geometry that fills the empty background on every
+ * screen (app shell, onboarding, auth). Layers, back → front:
+ *   1. paper-grain texture over the whole viewport
+ *   2. soft corner vignette for depth
+ *   3. giant zodiac ring rising from the bottom (220s rotation)
+ *   4. gold Sri Yantra, top-right (90s, breathing + drifting)
+ *   5. violet wheel, bottom-left (64s reverse)
+ *   6. emerald wheel, left margin (140s reverse)
+ *   7. violet lotus wheel, top-left margin
+ *   8. rose wheel, bottom-right margin
+ *   9. the spine of seven chakra orbs along the right edge, breathing in a
+ *      staggered 7s rhythm
+ * Transform/opacity only; honours prefers-reduced-motion via global opt-out;
  * never intercepts clicks, never causes overflow.
  */
 export function ChakraBackdrop() {
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
-      <div className="absolute -top-[14vmin] -right-[16vmin] text-gold opacity-[0.06]">
-        <div className="chakra-breathe">
-          <ChakraWheel size="70vmin" speed="slow" strokeWidth={1.5} />
+      {/* 1 — handmade paper grain */}
+      <div className="texture-grain absolute inset-0" />
+
+      {/* 2 — corner vignette (depth without darkening the content zone) */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(130% 95% at 50% 38%, transparent 58%, rgba(42,36,32,0.055) 100%)',
+        }}
+      />
+
+      {/* 3 — zodiac ring rising from below */}
+      <div className="absolute left-1/2 top-[104%] -translate-x-1/2 text-gold opacity-[0.055]">
+        <div className="chakra-spin-zodiac">
+          <ChakraWheel size="170vmin" speed="slow" strokeWidth={0.5} />
         </div>
       </div>
-      <div className="absolute -bottom-[10vmin] -left-[14vmin] text-violet/10">
-        <ChakraWheel size="45vmin" speed="mid" strokeWidth={1.5} />
+
+      {/* 4 — hero Sri Yantra, top-right */}
+      <div className="absolute -top-[15vmin] -right-[17vmin] text-gold opacity-[0.09]">
+        <div className="chakra-drift">
+          <div className="chakra-breathe">
+            <SriYantra size="76vmin" speed="slow" strokeWidth={0.55} />
+          </div>
+        </div>
+      </div>
+
+      {/* 5 — violet wheel, bottom-left */}
+      <div className="absolute -bottom-[12vmin] -left-[16vmin] text-violet opacity-[0.13]">
+        <div className="chakra-drift-late">
+          <ChakraWheel size="56vmin" speed="mid" strokeWidth={0.6} />
+        </div>
+      </div>
+
+      {/* 6 — emerald wheel, left margin */}
+      <div className="absolute -left-[26vmin] top-[34%] text-emerald opacity-[0.09]">
+        <ChakraWheel size="48vmin" speed="slow" strokeWidth={0.6} className="chakra-spin-slow-rev" />
+      </div>
+
+      {/* 7 — violet lotus wheel, top-left margin */}
+      <div className="absolute -top-[20vmin] -left-[18vmin] text-violet opacity-[0.07]">
+        <ChakraWheel size="46vmin" speed="slow" strokeWidth={0.55} className="chakra-spin-slow-rev" />
+      </div>
+
+      {/* 8 — rose wheel, bottom-right margin */}
+      <div className="absolute -bottom-[16vmin] -right-[12vmin] text-rose opacity-[0.06]">
+        <ChakraWheel size="44vmin" speed="slow" strokeWidth={0.55} />
+      </div>
+
+      {/* 9 — spine of seven, right edge */}
+      <div className="absolute inset-y-0 right-[2.1vmin]">
+        {CHAKRA_ORBS.map((orb, i) => (
+          <span
+            key={orb.top}
+            className="chakra-orb absolute right-0 block h-[1.5vmin] w-[1.5vmin] min-h-[6px] min-w-[6px] rounded-full"
+            style={{
+              top: orb.top,
+              background: orb.color,
+              boxShadow: `0 0 14px 4px ${orb.color}38`,
+              animationDelay: `${i * 1.05}s`,
+            }}
+          />
+        ))}
       </div>
     </div>
   );

@@ -15,7 +15,18 @@ node_modules
 
 # next.js
 /.next/
-/out/
+/.next-verify/
+
+# embedded postgres
+db/pgdata/
+db/pg*.log
+
+# capacitor android build
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+
 
 # production
 /build

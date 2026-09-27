@@ -103,7 +103,7 @@ export function HoroscopeScreen() {
                 </span>
               ))}
               {data.cautions.map((p) => (
-                <span key={p} className="inline-flex items-center gap-1.5 rounded-full bg-maroon/30 border border-maroon/50 px-3 py-1 text-t12 text-[#e9c8ce]">
+                <span key={p} className="inline-flex items-center gap-1.5 rounded-full bg-burgundy/30 border border-burgundy/55 px-3 py-1 text-t12 text-[#ecd0d6]">
                   <Icon name="warning" size={12} /> {t(`planet.${p}`)} · {t('horoscope.pressures')}
                 </span>
               ))}
@@ -118,15 +118,15 @@ export function HoroscopeScreen() {
                   key={tr.key}
                   className={`rounded-xl px-3 py-2.5 border transition-colors duration-200 ${
                     tr.note === 'support'
-                      ? 'bg-gold-faint/80 border-gold/30'
+                      ? 'bg-emerald-faint border-emerald/25'
                       : tr.note === 'pressure'
-                        ? 'bg-maroon-soft/70 border-maroon/25'
+                        ? 'bg-burgundy-soft/80 border-burgundy/25'
                         : 'bg-white/50 border-gold/15'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-t14 font-semibold text-charcoal">{t(`planet.${tr.key}`)}</span>
-                    <span className={`text-t12 font-bold ${tr.benefic ? 'text-[#8a6d10]' : 'text-maroon'}`}>
+                    <span className={`text-t12 font-bold ${tr.benefic ? 'text-emerald-deep' : 'text-burgundy'}`}>
                       {tr.houseFromMoon}
                       <sup>th</sup>
                     </span>

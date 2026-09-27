@@ -192,17 +192,18 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
               </GlassCard>
 
               {confirmLine && (
-                <GlassCard className="px-5 py-4">
-                  <p className="font-serif text-t16 text-charcoal text-center">
-                    {confirmLine}
-                    {selectedPlace ? <span className="text-muted-foreground"> {t('onboarding.confirmPlace', { place: selectedPlace.name })}</span> : null}
+                <GlassCard className="px-5 py-4 border-emerald/30 bg-emerald-soft/70">
+                  <p className="flex flex-wrap items-center justify-center gap-x-1.5 font-serif text-t16 text-emerald-deep text-center">
+                    <Icon name="check" size={15} strokeWidth={2.5} className="shrink-0" aria-hidden="true" />
+                    <span>{confirmLine}</span>
+                    {selectedPlace ? <span className="text-emerald-deep/75"> {t('onboarding.confirmPlace', { place: selectedPlace.name })}</span> : null}
                   </p>
                 </GlassCard>
               )}
 
               {computeError && (
-                <GlassCard className="px-5 py-4 border-maroon/30">
-                  <p className="text-t14 text-maroon">{computeError}</p>
+                <GlassCard className="px-5 py-4 border-burgundy/30 bg-burgundy-soft/70">
+                  <p className="text-t14 text-burgundy">{computeError}</p>
                 </GlassCard>
               )}
 
@@ -258,7 +259,7 @@ function StepDots({ step }: { step: number }) {
       {[1, 2].map((s) => (
         <span
           key={s}
-          className={`h-1.5 rounded-full transition-all duration-300 ${s <= step ? 'w-6 gold-grad' : 'w-3 bg-gold/25'}`}
+          className={`h-1.5 rounded-full transition-all duration-300 ${s <= step ? 'w-6 violet-grad' : 'w-3 bg-violet/25'}`}
         />
       ))}
     </div>

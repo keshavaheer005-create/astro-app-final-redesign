@@ -11,6 +11,7 @@
  */
 
 import type { SessionUser } from '@/components/selfsage/session-context';
+import { apiUrl } from '@/lib/api';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { getOAuthRedirectUrl, isSupabaseConfigured, SUPABASE_ANON_KEY, SUPABASE_URL } from './config';
 
@@ -95,7 +96,7 @@ export async function sbGetSessionUser(): Promise<SessionUser | null> {
 /* ── Unified facade (local fallbacks hit /api/auth) ─────────────────────── */
 
 async function localAuth(body: Record<string, unknown>): Promise<AuthResult> {
-  const res = await fetch('/api/auth', {
+  const res = await fetch(apiUrl('/api/auth'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

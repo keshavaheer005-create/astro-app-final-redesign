@@ -6,6 +6,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Icon, AcharyaAvatar } from '../icons';
 import { GoldButton } from '../ui-primitives';
 import { api, useSession } from '../session-context';
+import { apiUrl } from '@/lib/api';
+import { isNative, nativeSpeechTranscribe } from '@/lib/native';
 import { useAppStore } from '@/store/app';
 import { cn } from '@/lib/utils';
 
@@ -163,7 +165,7 @@ export function AcharyaScreen() {
 
       try {
         // Preferred path: SSE token streaming
-        const res = await fetch('/api/ask-acharya', {
+        const res = await fetch(apiUrl('/api/ask-acharya'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ question: q, language, stream: true, journalRef: reDate ?? undefined }),
@@ -287,8 +289,23 @@ export function AcharyaScreen() {
       stopRecording();
       return;
     }
-    if (voiceState !== 'idle' || !micSupported) return;
+    if (voiceState !== 'idle') return;
     setVoiceError(false);
+    // Native (Capacitor) path: one-shot plugin dictation via the device's
+    // speech engine — no MediaRecorder/ASR round-trip needed.
+    if (isNative()) {
+      setVoiceState('transcribing');
+      try {
+        const text = await nativeSpeechTranscribe(language);
+        if (text) setInput((prev) => (prev ? `${prev} ${text}`.slice(0, 600) : text));
+        setVoiceState('idle');
+      } catch {
+        setVoiceError(true);
+        setVoiceState('idle');
+      }
+      return;
+    }
+    if (!micSupported) return;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -355,7 +372,7 @@ export function AcharyaScreen() {
                     key={k}
                     type="button"
                     onClick={() => ask(t(k))}
-                    className="glass rounded-full px-4 py-2 text-t12 text-charcoal/80 hover:text-charcoal hover:border-gold/50 transition-all duration-250 active:scale-95"
+                    className="tap-sm inline-flex min-h-[44px] items-center rounded-full border border-violet/30 bg-violet-soft/80 px-4 py-2 text-t12 font-medium text-violet-deep hover:border-violet/55 hover:bg-violet-soft transition-colors duration-250"
                   >
                     {t(k)}
                   </button>
@@ -388,7 +405,7 @@ export function AcharyaScreen() {
                 >
                   {m.content}
                   {m.streaming && (
-                    <span className="inline-block w-2 h-4 ml-1 align-middle rounded-sm bg-gold animate-pulse" aria-hidden />
+                    <span className="inline-block w-2 h-4 ml-1 align-middle rounded-sm bg-violet animate-pulse" aria-hidden />
                   )}
                 </div>
                 {/* Listen to this reply — TTS */}
@@ -448,7 +465,7 @@ export function AcharyaScreen() {
                 {[0, 1, 2].map((i) => (
                   <span
                     key={i}
-                    className="w-2 h-2 rounded-full bg-gold animate-bounce"
+                    className="w-2 h-2 rounded-full bg-violet animate-bounce"
                     style={{ animationDelay: `${i * 140}ms` }}
                   />
                 ))}
@@ -473,11 +490,11 @@ export function AcharyaScreen() {
       >
         {voiceState !== 'idle' && (
           <div className="flex items-center gap-2 px-2" aria-live="polite">
-            <span className={cn('inline-flex items-center gap-1.5 text-t12', voiceState === 'recording' ? 'text-maroon' : 'text-muted-foreground')}>
+            <span className={cn('inline-flex items-center gap-1.5 text-t12', voiceState === 'recording' ? 'text-violet-deep' : 'text-muted-foreground')}>
               <Icon name={voiceState === 'recording' ? 'mic' : 'sparkle'} size={13} className={voiceState === 'recording' ? 'mic-pulse' : 'animate-spin-slow'} />
               {voiceState === 'recording' ? t('acharya.listening') : t('acharya.transcribing')}
             </span>
-            {voiceState === 'recording' && <span className="flex-1 h-px bg-gradient-to-r from-maroon/30 to-transparent" />}
+            {voiceState === 'recording' && <span className="flex-1 h-px bg-gradient-to-r from-violet/40 to-transparent" />}
           </div>
         )}
         {voiceError && <p className="px-2 text-t12 text-maroon">{t('acharya.micError')}</p>}
@@ -492,7 +509,7 @@ export function AcharyaScreen() {
               className={cn(
                 'w-12 h-12 rounded-full shrink-0 inline-flex items-center justify-center border transition-all duration-250 active:scale-90 disabled:opacity-40',
                 voiceState === 'recording'
-                  ? 'bg-maroon text-[#f5e6d8] border-maroon shadow-[0_0_0_0_rgba(107,39,55,0.4)] mic-ring'
+                  ? 'bg-violet text-white border-violet mic-ring-violet'
                   : 'glass text-gold hover:border-gold/50',
               )}
             >
