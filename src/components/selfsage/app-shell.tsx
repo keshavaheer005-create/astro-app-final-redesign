@@ -165,12 +165,14 @@ export function AppShellInner({
         </div>
       </main>
 
-      {/* Mobile floating pill nav (<1024px) — hides on scroll down, returns on scroll up */}
+      {/* Mobile floating pill nav (<1024px) — hides on scroll down, returns on scroll up.
+          Shadow/bevel language matches the liquid-glass feature tiles so the bar feels
+          cut from the same optical system (crisp top highlight, deep float, warm under-edge). */}
       <nav
         aria-label="Main navigation"
         aria-hidden={hidden}
         className={cn(
-          'lg:hidden fixed z-40 bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 right-4 glass bar-texture rounded-full h-16 px-2 flex items-center shadow-[0_12px_40px_rgba(42,36,32,0.18)]',
+          'lg:hidden fixed z-40 bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 right-4 glass bar-texture rounded-full h-16 px-2 flex items-center shadow-[0_18px_44px_-12px_rgba(42,36,32,0.26),0_4px_14px_-4px_rgba(42,36,32,0.12),inset_0_1px_0_rgba(255,255,255,0.9),inset_0_-1px_0_rgba(201,162,39,0.14)]',
           'transition-all duration-300 ease-out will-change-transform',
           hidden ? 'translate-y-[160%] opacity-0 pointer-events-none' : 'translate-y-0 opacity-100 focus-within:pointer-events-auto focus-within:translate-y-0 focus-within:opacity-100',
         )}

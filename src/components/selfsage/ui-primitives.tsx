@@ -358,45 +358,47 @@ export function SlidingPillTabs<T extends string>({
 
   return (
     <div className={cn('relative', className)}>
-      <div
-        ref={scrollRef}
-        onScroll={updateFade}
-        className="relative flex rounded-full bg-white/55 border border-gold/25 p-1 backdrop-blur-md overflow-x-auto no-scrollbar"
-      >
-        <span
-          className="absolute top-1 bottom-1 rounded-full gold-grad shadow-[0_2px_10px_rgba(201,162,39,0.4)]"
+      {/* Glass shell stays static; the transparent track scrolls and gets the
+          background-agnostic mask fade (never a hard colour-matched gradient). */}
+      <div className="rounded-full bg-white/55 border border-gold/25 p-1 backdrop-blur-md shadow-[0_8px_24px_-12px_rgba(42,36,32,0.2),inset_0_1px_0_rgba(255,255,255,0.8)]">
+        <div
+          ref={scrollRef}
+          onScroll={updateFade}
+          className="edge-fade-x relative flex overflow-x-auto no-scrollbar rounded-full p-0"
           style={{
-            transform: `translateX(${pill.left}px)`,
-            width: pill.width,
-            opacity: pill.ready ? 1 : 0,
-            transition: 'transform 250ms ease, width 250ms ease',
+            ['--fade-l' as string]: fade.left ? '24px' : '0px',
+            ['--fade-r' as string]: fade.right ? '24px' : '0px',
           }}
-        />
-        {tabs.map((t, i) => (
-          <button
-            key={t.id}
-            ref={(el) => {
-              refs.current[i] = el;
+        >
+          <span
+            className="absolute left-0 top-0 bottom-0 rounded-full gold-grad shadow-[0_2px_10px_rgba(201,162,39,0.4)]"
+            style={{
+              transform: `translateX(${pill.left}px)`,
+              width: pill.width,
+              opacity: pill.ready ? 1 : 0,
+              transition: 'transform 250ms ease, width 250ms ease',
             }}
-            type="button"
-            onClick={() => onChange(t.id)}
-            className={cn(
-              'relative z-10 flex-1 min-w-fit flex items-center justify-center gap-1.5 rounded-full font-medium transition-colors duration-250 ease-out active:scale-[0.97]',
-              compact ? 'h-8 px-2.5 text-t12' : 'h-9 px-3.5 text-t14',
-              active === t.id ? 'text-charcoal' : 'text-muted-foreground hover:text-charcoal',
-            )}
-          >
-            {t.icon && <Icon name={t.icon} size={compact ? 14 : 16} />}
-            <span className="whitespace-nowrap">{t.label}</span>
-          </button>
-        ))}
+          />
+          {tabs.map((t, i) => (
+            <button
+              key={t.id}
+              ref={(el) => {
+                refs.current[i] = el;
+              }}
+              type="button"
+              onClick={() => onChange(t.id)}
+              className={cn(
+                'relative z-10 flex-none sm:flex-1 min-w-fit flex items-center justify-center gap-1.5 rounded-full font-medium transition-colors duration-250 ease-out active:scale-[0.97]',
+                compact ? 'h-9 px-3 text-t12' : 'h-10 px-3.5 text-t14',
+                active === t.id ? 'text-charcoal' : 'text-muted-foreground hover:text-charcoal',
+              )}
+            >
+              {t.icon && <Icon name={t.icon} size={compact ? 14 : 16} />}
+              <span className="whitespace-nowrap">{t.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
-      {fade.left && (
-        <div className="absolute left-0 top-0 bottom-0 w-7 rounded-l-full bg-gradient-to-r from-[#FAF7F0] to-transparent pointer-events-none transition-opacity duration-250" aria-hidden />
-      )}
-      {fade.right && (
-        <div className="absolute right-0 top-0 bottom-0 w-7 rounded-r-full bg-gradient-to-l from-[#FAF7F0] to-transparent pointer-events-none transition-opacity duration-250" aria-hidden />
-      )}
     </div>
   );
 }

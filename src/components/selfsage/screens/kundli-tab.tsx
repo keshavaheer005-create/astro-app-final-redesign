@@ -90,45 +90,50 @@ export function KundliTab({ initialView }: { initialView?: KundliView }) {
         <MandalaAccent size={190} className={cn('chakra-spin-zodiac', VIEW_TONE[view].accent)} />
       </div>
       <div className="relative">
-        <div
-          ref={scrollRef}
-          onScroll={updateFade}
-          className="relative flex rounded-full border border-violet/25 bg-violet-faint/80 p-1 backdrop-blur-md overflow-x-auto no-scrollbar"
-        >
-          <span
-            aria-hidden="true"
-            className="absolute top-1 bottom-1 rounded-full violet-grad shadow-[0_2px_10px_rgba(110,74,158,0.35)]"
+        {/* Mobile-first segmented strip: labels NEVER truncate — on phones the
+            pills keep their natural width and the track scrolls (snap + mask
+            fades signal more tabs); from sm up pills share the width equally.
+            The glass shell stays put; only the transparent track scrolls, so
+            the mask fades labels without dissolving the bar itself. */}
+        <div className="rounded-full border border-white/60 bg-white/45 shadow-[0_10px_30px_-14px_rgba(42,36,32,0.25),inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur-xl">
+          <div
+            ref={scrollRef}
+            onScroll={updateFade}
+            className="edge-fade-x snap-x snap-proximity relative flex overflow-x-auto no-scrollbar rounded-full p-1.5"
             style={{
-              transform: `translateX(${pill.x}px)`,
-              width: pill.w,
-              opacity: pill.ready ? 1 : 0,
-              transition: 'transform 260ms ease, width 260ms ease, opacity 200ms ease',
+              ['--fade-l' as string]: fade.left ? '26px' : '0px',
+              ['--fade-r' as string]: fade.right ? '26px' : '0px',
             }}
-          />
-          {tabs.map((tab, i) => (
-            <button
-              key={tab.id}
-              ref={(el) => {
-                tabRefs.current[i] = el;
+          >
+            <span
+              aria-hidden="true"
+              className="absolute left-0 top-1.5 bottom-1.5 rounded-full violet-grad shadow-[0_2px_10px_rgba(110,74,158,0.4)]"
+              style={{
+                transform: `translateX(${pill.x}px)`,
+                width: pill.w,
+                opacity: pill.ready ? 1 : 0,
+                transition: 'transform 260ms ease, width 260ms ease, opacity 200ms ease',
               }}
-              type="button"
-              aria-pressed={view === tab.id}
-              onClick={() => setView(tab.id)}
-              className={cn(
-                'tap-sm relative z-10 flex-1 min-w-fit h-11 rounded-full px-3.5 text-t14 font-medium transition-colors duration-250 ease-out',
-                view === tab.id ? 'text-white' : 'text-muted-foreground hover:text-charcoal',
-              )}
-            >
-              <span className="whitespace-nowrap">{tab.label}</span>
-            </button>
-          ))}
+            />
+            {tabs.map((tab, i) => (
+              <button
+                key={tab.id}
+                ref={(el) => {
+                  tabRefs.current[i] = el;
+                }}
+                type="button"
+                aria-pressed={view === tab.id}
+                onClick={() => setView(tab.id)}
+                className={cn(
+                  'tap-sm relative z-10 flex-none sm:flex-1 min-w-fit h-12 sm:h-11 snap-start rounded-full px-4 sm:px-3 text-t14 font-medium transition-colors duration-250 ease-out',
+                  view === tab.id ? 'text-white' : 'text-charcoal/70 hover:text-charcoal',
+                )}
+              >
+                <span className="whitespace-nowrap">{tab.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
-        {fade.left && (
-          <div className="absolute left-0 top-0 bottom-0 w-7 rounded-l-full bg-gradient-to-r from-[#f6f2fa] to-transparent pointer-events-none transition-opacity duration-250" aria-hidden />
-        )}
-        {fade.right && (
-          <div className="absolute right-0 top-0 bottom-0 w-7 rounded-r-full bg-gradient-to-l from-[#f6f2fa] to-transparent pointer-events-none transition-opacity duration-250" aria-hidden />
-        )}
       </div>
       <div key={view} className="stagger-in">
         {view === 'chart' && <KundliChartScreen />}

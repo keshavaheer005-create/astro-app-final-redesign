@@ -181,9 +181,9 @@ function signIndexOfTropicalAsc(chart: NonNullable<ReturnType<typeof useSession>
 function SummaryTile({ label, value, sub, icon, tone = 'gold' }: { label: string; value: string; sub?: string; icon: 'compass' | 'moon' | 'sun'; tone?: 'gold' | 'violet' }) {
   return (
     <GlassCard className="p-3.5 sm:p-4">
-      <div className={cn('flex items-center gap-2', tone === 'violet' ? 'text-violet' : 'text-gold')}>
-        <Icon name={icon} size={16} className="shrink-0" />
-        <span className="text-t12 text-muted-foreground leading-tight">{label}</span>
+      <div className={cn('flex items-center gap-1.5 min-w-0', tone === 'violet' ? 'text-violet' : 'text-gold')}>
+        <Icon name={icon} size={13} className="shrink-0" />
+        <span className="text-t12 text-muted-foreground leading-tight whitespace-nowrap truncate">{label}</span>
       </div>
       <p className="mt-1.5 font-serif text-t16 sm:text-t20 font-semibold text-charcoal leading-snug line-clamp-2" title={value}>{value}</p>
       {sub && <p className="text-t12 text-muted-foreground leading-snug line-clamp-2" title={sub}>{sub}</p>}

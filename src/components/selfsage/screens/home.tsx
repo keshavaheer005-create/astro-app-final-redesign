@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Icon, AcharyaAvatar, MoonPhaseGlyph, type IconName } from '../icons';
 import { GlassCard, SectionHeader, GoldButton, ErrorState } from '../ui-primitives';
+import { MandalaAccent } from '../chakra';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
@@ -456,12 +457,13 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
   // Moon phase 0→1 for the at-a-glance strip (same formula as the hero glyph)
   const moonPhase = panchang ? ((panchang.tithi.index - 1) + panchang.tithi.percent / 100) / 30 : null;
 
-  // Shortcut tile tints — one accent domain per destination (gold stays CTA-only)
+  // Shortcut tile tints — one accent domain per destination (gold stays CTA-only).
+  // `tint` washes the whole liquid-glass tile, `chip` colours its icon chip.
   const QUICK_TONES = [
-    { chip: 'bg-violet-soft/80 border-violet/30 text-violet-deep' }, // Ask Acharya
-    { chip: 'bg-gold-soft/70 border-gold/35 text-gold' }, // Today's Panchang
-    { chip: 'bg-rose-soft/80 border-rose/30 text-rose-deep' }, // Decision check
-    { chip: 'bg-emerald-soft/80 border-emerald/35 text-emerald-deep' }, // My journal
+    { tint: 'glass-tint-violet', chip: 'border-violet/30 text-violet-deep' }, // Ask Acharya
+    { tint: 'glass-tint-gold', chip: 'border-gold/40 text-gold' }, // Today's Panchang
+    { tint: 'glass-tint-rose', chip: 'border-rose/30 text-rose-deep' }, // Decision check
+    { tint: 'glass-tint-emerald', chip: 'border-emerald/35 text-emerald-deep' }, // My journal
   ];
 
   // One-tap shortcuts to the most-used destinations (no new backend calls)
@@ -506,29 +508,45 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
     <div className="relative space-y-6">
       {/* Full-viewport gold gradient comes from ScreenGradient (app-shell) */}
 
-      {/* Header */}
-      <header className="flex items-center justify-between gap-3 pt-1">
-        <div className="min-w-0">
-          <p className="text-t14 text-muted-foreground">{greeting},</p>
-          <h1 className="font-serif text-t28 font-bold text-gold-grad truncate">{displayName}</h1>
-          <p className="text-t12 text-muted-foreground mt-0.5">{dateLine}</p>
+      {/* Cohesive header band — greeting, date and the at-a-glance stats read
+          as ONE premium unit: gold-tinted liquid glass, dawn glow and a slowly
+          turning mandala watermark instead of two disconnected pieces. */}
+      <header
+        className="glass glass-tint-gold glass-liquid relative overflow-hidden rounded-[26px] px-5 pt-5 pb-3.5 sm:px-6 sm:pt-6 sm:pb-4 stagger-in"
+        style={{ animationDelay: '10ms', animationFillMode: 'backwards' }}
+      >
+        {/* dawn glow + mandala watermark (decorative, non-interactive) */}
+        <div className="pointer-events-none absolute -top-20 -right-14 h-52 w-52 rounded-full bg-gold/25 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -bottom-24 -left-16 h-48 w-48 rounded-full bg-gold-soft/50 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -top-10 -right-9 text-gold opacity-[0.09]" aria-hidden="true">
+          <MandalaAccent size={148} className="chakra-spin-zodiac" />
         </div>
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              aria-label={t('home.headerBell')}
-              className={cn(
-                'relative w-11 h-11 rounded-full glass inline-flex items-center justify-center text-gold hover:scale-105 active:scale-95 transition-transform duration-250',
-                reminderAlert && 'bell-wiggle',
-              )}
-            >
-              <Icon name="bell" size={20} />
-              {((checkin && !checkin.checkedInToday) || letterAlert || reminderAlert || skyUnreadCount > 0) && (
-                <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-maroon animate-pulse" />
-              )}
-            </button>
-          </PopoverTrigger>
+
+        <div className="relative flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-t14 font-medium text-muted-foreground">{greeting},</p>
+            <h1 className="font-serif text-t28 font-bold text-gold-grad truncate leading-tight">{displayName}</h1>
+            <p className="mt-1 inline-flex items-center gap-1.5 text-t12 text-muted-foreground">
+              <Icon name="sun" size={12} className="text-gold/80" />
+              {dateLine}
+            </p>
+          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                aria-label={t('home.headerBell')}
+                className={cn(
+                  'relative w-11 h-11 shrink-0 rounded-full bg-white/70 border border-gold/25 shadow-[0_2px_10px_rgba(201,162,39,0.18),inset_0_1px_0_rgba(255,255,255,0.9)] inline-flex items-center justify-center text-gold hover:scale-105 active:scale-95 transition-transform duration-250',
+                  reminderAlert && 'bell-wiggle',
+                )}
+              >
+                <Icon name="bell" size={20} />
+                {((checkin && !checkin.checkedInToday) || letterAlert || reminderAlert || skyUnreadCount > 0) && (
+                  <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-maroon animate-pulse" />
+                )}
+              </button>
+            </PopoverTrigger>
           <PopoverContent align="end" sideOffset={10} className="w-72 glass border-gold/30 p-0 overflow-hidden">
             <div className="px-4 pt-3 pb-2 border-b border-gold/15 bg-gold-faint/60 bar-texture-solid">
               <p className="text-t12 font-bold uppercase tracking-wider text-gold">{t('notifications.title')}</p>
@@ -648,45 +666,53 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
             </div>
           </PopoverContent>
         </Popover>
+        </div>
+
+        {/* At a glance — streak · antardasha · moon phase, fused into the same
+            band behind a soft hairline so the whole top reads as one header */}
+        <section
+          aria-label={t('home.glance.aria')}
+          className="relative mt-4 flex items-stretch gap-1 border-t border-gold/20 pt-3"
+        >
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-1">
+            <p className="truncate text-[11px] uppercase tracking-wide text-muted-foreground/85">{t('home.glance.streak')}</p>
+            <p className="inline-flex items-center gap-1.5 text-t16 font-semibold text-emerald-deep">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-soft/90">
+                <Icon name="flame" size={12} className="flame-pulse" />
+              </span>
+              {checkin ? checkin.streak : '—'}
+            </p>
+          </div>
+          <div className="w-px bg-gold/20" aria-hidden="true" />
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-1">
+            <p className="truncate text-[11px] uppercase tracking-wide text-muted-foreground/85">{t('home.glance.dasha')}</p>
+            <p className="inline-flex items-center gap-1.5 text-t16 font-semibold text-gold tabular-nums">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-gold-soft/90">
+                <Icon name="timeline" size={12} />
+              </span>
+              {dashaNow ? `${dashaNow.antarPercent}%` : '—'}
+            </p>
+          </div>
+          <div className="w-px bg-gold/20" aria-hidden="true" />
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-1">
+            <p className="truncate text-[11px] uppercase tracking-wide text-muted-foreground/85">{t('home.glance.moon')}</p>
+            {moonPhase !== null ? (
+              <p className="inline-flex items-center gap-1 text-t12 font-semibold text-violet-deep">
+                <MoonPhaseGlyph phase={moonPhase} size={16} className="shrink-0" />
+                <span className="truncate">{t(phaseKeyOf(moonPhase))}</span>
+              </p>
+            ) : (
+              <p className="text-t16 font-semibold text-muted-foreground">—</p>
+            )}
+          </div>
+        </section>
       </header>
 
-      {/* At a glance — streak · antardasha · moon phase (all locally computed) */}
-      <section
-        aria-label={t('home.glance.aria')}
-        className="glass rounded-2xl flex items-stretch px-4 py-2.5 stagger-in"
-        style={{ animationDelay: '30ms', animationFillMode: 'backwards' }}
-      >
-        <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 px-1">
-          <p className="truncate text-t12 text-muted-foreground">{t('home.glance.streak')}</p>
-          <p className="inline-flex items-center gap-1 text-t16 font-semibold text-emerald-deep">
-            <Icon name="flame" size={14} className="flame-pulse" />
-            {checkin ? checkin.streak : '—'}
-          </p>
-        </div>
-        <div className="mx-1 w-px bg-gold/15" aria-hidden="true" />
-        <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 px-1">
-          <p className="truncate text-t12 text-muted-foreground">{t('home.glance.dasha')}</p>
-          <p className="text-t16 font-semibold text-gold tabular-nums">{dashaNow ? `${dashaNow.antarPercent}%` : '—'}</p>
-        </div>
-        <div className="mx-1 w-px bg-gold/15" aria-hidden="true" />
-        <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 px-1">
-          <p className="truncate text-t12 text-muted-foreground">{t('home.glance.moon')}</p>
-          {moonPhase !== null ? (
-            <p className="inline-flex items-center gap-1 text-t12 font-semibold text-violet-deep">
-              <MoonPhaseGlyph phase={moonPhase} size={16} className="shrink-0" />
-              <span className="truncate">{t(phaseKeyOf(moonPhase))}</span>
-            </p>
-          ) : (
-            <p className="text-t16 font-semibold text-muted-foreground">—</p>
-          )}
-        </div>
-      </section>
-
-      {/* Shortcuts — tinted quick tiles (2×2 on mobile, 4-up on desktop).
-          Placed under the glance strip so the top of Home reads calm. */}
+      {/* Shortcuts — liquid-glass quick tiles, each tinted with its destination
+          domain (2×2 on mobile, 4-up on desktop) with a breathing rhythm. */}
       <nav
         aria-label={t('home.quick.aria')}
-        className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 stagger-in"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4 stagger-in"
         style={{ animationDelay: '20ms', animationFillMode: 'backwards' }}
       >
         {quickActions.map((qa, i) => (
@@ -695,17 +721,28 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
             type="button"
             onClick={qa.go}
             style={{ animationDelay: `${30 + i * 45}ms`, animationFillMode: 'backwards' }}
-            className="tap-sm glass stagger-in group flex min-h-[78px] flex-col items-start justify-between gap-2.5 rounded-2xl p-3.5 text-left transition-all duration-250 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(42,36,32,0.12)]"
+            className={cn(
+              'tap-sm glass glass-liquid stagger-in group relative flex min-h-[104px] sm:min-h-[112px] flex-col items-start justify-between gap-3 rounded-[22px] p-4 text-left',
+              'transition-all duration-250 ease-out hover:-translate-y-1 hover:shadow-[0_24px_48px_-16px_rgba(42,36,32,0.28)] active:scale-[0.98]',
+              QUICK_TONES[i % QUICK_TONES.length].tint,
+            )}
           >
             <span
               className={cn(
-                'inline-flex h-9 w-9 items-center justify-center rounded-xl border transition-transform duration-250 group-hover:scale-105',
+                'inline-flex h-10 w-10 items-center justify-center rounded-[14px] border bg-white/80 shadow-[0_2px_8px_rgba(42,36,32,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] transition-transform duration-250 group-hover:scale-110',
                 QUICK_TONES[i % QUICK_TONES.length].chip,
               )}
             >
-              <Icon name={qa.icon} size={17} />
+              <Icon name={qa.icon} size={18} />
             </span>
-            <span className="text-t13 font-semibold leading-snug text-charcoal/90">{t(qa.labelKey)}</span>
+            <span className="flex w-full items-end justify-between gap-1.5">
+              <span className="text-t14 font-semibold leading-snug text-charcoal/95">{t(qa.labelKey)}</span>
+              <Icon
+                name="chevron-right"
+                size={15}
+                className="mb-0.5 hidden shrink-0 text-gold opacity-0 transition-all duration-250 group-hover:translate-x-0.5 group-hover:opacity-100 lg:block"
+              />
+            </span>
           </button>
         ))}
       </nav>
@@ -829,7 +866,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                     }}
                     aria-label={`${language === 'hi' ? item.name.hi : item.name.en}, ${whenLabel}`}
                     className={cn(
-                      'sky-chip group/chip shrink-0 min-w-[148px] max-w-[190px] text-left glass rounded-xl px-3 py-2.5',
+                      'sky-chip group/chip shrink-0 min-w-[168px] max-w-[236px] text-left glass rounded-xl px-3 py-2.5',
                       'transition-all duration-250 ease-out hover:-translate-y-0.5 hover:shadow-[0_6px_18px_-8px_rgba(201,162,39,0.45)] active:scale-[0.97]',
                       'animate-in fade-in-0 slide-in-from-left-2 focus-visible:ring-2 focus-visible:ring-gold/60 focus-visible:outline-none',
                     )}
@@ -1144,12 +1181,12 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
         <section key={section.titleKey} aria-label={t(section.titleKey)}>
           {si > 0 && <div className="ornament-divider my-6">✦</div>}
           <SectionHeader title={t(section.titleKey)} tone={section.tone} />
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
             {section.items.map((item) => (
               <GlassCard
                 key={item.titleKey}
                 onClick={() => onNavigate('kundli', item.view)}
-                className="p-4 sm:p-5 group ripple"
+                className="glass-liquid p-4 sm:p-5 group ripple rounded-[22px]"
               >
                 <span className={cn('inline-flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-250', SECTION_CHIP_TONES[section.tone])}>
                   <Icon name={item.icon} size={20} />

@@ -674,6 +674,53 @@
      full-viewport <ScreenGradient> (chakra.tsx) so every tab owns its own
      atmosphere instead of a boxed overlay on a shared background. */
 
+  /* ── Liquid glass feature tile ─────────────────────────────────────────
+     A step above .glass for the Home feature grid: crisper specular edge
+     along the top/left (light catching a bevel), deeper float shadow, and
+     more refraction so the screen gradient glows THROUGH the tile. Pairs
+     with .glass-tint-* for the per-domain colour wash. */
+  .glass-liquid {
+    box-shadow:
+      0 20px 44px -18px rgba(42, 36, 32, 0.22),
+      0 6px 18px -6px rgba(42, 36, 32, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      inset 1px 0 0 rgba(255, 255, 255, 0.55),
+      inset 0 -1px 0 rgba(201, 162, 39, 0.1);
+  }
+  .glass-liquid::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+      radial-gradient(120% 60% at 8% 0%, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 55%),
+      linear-gradient(160deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 38%);
+  }
+
+  /* ── Scroll-strip edge fades (mask-based, background-agnostic) ─────────
+     Applied to the SCROLL CONTAINER: content (incl. the sliding pill)
+     genuinely dissolves toward the edge instead of a hard cut — reads as
+     "more tabs this way" on phones without ever truncating a label. */
+  .edge-fade-x {
+    --fade-l: 0px;
+    --fade-r: 0px;
+    -webkit-mask-image: linear-gradient(
+      90deg,
+      transparent 0,
+      #000 var(--fade-l),
+      #000 calc(100% - var(--fade-r)),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      90deg,
+      transparent 0,
+      #000 var(--fade-l),
+      #000 calc(100% - var(--fade-r)),
+      transparent 100%
+    );
+  }
+
   /* ── Elevation (hero cards that should read a step above plain glass) ── */
   .glass-elev {
     box-shadow:
