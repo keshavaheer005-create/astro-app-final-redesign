@@ -42,7 +42,7 @@ export function KundliChartScreen() {
   return (
     <div className="space-y-5">
       <header>
-        <h1 className="font-serif text-t28 font-bold text-charcoal">{chart.input.name}</h1>
+        <h1 className="font-serif text-t28 font-bold text-gold-grad">{chart.input.name}</h1>
         <p className="text-t12 text-muted-foreground mt-0.5">
           {chart.input.dob} · {chart.input.tob} · {chart.input.placeName ?? ''} · ayanamsa {chart.ayanamsa.toFixed(2)}°
         </p>

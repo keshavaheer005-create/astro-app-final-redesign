@@ -7,7 +7,7 @@ import { Icon, LogoMark } from '../icons';
 import { GlassCard, GoldButton, GhostButton } from '../ui-primitives';
 import { GlassDatePicker, TimeWheel } from '../pickers';
 import { LocationCombobox, type LocationResult } from '../location-combobox';
-import { ChakraBackdrop, ChakraSpinner, ChakraWheel, OmEmblem } from '../chakra';
+import { ChakraBackdrop, ChakraSpinner, ChakraWheel, OmEmblem, ScreenGradient } from '../chakra';
 import { api, useSession, type ChartData } from '../session-context';
 
 type Step = 'welcome' | 'name' | 'birth' | 'computing' | 'ready';
@@ -82,10 +82,21 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
 
   const canProceedBirth = !!selectedPlace;
 
+  // The setup flow owns its atmosphere: gold welcome → violet birth details →
+  // emerald computing → gold ready. Cross-fades via ScreenGradient.
+  const stepTone: Record<Step, string> = {
+    welcome: 'gold',
+    name: 'violet',
+    birth: 'violet',
+    computing: 'emerald',
+    ready: 'gold',
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-cream relative">
       <div className="mandala-bg" aria-hidden="true" />
       <ChakraBackdrop />
+      <ScreenGradient tone={stepTone[step]} />
       <div className="relative z-10 flex-1 w-full max-w-lg mx-auto px-4 py-8 flex flex-col justify-center">
         <AnimatePresence mode="wait">
           {step === 'welcome' && (
@@ -106,7 +117,7 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
                 </div>
                 <LogoMark size={84} className="relative" />
               </div>
-              <h1 className="font-serif text-t28 font-bold text-charcoal">{t('onboarding.welcome')}</h1>
+              <h1 className="font-serif text-t28 font-bold text-gold-grad">{t('onboarding.welcome')}</h1>
               <p className="mt-2 text-gold-grad font-serif text-t16 italic">{t('splash.motto')}</p>
               <p className="mt-5 text-t14 text-muted-foreground leading-relaxed">{t('onboarding.welcomeBody')}</p>
               <div className="mt-8">
@@ -127,7 +138,7 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
             >
               <GlassCard className="p-6">
                 <StepDots step={1} />
-                <h2 className="font-serif text-t20 font-semibold text-charcoal">{t('onboarding.step.name')}</h2>
+                <h2 className="font-serif text-t20 font-semibold text-violet-grad">{t('onboarding.step.name')}</h2>
                 <input
                   autoFocus
                   value={name}
@@ -160,7 +171,7 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
             >
               <GlassCard className="p-6">
                 <StepDots step={2} />
-                <h2 className="font-serif text-t20 font-semibold text-charcoal mb-4">{t('onboarding.step.birth')}</h2>
+                <h2 className="font-serif text-t20 font-semibold text-violet-grad mb-4">{t('onboarding.step.birth')}</h2>
 
                 <label className="text-t12 font-medium text-muted-foreground uppercase tracking-wide">{t('onboarding.namePlaceholder')}</label>
                 <input
@@ -237,7 +248,7 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
                 <div className="mx-auto w-16 h-16 rounded-full gold-grad flex items-center justify-center mb-5 shadow-[0_6px_24px_rgba(201,162,39,0.4)]">
                   <Icon name="check" size={30} strokeWidth={2} />
                 </div>
-                <h2 className="font-serif text-t28 font-bold text-charcoal">{t('onboarding.ready')}</h2>
+                <h2 className="font-serif text-t28 font-bold text-gold-grad">{t('onboarding.ready')}</h2>
                 <p className="mt-3 text-t14 text-muted-foreground leading-relaxed">{t('onboarding.readyBody')}</p>
                 {/* A quiet Om seal — the birth chart is received, not just built */}
                 <div className="mt-4 flex justify-center text-violet/70">

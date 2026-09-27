@@ -66,7 +66,7 @@ export function HoroscopeScreen() {
   return (
     <div className="space-y-5">
       <header>
-        <h1 className="font-serif text-t28 font-bold text-charcoal">{t('horoscope.' + period)}</h1>
+        <h1 className="font-serif text-t28 font-bold text-violet-grad">{t('horoscope.' + period)}</h1>
         <p className="text-t12 text-muted-foreground mt-0.5">{t('horoscope.disclaimer')}</p>
       </header>
 

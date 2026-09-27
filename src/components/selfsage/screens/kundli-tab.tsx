@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { MandalaAccent } from '../chakra';
+import { useAppStore, type ScreenTone } from '@/store/app';
 import { KundliChartScreen } from './kundli-chart';
 import { PanchangScreen } from './kundli-panchang';
 import { HoroscopeScreen } from './kundli-horoscope';
@@ -14,18 +15,27 @@ export type KundliView = 'chart' | 'panchang' | 'horoscope' | 'matching' | 'repo
 
 /* Per-view atmosphere — secondary tint domains (gold stays the CTA colour):
    chart/panchang sit in the golden daylight band, horoscope/reports in
-   violet insight, matching in rose harmony. */
-const VIEW_TONE: Record<KundliView, { wash: string; accent: string }> = {
-  chart: { wash: 'wash-gold', accent: 'text-gold' },
-  panchang: { wash: 'wash-gold', accent: 'text-gold' },
-  horoscope: { wash: 'wash-violet', accent: 'text-violet' },
-  matching: { wash: 'wash-rose', accent: 'text-rose' },
-  reports: { wash: 'wash-violet', accent: 'text-violet' },
+   violet insight, matching in rose harmony. The tone drives BOTH the corner
+   mandala accent and the full-viewport ScreenGradient (via the store). */
+const VIEW_TONE: Record<KundliView, { accent: string; tone: ScreenTone }> = {
+  chart: { accent: 'text-gold', tone: 'gold' },
+  panchang: { accent: 'text-gold', tone: 'gold' },
+  horoscope: { accent: 'text-violet', tone: 'violet' },
+  matching: { accent: 'text-rose', tone: 'rose' },
+  reports: { accent: 'text-violet', tone: 'violet' },
 };
 
 export function KundliTab({ initialView }: { initialView?: KundliView }) {
   const { t } = useTranslation();
   const [view, setView] = useState<KundliView>(initialView ?? 'chart');
+  const setScreenTone = useAppStore((s) => s.setScreenTone);
+
+  // This sub-tab owns the whole-screen atmosphere: switching views cross-fades
+  // the fixed ScreenGradient (gold chart/panchang · violet horoscope/reports ·
+  // rose matching). Cleanup resets to kundli's gold default on unmount.
+  useEffect(() => {
+    setScreenTone(VIEW_TONE[view].tone);
+  }, [view, setScreenTone]);
 
   // Sliding violet pill indicator (transform 260ms ease) — same mechanics as the
   // profile language switcher. Violet = the Kundli mystical/insight domain;
@@ -71,9 +81,8 @@ export function KundliTab({ initialView }: { initialView?: KundliView }) {
 
   return (
     <div className="relative space-y-4">
-      {/* Per-view atmosphere: soft colour wash + a slowly turning corner
-          mandala that cross-fades its tint with the active view */}
-      <div className={cn('wash -z-10', VIEW_TONE[view].wash)} aria-hidden="true" />
+      {/* Full-viewport gradient comes from ScreenGradient (store-driven);
+          a slowly turning corner mandala cross-fades its tint with the view */}
       <div
         className="pointer-events-none absolute -top-10 -right-4 opacity-[0.12] transition-colors duration-700"
         aria-hidden="true"

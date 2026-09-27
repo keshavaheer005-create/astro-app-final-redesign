@@ -116,6 +116,18 @@ export function AuthCard({ onAuthed }: { onAuthed?: () => void }) {
 
   return (
     <GlassCard className="relative mx-auto w-full max-w-md overflow-hidden p-7">
+      {/* Local emerald atmosphere — a calm gradient field inside the card
+          (the auth card is embedded, so this stays scoped, not fixed) */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        aria-hidden="true"
+        style={{
+          background:
+            'radial-gradient(90% 55% at 12% -6%, rgba(62,142,110,0.20), transparent 60%),' +
+            'radial-gradient(80% 50% at 95% 8%, rgba(127,191,164,0.14), transparent 58%),' +
+            'radial-gradient(120% 60% at 50% 112%, rgba(62,142,110,0.12), transparent 64%)',
+        }}
+      />
       {/* decorative chakra — never interactive, spins slowly behind the header */}
       <div className="pointer-events-none absolute -top-7 -right-7 text-gold opacity-[0.10]" aria-hidden="true">
         <ChakraWheel size={120} speed="slow" strokeWidth={1.5} />

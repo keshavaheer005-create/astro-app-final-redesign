@@ -150,14 +150,14 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
 
   return (
     <div className="relative space-y-5">
-      {/* Emerald atmosphere — the journal is growth/reflection territory */}
-      <div className="wash wash-emerald -z-10" aria-hidden="true" />
+      {/* Full-viewport emerald gradient comes from ScreenGradient (app-shell);
+          a slowly turning corner mandala accents the margin */}
       <div className="pointer-events-none absolute -top-10 -right-4 text-emerald opacity-[0.12]" aria-hidden="true">
         <MandalaAccent size={180} className="chakra-spin-zodiac" />
       </div>
       <header className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="font-serif text-t28 font-bold text-charcoal">{t('journal.title')}</h1>
+          <h1 className="font-serif text-t28 font-bold text-emerald-grad">{t('journal.title')}</h1>
           <p className="text-t14 text-muted-foreground">{t('journal.subtitle')}</p>
         </div>
         {data && data.streak > 0 && (

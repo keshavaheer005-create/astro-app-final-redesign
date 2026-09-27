@@ -434,6 +434,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
 
   const submitCheckin = async () => {
     setSaving(true);
+    setCheckinError(false);
     try {
       await api('/api/checkins', {
         method: 'POST',
@@ -443,7 +444,8 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
       setNote('');
       await loadCheckin();
     } catch {
-      /* keep card open */
+      // Never silent — tell the user the save failed so they can retry.
+      setCheckinError(true);
     } finally {
       setSaving(false);
     }
@@ -453,6 +455,14 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
   const displayName = chart?.input?.name || user?.name || 'Seeker';
   // Moon phase 0→1 for the at-a-glance strip (same formula as the hero glyph)
   const moonPhase = panchang ? ((panchang.tithi.index - 1) + panchang.tithi.percent / 100) / 30 : null;
+
+  // Shortcut tile tints — one accent domain per destination (gold stays CTA-only)
+  const QUICK_TONES = [
+    { chip: 'bg-violet-soft/80 border-violet/30 text-violet-deep' }, // Ask Acharya
+    { chip: 'bg-gold-soft/70 border-gold/35 text-gold' }, // Today's Panchang
+    { chip: 'bg-rose-soft/80 border-rose/30 text-rose-deep' }, // Decision check
+    { chip: 'bg-emerald-soft/80 border-emerald/35 text-emerald-deep' }, // My journal
+  ];
 
   // One-tap shortcuts to the most-used destinations (no new backend calls)
   const quickActions: { icon: IconName; labelKey: string; go: () => void }[] = [
@@ -494,34 +504,13 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
 
   return (
     <div className="relative space-y-6">
-      {/* Soft gold atmosphere — Home's base wash, painted beneath all content */}
-      <div className="wash wash-gold -z-10" aria-hidden="true" />
-
-      {/* Quick actions — one-tap shortcuts to the most-used features */}
-      <div
-        role="toolbar"
-        aria-label={t('home.quick.aria')}
-        className="no-scrollbar flex gap-2 overflow-x-auto pb-0.5 stagger-in"
-        style={{ animationDelay: '15ms', animationFillMode: 'backwards' }}
-      >
-        {quickActions.map((qa) => (
-          <button
-            key={qa.labelKey}
-            type="button"
-            onClick={qa.go}
-            className="tap-sm glass inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-t12 font-medium text-charcoal/85 transition-colors duration-250 hover:border-gold/50 hover:text-charcoal"
-          >
-            <Icon name={qa.icon} size={15} className="text-gold" />
-            {t(qa.labelKey)}
-          </button>
-        ))}
-      </div>
+      {/* Full-viewport gold gradient comes from ScreenGradient (app-shell) */}
 
       {/* Header */}
       <header className="flex items-center justify-between gap-3 pt-1">
         <div className="min-w-0">
           <p className="text-t14 text-muted-foreground">{greeting},</p>
-          <h1 className="font-serif text-t28 font-bold text-charcoal truncate">{displayName}</h1>
+          <h1 className="font-serif text-t28 font-bold text-gold-grad truncate">{displayName}</h1>
           <p className="text-t12 text-muted-foreground mt-0.5">{dateLine}</p>
         </div>
         <Popover>
@@ -692,6 +681,34 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
           )}
         </div>
       </section>
+
+      {/* Shortcuts — tinted quick tiles (2×2 on mobile, 4-up on desktop).
+          Placed under the glance strip so the top of Home reads calm. */}
+      <nav
+        aria-label={t('home.quick.aria')}
+        className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 stagger-in"
+        style={{ animationDelay: '20ms', animationFillMode: 'backwards' }}
+      >
+        {quickActions.map((qa, i) => (
+          <button
+            key={qa.labelKey}
+            type="button"
+            onClick={qa.go}
+            style={{ animationDelay: `${30 + i * 45}ms`, animationFillMode: 'backwards' }}
+            className="tap-sm glass stagger-in group flex min-h-[78px] flex-col items-start justify-between gap-2.5 rounded-2xl p-3.5 text-left transition-all duration-250 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(42,36,32,0.12)]"
+          >
+            <span
+              className={cn(
+                'inline-flex h-9 w-9 items-center justify-center rounded-xl border transition-transform duration-250 group-hover:scale-105',
+                QUICK_TONES[i % QUICK_TONES.length].chip,
+              )}
+            >
+              <Icon name={qa.icon} size={17} />
+            </span>
+            <span className="text-t13 font-semibold leading-snug text-charcoal/90">{t(qa.labelKey)}</span>
+          </button>
+        ))}
+      </nav>
 
       {/* Hero: today's panchang + Acharya CTA — gold gradient glass elevation */}
       <GlassCard className="glass-elev glass-tint-gold p-5 sm:p-6">
@@ -908,7 +925,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                 <p className="text-t12 text-muted-foreground">{t('home.streak', { n: checkin.streak })}</p>
               </div>
             </motion.div>
-          ) : checkinError ? (
+          ) : !checkin && checkinError ? (
             <ErrorState message={t('common.networkError')} onRetry={loadCheckin} />
           ) : !checkin ? (
             <div className="space-y-3 py-2">
@@ -989,6 +1006,9 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                   );
                 })()}
                 {mood <= 2 && <p className="text-t12 text-maroon/80 italic">{t('home.checkinLow')}</p>}
+                {checkinError && (
+                  <p className="text-t12 font-medium text-maroon" role="alert">{t('common.networkError')} — {t('common.retry')}</p>
+                )}
                 <GoldButton onClick={submitCheckin} disabled={saving} className="w-full">
                   {saving ? t('common.loading') : justSaved ? t('common.saved') : t('home.checkinSubmit')}
                   {!saving && <Icon name="check" size={16} />}

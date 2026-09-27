@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { Icon, LogoMark, type IconName } from './icons';
-import { MandalaBackdrop, useSlidingIndicator } from './ui-primitives';
-import { ChakraBackdrop } from './chakra';
+import { MandalaBackdrop } from './ui-primitives';
+import { ChakraBackdrop, ScreenGradient } from './chakra';
+import { useAppStore, type ScreenTone } from '@/store/app';
 import { cn } from '@/lib/utils';
 
 export type TabId = 'home' | 'kundli' | 'journal' | 'acharya' | 'profile';
@@ -56,24 +57,28 @@ function NavItems({
   labelOf: (key: string) => string;
 }) {
   const activeIndex = TABS.findIndex((t) => t.id === active);
-  const { bind, style } = useSlidingIndicator(activeIndex, !!vertical);
 
+  /* Deterministic indicator — no JS measurement, so the gold pill lands
+     dead-centre under the active tab at EVERY viewport width (measured
+     offsets went stale on resize, especially on mobile). Horizontal items
+     are equal flex-1 columns (20% each); vertical items are a fixed
+     58px + 8px-gap rhythm. */
   return (
-    <>
+    <div className={cn('relative flex w-full', vertical ? 'flex-col gap-2' : 'flex-row h-full')}>
       <span
-        className="absolute rounded-full gold-grad shadow-[0_2px_12px_rgba(201,162,39,0.45)]"
-        style={{
-          ...style,
-          transition: 'transform 250ms ease, width 250ms ease, height 250ms ease',
-          ...(vertical ? { left: 10, right: 10 } : { top: 6, bottom: 6 }),
-        }}
+        aria-hidden="true"
+        className="absolute rounded-full gold-grad shadow-[0_2px_12px_rgba(201,162,39,0.45)] transition-all duration-300 ease-out"
+        style={
+          vertical
+            ? { top: 0, height: 58, left: 2, right: 2, transform: `translateY(${activeIndex * 66}px)` }
+            : { left: 3, width: 'calc(20% - 6px)', top: 6, bottom: 6, transform: `translateX(calc(${activeIndex} * (100% + 6px)))` }
+        }
       />
-      {TABS.map((t, i) => {
+      {TABS.map((t) => {
         const isActive = t.id === active;
         return (
           <button
             key={t.id}
-            ref={bind(i)}
             type="button"
             onClick={() => onChange(t.id)}
             aria-label={labelOf(t.labelKey)}
@@ -93,9 +98,17 @@ function NavItems({
           </button>
         );
       })}
-    </>
+    </div>
   );
 }
+
+export const TAB_TONE: Record<TabId, ScreenTone> = {
+  home: 'gold',
+  kundli: 'gold', // overridden per sub-view inside KundliTab
+  journal: 'emerald',
+  acharya: 'emerald',
+  profile: 'burgundy',
+};
 
 export function AppShellInner({
   activeTab,
@@ -109,11 +122,20 @@ export function AppShellInner({
   children: React.ReactNode;
 }) {
   const hidden = useHideOnScroll();
+  const tone = useAppStore((s) => s.screenTone);
+  const setScreenTone = useAppStore((s) => s.setScreenTone);
+
+  // Each tab owns its atmosphere; KundliTab drives its own per-view tone
+  // (child effect wins over this one for kundli).
+  useEffect(() => {
+    if (activeTab !== 'kundli') setScreenTone(TAB_TONE[activeTab]);
+  }, [activeTab, setScreenTone]);
 
   return (
     <div className="min-h-screen flex flex-col bg-cream text-charcoal">
       <MandalaBackdrop />
       <ChakraBackdrop />
+      <ScreenGradient tone={tone} />
 
       {/* Desktop sidebar (≥1024px) */}
       <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-[92px] z-40 flex-col items-center py-5">

@@ -166,7 +166,7 @@ export function MatchingScreen() {
   return (
     <div className="space-y-5">
       <header>
-        <h1 className="font-serif text-t28 font-bold text-charcoal">{t('match.title')}</h1>
+        <h1 className="font-serif text-t28 font-bold text-rose-grad">{t('match.title')}</h1>
         <p className="text-t14 text-muted-foreground">{t('match.subtitle')}</p>
       </header>
       {/* rose = the matching/harmony domain colour: a soft tinted hairline under the title */}

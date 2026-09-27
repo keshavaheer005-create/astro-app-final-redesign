@@ -176,15 +176,20 @@
   /* ── Liquid glass card ─────────────────────────────────────────────── */
   .glass {
     position: relative;
-    background: rgba(255, 255, 255, 0.6);
-    -webkit-backdrop-filter: blur(20px) saturate(1.15);
-    backdrop-filter: blur(20px) saturate(1.15);
-    border: 1px solid rgba(201, 162, 39, 0.28);
+    /* Liquid glass: soft vertical light-to-clear fill so the screen gradient
+       behind refracts through with real colour; not a flat white slab. */
+    background: linear-gradient(168deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 253, 246, 0.52) 46%, rgba(255, 250, 236, 0.6) 100%);
+    -webkit-backdrop-filter: blur(22px) saturate(1.5);
+    backdrop-filter: blur(22px) saturate(1.5);
+    border: 1px solid rgba(255, 255, 255, 0.66);
+    outline: 1px solid rgba(201, 162, 39, 0.16);
+    outline-offset: -1px;
     border-radius: 20px;
     box-shadow:
-      0 8px 32px rgba(42, 36, 32, 0.08),
-      0 2px 8px rgba(42, 36, 32, 0.06),
-      inset 0 1px 0 rgba(255, 255, 255, 0.55);
+      0 14px 44px rgba(42, 36, 32, 0.11),
+      0 2px 10px rgba(42, 36, 32, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.85),
+      inset 0 -1px 0 rgba(201, 162, 39, 0.08);
     overflow: hidden;
   }
   .glass::before {
@@ -665,52 +670,9 @@
     border-color: rgba(92, 26, 40, 0.3);
   }
 
-  /* ── Screen washes (per-screen colour atmosphere) ──────────────────────
-     Four-layer light gradient fields: a top aurora band that melts into the
-     cream base, two corner glows, and a gentle rise from the bottom edge.
-     Clearly colourful yet calm — content always wins. Position as the FIRST
-     child of a `relative` screen root (washes paint beneath via -z-10);
-     pointer-events stay off; never causes overflow. */
-  .wash {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-  }
-  .wash-gold {
-    background:
-      linear-gradient(180deg, rgba(201, 162, 39, 0.14) 0%, rgba(201, 162, 39, 0.06) 30%, rgba(201, 162, 39, 0.02) 56%, transparent 76%),
-      radial-gradient(85% 42% at 86% -4%, rgba(201, 162, 39, 0.15), transparent 62%),
-      radial-gradient(70% 38% at 2% 22%, rgba(232, 197, 104, 0.11), transparent 58%),
-      radial-gradient(64% 34% at 50% 108%, rgba(232, 197, 104, 0.12), transparent 66%);
-  }
-  .wash-emerald {
-    background:
-      linear-gradient(180deg, rgba(62, 142, 110, 0.15) 0%, rgba(62, 142, 110, 0.065) 30%, rgba(62, 142, 110, 0.02) 56%, transparent 76%),
-      radial-gradient(85% 42% at 86% -4%, rgba(62, 142, 110, 0.16), transparent 62%),
-      radial-gradient(70% 38% at 2% 22%, rgba(62, 142, 110, 0.10), transparent 58%),
-      radial-gradient(64% 34% at 50% 108%, rgba(62, 142, 110, 0.11), transparent 66%);
-  }
-  .wash-violet {
-    background:
-      linear-gradient(180deg, rgba(110, 74, 158, 0.14) 0%, rgba(110, 74, 158, 0.06) 30%, rgba(110, 74, 158, 0.02) 56%, transparent 76%),
-      radial-gradient(85% 42% at 86% -4%, rgba(110, 74, 158, 0.16), transparent 62%),
-      radial-gradient(70% 38% at 2% 22%, rgba(110, 74, 158, 0.10), transparent 58%),
-      radial-gradient(64% 34% at 50% 108%, rgba(143, 108, 192, 0.10), transparent 66%);
-  }
-  .wash-rose {
-    background:
-      linear-gradient(180deg, rgba(194, 69, 90, 0.13) 0%, rgba(194, 69, 90, 0.055) 30%, rgba(194, 69, 90, 0.018) 56%, transparent 76%),
-      radial-gradient(85% 42% at 86% -4%, rgba(194, 69, 90, 0.15), transparent 62%),
-      radial-gradient(70% 38% at 2% 22%, rgba(194, 69, 90, 0.09), transparent 58%),
-      radial-gradient(64% 34% at 50% 108%, rgba(201, 162, 39, 0.08), transparent 66%);
-  }
-  .wash-burgundy {
-    background:
-      linear-gradient(180deg, rgba(92, 26, 40, 0.12) 0%, rgba(92, 26, 40, 0.05) 30%, rgba(92, 26, 40, 0.016) 56%, transparent 76%),
-      radial-gradient(85% 42% at 86% -4%, rgba(92, 26, 40, 0.14), transparent 62%),
-      radial-gradient(70% 38% at 2% 22%, rgba(92, 26, 40, 0.08), transparent 58%),
-      radial-gradient(64% 34% at 50% 108%, rgba(194, 69, 90, 0.10), transparent 66%);
-  }
+  /* ── Screen washes — REMOVED: per-screen colour now lives in the fixed
+     full-viewport <ScreenGradient> (chakra.tsx) so every tab owns its own
+     atmosphere instead of a boxed overlay on a shared background. */
 
   /* ── Elevation (hero cards that should read a step above plain glass) ── */
   .glass-elev {

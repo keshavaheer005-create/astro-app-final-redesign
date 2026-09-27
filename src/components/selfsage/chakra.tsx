@@ -353,6 +353,58 @@ export function ChakraBackdrop() {
   );
 }
 
+/**
+ * ScreenGradient — the app's atmosphere engine. A fixed, full-viewport stack
+ * of five rich gradient fields (gold / emerald / violet / rose / burgundy)
+ * that cross-fades as tabs change, so every tab OWNS its own background
+ * instead of sitting on one shared cream plane. Paints above the ChakraBackdrop
+ * (z-0) and below all content (z-10); pointer-events stay off; opacity-only
+ * transitions (700ms) respect the global reduced-motion opt-out.
+ */
+const TONE_GRADS: Record<string, string> = {
+  gold:
+    'radial-gradient(90% 65% at 10% -10%, rgba(212,175,55,0.36), transparent 60%),' +
+    'radial-gradient(85% 60% at 95% 2%, rgba(232,197,104,0.28), transparent 58%),' +
+    'radial-gradient(130% 75% at 50% 115%, rgba(201,162,39,0.20), transparent 64%),' +
+    'linear-gradient(172deg, rgba(233,196,106,0.24) 0%, rgba(233,196,106,0.09) 34%, transparent 62%)',
+  emerald:
+    'radial-gradient(90% 65% at 8% -8%, rgba(62,142,110,0.34), transparent 60%),' +
+    'radial-gradient(80% 55% at 96% 4%, rgba(127,191,164,0.26), transparent 58%),' +
+    'radial-gradient(130% 75% at 50% 115%, rgba(62,142,110,0.19), transparent 64%),' +
+    'linear-gradient(172deg, rgba(62,142,110,0.22) 0%, rgba(62,142,110,0.08) 34%, transparent 62%)',
+  violet:
+    'radial-gradient(90% 65% at 10% -10%, rgba(110,74,158,0.33), transparent 60%),' +
+    'radial-gradient(85% 58% at 94% 4%, rgba(143,108,192,0.26), transparent 58%),' +
+    'radial-gradient(130% 75% at 50% 115%, rgba(110,74,158,0.18), transparent 64%),' +
+    'linear-gradient(172deg, rgba(110,74,158,0.21) 0%, rgba(110,74,158,0.075) 34%, transparent 62%)',
+  rose:
+    'radial-gradient(90% 65% at 10% -10%, rgba(194,69,90,0.31), transparent 60%),' +
+    'radial-gradient(85% 58% at 94% 4%, rgba(217,112,138,0.26), transparent 58%),' +
+    'radial-gradient(130% 75% at 50% 115%, rgba(194,69,90,0.17), transparent 64%),' +
+    'linear-gradient(172deg, rgba(194,69,90,0.20) 0%, rgba(194,69,90,0.07) 34%, transparent 62%)',
+  burgundy:
+    'radial-gradient(90% 65% at 10% -10%, rgba(92,26,40,0.29), transparent 60%),' +
+    'radial-gradient(85% 58% at 94% 4%, rgba(163,51,71,0.24), transparent 58%),' +
+    'radial-gradient(130% 75% at 50% 115%, rgba(92,26,40,0.17), transparent 64%),' +
+    'linear-gradient(172deg, rgba(92,26,40,0.19) 0%, rgba(92,26,40,0.07) 34%, transparent 62%)',
+};
+
+const TONE_KEYS = ['gold', 'emerald', 'violet', 'rose', 'burgundy'] as const;
+
+export function ScreenGradient({ tone }: { tone: string }) {
+  return (
+    <div className="pointer-events-none fixed inset-0 z-[1] overflow-hidden" aria-hidden="true">
+      {TONE_KEYS.map((k) => (
+        <div
+          key={k}
+          className="absolute inset-0 transition-opacity duration-700 ease-out will-change-[opacity]"
+          style={{ background: TONE_GRADS[k], opacity: k === tone ? 1 : 0 }}
+        />
+      ))}
+    </div>
+  );
+}
+
 /** Loading affordance: center dot + one fast-spinning chakra ring + label. */
 export function ChakraSpinner({ size = 44, label }: { size?: number; label?: string }) {
   const { t } = useTranslation();

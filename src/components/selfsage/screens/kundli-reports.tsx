@@ -67,7 +67,7 @@ export function ReportsScreen() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="font-serif text-t28 font-bold text-charcoal">{t('reports.title')}</h1>
+        <h1 className="font-serif text-t28 font-bold text-violet-grad">{t('reports.title')}</h1>
         <p className="text-t14 text-muted-foreground">{chart.input.name}</p>
       </header>
 

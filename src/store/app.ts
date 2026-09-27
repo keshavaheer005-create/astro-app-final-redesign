@@ -5,6 +5,9 @@ import { persist } from 'zustand/middleware';
 
 export type Language = 'en' | 'hi';
 
+/** Screen atmosphere tones — the fixed full-viewport gradient behind each tab. */
+export type ScreenTone = 'gold' | 'emerald' | 'violet' | 'rose' | 'burgundy';
+
 interface AppState {
   language: Language;
   reduceMotion: boolean;
@@ -12,6 +15,8 @@ interface AppState {
   reminderEnabled: boolean;
   reminderTime: string; // HH:MM
   weeklyReflectionEnabled: boolean;
+  /** Active screen atmosphere — drives the fixed ScreenGradient (not persisted). */
+  screenTone: ScreenTone;
   /** One-shot composer draft handed to the Acharya screen (e.g. "discuss this journal note"). */
   acharyaDraft: string | null;
   /** Journal date the draft refers to (threads the Acharya reply back to the entry). */
@@ -27,6 +32,7 @@ interface AppState {
   consumeAcharyaDraft: () => { text: string; journalDate: string | null } | null;
   pushPendingFocus: (target: string) => void;
   consumePendingFocus: () => string | null;
+  setScreenTone: (t: ScreenTone) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -38,6 +44,7 @@ export const useAppStore = create<AppState>()(
       reminderEnabled: true,
       reminderTime: '20:00',
       weeklyReflectionEnabled: true,
+      screenTone: 'gold' as ScreenTone,
       acharyaDraft: null as string | null,
       acharyaDraftDate: null as string | null,
       pendingFocus: null as string | null,
@@ -59,6 +66,7 @@ export const useAppStore = create<AppState>()(
         if (target) set({ pendingFocus: null });
         return target;
       },
+      setScreenTone: (screenTone) => set({ screenTone }),
     }),
     {
       name: 'selfsage-prefs',
@@ -69,6 +77,7 @@ export const useAppStore = create<AppState>()(
         reminderEnabled: s.reminderEnabled,
         reminderTime: s.reminderTime,
         weeklyReflectionEnabled: s.weeklyReflectionEnabled,
+      // screenTone intentionally NOT persisted — derived per screen
         // acharyaDraft(+Date) + pendingFocus intentionally NOT persisted — one-shot handoffs
       }),
     },

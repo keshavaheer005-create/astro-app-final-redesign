@@ -15,13 +15,30 @@ export function useSlidingIndicator(activeIndex: number, vertical: boolean) {
   const [style, setStyle] = useState<React.CSSProperties>({ opacity: 0 });
 
   useLayoutEffect(() => {
-    const el = refs.current[activeIndex];
-    if (!el) return;
-    if (vertical) {
-      setStyle({ transform: `translateY(${el.offsetTop}px)`, height: el.offsetHeight, opacity: 1 });
-    } else {
-      setStyle({ transform: `translateX(${el.offsetLeft}px)`, width: el.offsetWidth, opacity: 1 });
-    }
+    const measure = () => {
+      const el = refs.current[activeIndex];
+      if (!el) return;
+      if (vertical) {
+        setStyle({ transform: `translateY(${el.offsetTop}px)`, height: el.offsetHeight, opacity: 1 });
+      } else {
+        setStyle({ transform: `translateX(${el.offsetLeft}px)`, width: el.offsetWidth, opacity: 1 });
+      }
+    };
+    measure();
+    // Re-measure when the viewport changes so the pill never drifts off the
+    // active label on resize / orientation change (mobile-critical).
+    let raf = 0;
+    const onResize = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(measure);
+    };
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+    };
   }, [activeIndex, vertical]);
 
   const bind = (i: number) => (el: HTMLElement | null) => {

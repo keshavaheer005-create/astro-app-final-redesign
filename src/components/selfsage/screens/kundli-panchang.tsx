@@ -170,7 +170,7 @@ export function PanchangScreen() {
     <div className="space-y-5">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-serif text-t28 font-bold text-charcoal">{t('panchang.title')}</h1>
+          <h1 className="font-serif text-t28 font-bold text-gold-grad">{t('panchang.title')}</h1>
           <p className="text-t14 text-muted-foreground">{t('panchang.subtitle')} · {chart.input.placeName}</p>
         </div>
         {/* Day / Month segmented toggle — sliding gold pill indicator */}

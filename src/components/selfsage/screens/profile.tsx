@@ -133,14 +133,13 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
 
   return (
     <div className="relative space-y-6 max-w-3xl">
-      {/* Deep burgundy atmosphere — the profile is your root, your identity;
-          a wine-toned gradient field with a turning corner mandala */}
-      <div className="wash wash-burgundy -z-10" aria-hidden="true" />
+      {/* Deep burgundy atmosphere — the whole-screen gradient comes from
+          ScreenGradient (app-shell); the wine-toned corner mandala accents it */}
       <div className="pointer-events-none absolute -top-10 -right-4 text-burgundy opacity-[0.10]" aria-hidden="true">
         <MandalaAccent size={180} className="chakra-spin-zodiac" />
       </div>
       <header className="flex items-center justify-between">
-        <h1 className="font-serif text-t28 font-bold text-charcoal">{t('profile.title')}</h1>
+        <h1 className="font-serif text-t28 font-bold text-burgundy-grad">{t('profile.title')}</h1>
         <LogoMark size={34} className="opacity-80" />
       </header>
 
