@@ -93,7 +93,7 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-cream relative">
+    <div className="min-h-dvh flex flex-col bg-cream relative">
       <div className="mandala-bg" aria-hidden="true" />
       <ChakraBackdrop />
       <ScreenGradient tone={stepTone[step]} />

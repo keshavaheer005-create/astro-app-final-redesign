@@ -458,12 +458,14 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
   const moonPhase = panchang ? ((panchang.tithi.index - 1) + panchang.tithi.percent / 100) / 30 : null;
 
   // Shortcut tile tints — one accent domain per destination (gold stays CTA-only).
-  // `tint` washes the whole liquid-glass tile, `chip` colours its icon chip.
+  // `chipGrad` fills the icon badge with a soft two-tone gradient (no hairline
+  // border — a border on a small circular chip reads as a cheap outline-icon
+  // kit; a gradient fill reads as a premium, tactile mark instead).
   const QUICK_TONES = [
-    { tint: 'glass-tint-violet', chip: 'border-violet/30 text-violet-deep' }, // Ask Acharya
-    { tint: 'glass-tint-gold', chip: 'border-gold/40 text-gold' }, // Today's Panchang
-    { tint: 'glass-tint-rose', chip: 'border-rose/30 text-rose-deep' }, // Decision check
-    { tint: 'glass-tint-emerald', chip: 'border-emerald/35 text-emerald-deep' }, // My journal
+    { chipGrad: 'linear-gradient(150deg, rgba(110,74,158,0.16), rgba(110,74,158,0.05))', text: 'text-violet-deep' }, // Ask Acharya
+    { chipGrad: 'linear-gradient(150deg, rgba(201,162,39,0.20), rgba(201,162,39,0.06))', text: 'text-gold' }, // Today's Panchang
+    { chipGrad: 'linear-gradient(150deg, rgba(194,69,90,0.16), rgba(194,69,90,0.05))', text: 'text-rose-deep' }, // Decision check
+    { chipGrad: 'linear-gradient(150deg, rgba(62,142,110,0.18), rgba(62,142,110,0.06))', text: 'text-emerald-deep' }, // My journal
   ];
 
   // One-tap shortcuts to the most-used destinations (no new backend calls)
@@ -708,11 +710,13 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
         </section>
       </header>
 
-      {/* Shortcuts — liquid-glass quick tiles, each tinted with its destination
-          domain (2×2 on mobile, 4-up on desktop) with a breathing rhythm. */}
+      {/* Shortcuts — ONE unified liquid-glass strip (matches the bottom nav's
+          floating-bar language), four columns in a single horizontal row on
+          every width. No hairline borders anywhere in here — icon badges are
+          soft gradient fills, and the strip itself carries the only edge. */}
       <nav
         aria-label={t('home.quick.aria')}
-        className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4 stagger-in"
+        className="glass glass-liquid bar-texture stagger-in grid grid-cols-4 gap-1 rounded-[24px] px-1.5 py-2.5 sm:px-2.5 sm:py-3"
         style={{ animationDelay: '20ms', animationFillMode: 'backwards' }}
       >
         {quickActions.map((qa, i) => (
@@ -721,27 +725,19 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
             type="button"
             onClick={qa.go}
             style={{ animationDelay: `${30 + i * 45}ms`, animationFillMode: 'backwards' }}
-            className={cn(
-              'tap-sm glass glass-liquid stagger-in group relative flex min-h-[88px] sm:min-h-[112px] flex-col items-start justify-between gap-2.5 rounded-[22px] p-3.5 sm:p-4 text-left',
-              'transition-all duration-250 ease-out hover:-translate-y-1 hover:shadow-[0_24px_48px_-16px_rgba(42,36,32,0.28)] active:scale-[0.98]',
-              QUICK_TONES[i % QUICK_TONES.length].tint,
-            )}
+            className="tap-sm group relative flex flex-col items-center gap-1.5 rounded-[16px] py-1.5 text-center transition-transform duration-250 ease-out active:scale-[0.94]"
           >
             <span
               className={cn(
-                'inline-flex h-10 w-10 items-center justify-center rounded-[14px] border bg-white/80 shadow-[0_2px_8px_rgba(42,36,32,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] transition-transform duration-250 group-hover:scale-110',
-                QUICK_TONES[i % QUICK_TONES.length].chip,
+                'inline-flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full transition-transform duration-250 group-hover:scale-110 group-active:scale-95',
+                QUICK_TONES[i % QUICK_TONES.length].text,
               )}
+              style={{ background: QUICK_TONES[i % QUICK_TONES.length].chipGrad }}
             >
-              <Icon name={qa.icon} size={18} />
+              <Icon name={qa.icon} size={19} />
             </span>
-            <span className="flex w-full items-end justify-between gap-1.5">
-              <span className="text-t14 font-semibold leading-snug text-charcoal/95">{t(qa.labelKey)}</span>
-              <Icon
-                name="chevron-right"
-                size={15}
-                className="mb-0.5 hidden shrink-0 text-gold opacity-0 transition-all duration-250 group-hover:translate-x-0.5 group-hover:opacity-100 lg:block"
-              />
+            <span className="text-[10.5px] sm:text-t12 font-medium leading-tight text-charcoal/85 [overflow-wrap:anywhere]">
+              {t(qa.labelKey)}
             </span>
           </button>
         ))}

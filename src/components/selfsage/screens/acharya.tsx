@@ -336,7 +336,7 @@ export function AcharyaScreen() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-11rem)] lg:h-[calc(100dvh-9rem)]">
+    <div className="flex flex-col h-[calc(100dvh-8rem-env(safe-area-inset-bottom))] lg:h-[calc(100dvh-4.5rem)]">
       {/* Chat header — calm emerald-tinted glass (matches the light app) with
           a single violet pulse as Acharya's intuition signature */}
       <div className="glass glass-tint-emerald bar-texture px-4 py-3 flex items-center gap-3 shrink-0 relative overflow-hidden">

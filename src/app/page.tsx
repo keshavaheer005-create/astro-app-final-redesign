@@ -32,7 +32,7 @@ class TopErrorBoundary extends Component<{ children: React.ReactNode }, { error:
   render() {
     if (this.state.error) {
       return (
-        <div className="min-h-screen bg-cream flex items-center justify-center px-6">
+        <div className="min-h-dvh bg-cream flex items-center justify-center px-6">
           <div className="glass p-8 max-w-md text-center">
             <LogoMark size={56} className="mx-auto mb-4 opacity-70" />
             <h1 className="font-serif text-t20 font-bold text-charcoal">The stars slipped</h1>
@@ -63,7 +63,7 @@ class TopErrorBoundary extends Component<{ children: React.ReactNode }, { error:
  */
 function StaticSplash() {
   return (
-    <div className="min-h-screen bg-cream flex flex-col items-center justify-center px-6 relative">
+    <div className="min-h-dvh bg-cream flex flex-col items-center justify-center px-6 relative">
       <div className="mandala-bg" aria-hidden="true" />
       <LogoMark size={88} className="animate-pulse" />
       <h1 className="mt-5 font-serif text-t28 font-bold text-charcoal">Self Sage</h1>
@@ -81,7 +81,7 @@ function StaticSplash() {
 function Splash({ timedOut, onRetry }: { timedOut?: boolean; onRetry?: () => void }) {
   const { t } = useTranslation();
   return (
-    <div className="min-h-screen bg-cream flex flex-col items-center justify-center px-6 relative">
+    <div className="min-h-dvh bg-cream flex flex-col items-center justify-center px-6 relative">
       <div className="mandala-bg" aria-hidden="true" />
       <LogoMark size={88} className="animate-pulse" />
       <h1 className="mt-5 font-serif text-t28 font-bold text-charcoal">Self Sage</h1>
