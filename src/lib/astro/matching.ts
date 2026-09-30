@@ -1,38 +1,11 @@
 // ─── Kundli Matching (Ashtakoota Guna Milan) ────────────────────────────────
 
-import { NAKSHATRAS, SIGNS, nakshatraIndex, signIndex, PlanetKey } from './constants';
-import { SIGN_VARNA_FALLBACK, YONI_FALLBACK, VASHYA_FALLBACK, NAKSHATRA_GANA_FALLBACK, NAKSHATRA_NADI_FALLBACK } from './matching-fallback';
-
-type Tables = {
-  NAKSHATRA_YONI: string[];
-  YONI_MATRIX: number[][];
-  YONI_NAMES: string[];
-  SIGN_VASHYA: string[];
-  VASYA_MAP: number[][];
-  NAKSHATRA_GANA: string[];
-  NAKSHATRA_NADI: string[];
-  SIGN_VARNA: string[];
-};
-
-function loadTables(): Tables {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const mod = require('./matching-tables');
-    if (mod?.NAKSHATRA_YONI && mod?.YONI_MATRIX) return mod;
-  } catch {
-    /* fall through */
-  }
-  return {
-    NAKSHATRA_YONI: YONI_FALLBACK.NAKSHATRA_YONI,
-    YONI_MATRIX: YONI_FALLBACK.YONI_MATRIX,
-    YONI_NAMES: YONI_FALLBACK.YONI_NAMES,
-    SIGN_VASHYA: VASHYA_FALLBACK.SIGN_VASHYA,
-    VASYA_MAP: VASHYA_FALLBACK.VASYA_MAP,
-    NAKSHATRA_GANA: NAKSHATRA_GANA_FALLBACK,
-    NAKSHATRA_NADI: NAKSHATRA_NADI_FALLBACK,
-    SIGN_VARNA: SIGN_VARNA_FALLBACK,
-  };
-}
+import { SIGNS, nakshatraIndex, signIndex, PlanetKey } from './constants';
+import {
+  NAKSHATRA_YONI, YONI_MATRIX, YONI_NAMES, VASHYA_GROUPS, VASHYA_MATRIX, vashyaGroup,
+  NAKSHATRA_GANA, GANA_MATRIX, NAKSHATRA_NADI, SIGN_VARNA,
+} from './matching-tables';
+import { degInSign } from './constants';
 
 const GRAHA_FRIENDS: Record<string, string[]> = {
   Su: ['Mo', 'Ma', 'Ju'],
@@ -77,13 +50,24 @@ export interface MatchResult {
   ganaDosha: boolean;
 }
 
+export const SIGN_LORD_KEYS: PlanetKey[] = ['Ma', 'Ve', 'Me', 'Mo', 'Su', 'Me', 'Ve', 'Ma', 'Ju', 'Sa', 'Sa', 'Ju'];
+
+/** Graha Maitri points (0-5) for two sign lords. */
+export function grahaMaitriScore(bLord: PlanetKey, gLord: PlanetKey): number {
+  if (bLord === gLord) return 5;
+  const b2g = GRAHA_FRIENDS[bLord].includes(gLord) ? 'F' : GRAHA_ENEMIES[bLord].includes(gLord) ? 'E' : 'N';
+  const g2b = GRAHA_FRIENDS[gLord].includes(bLord) ? 'F' : GRAHA_ENEMIES[gLord].includes(bLord) ? 'E' : 'N';
+  const pair = b2g + g2b;
+  return pair === 'FF' ? 5 : pair === 'FN' || pair === 'NF' ? 4 : pair === 'NN' ? 3 : pair === 'FE' || pair === 'EF' ? 1 : pair === 'NE' || pair === 'EN' ? 0.5 : 0;
+}
+
 const pad = (n: number, l: number) => (n % l + l) % l;
 
 export function ashtakoota(
   boy: { moonLon: number },
   girl: { moonLon: number },
 ): MatchResult {
-  const T = loadTables();
+  const T = { NAKSHATRA_YONI, YONI_MATRIX, YONI_NAMES, NAKSHATRA_GANA, NAKSHATRA_NADI, SIGN_VARNA };
   const bSign = signIndex(boy.moonLon);
   const gSign = signIndex(girl.moonLon);
   const bNak = nakshatraIndex(boy.moonLon);
@@ -96,17 +80,19 @@ export function ashtakoota(
   const varnaScore = VARNA_ORDER[bVarna] >= VARNA_ORDER[gVarna] ? 1 : 0;
   kootas.push({ key: 'Varna', boy: bSign, girl: gSign, max: 1, score: varnaScore, note: `Boy ${bVarna} / Girl ${gVarna}` });
 
-  // 2. Vashya (2)
-  const bV = T.SIGN_VASHYA[bSign];
-  const gV = T.SIGN_VASHYA[gSign];
-  const bVasya = T.VASYA_MAP[bSign].includes(gSign);
-  const gVasya = T.VASYA_MAP[gSign].includes(bSign);
-  const vashyaScore = bV === gV ? 2 : bVasya || gVasya ? 2 : 1;
+  // 2. Vashya (2) — groups depend on the Moon's degree for Sagittarius/Capricorn.
+  //    Matrix rows = bride's group, columns = groom's group.
+  const bV = vashyaGroup(bSign, degInSign(boy.moonLon));
+  const gV = vashyaGroup(gSign, degInSign(girl.moonLon));
+  const vashyaScore = VASHYA_MATRIX[VASHYA_GROUPS.indexOf(gV)][VASHYA_GROUPS.indexOf(bV)];
   kootas.push({ key: 'Vashya', boy: bSign, girl: gSign, max: 2, score: vashyaScore, note: `Boy ${bV} / Girl ${gV}` });
 
   // 3. Tara (3)
   const taraN = (from: number, to: number) => pad(to - from, 27) + 1;
-  const taraGood = (n: number) => [2, 4, 6, 8, 9].includes(((n - 1) % 9) + 1);
+  // Remainder of count/9: 3 (Vipat), 5 (Pratyari), 7 (Vadha) are inauspicious;
+  // everything else (incl. 1 = Janma, 9/0 = Parama Mitra) is good. This matches
+  // AstroSage (Punarvasu/Vishakha = counts 10/19 -> 3/3).
+  const taraGood = (n: number) => ![3, 5, 7].includes(((n - 1) % 9) + 1);
   const boyToGirl = taraN(bNak, gNak);
   const girlToBoy = taraN(gNak, bNak);
   const bOk = taraGood(boyToGirl);
@@ -123,28 +109,22 @@ export function ashtakoota(
   kootas.push({ key: 'Yoni', boy: bNak, girl: gNak, max: 4, score: yoniScore, note: `${bYoni} / ${gYoni}` });
 
   // 5. Graha Maitri (5)
-  const LORDS: Record<number, PlanetKey> = { 0: 'Ma', 1: 'Ve', 2: 'Me', 3: 'Mo', 4: 'Su', 5: 'Me', 6: 'Ve', 7: 'Ma', 8: 'Ju', 9: 'Sa', 10: 'Sa', 11: 'Ju' };
-  const bLord = LORDS[bSign];
-  const gLord = LORDS[gSign];
-  let maitriScore: number;
-  if (bLord === gLord) maitriScore = 5;
-  else {
-    const b2g = GRAHA_FRIENDS[bLord].includes(gLord) ? 'F' : GRAHA_ENEMIES[bLord].includes(gLord) ? 'E' : 'N';
-    const g2b = GRAHA_FRIENDS[gLord].includes(bLord) ? 'F' : GRAHA_ENEMIES[gLord].includes(bLord) ? 'E' : 'N';
-    const pair = b2g + g2b;
-    maitriScore = pair === 'FF' ? 5 : pair === 'FN' || pair === 'NF' ? 4 : pair === 'NN' ? 3 : pair === 'FE' || pair === 'EF' ? 1 : pair === 'NE' || pair === 'EN' ? 0.5 : 0;
-  }
+  const bLord = SIGN_LORD_KEYS[bSign];
+  const gLord = SIGN_LORD_KEYS[gSign];
+  const maitriScore = grahaMaitriScore(bLord, gLord);
   kootas.push({ key: 'Graha Maitri', boy: bSign, girl: gSign, max: 5, score: maitriScore, note: `Lords ${bLord}/${gLord}` });
 
   // 6. Gana (6)
   const bGana = T.NAKSHATRA_GANA[bNak];
   const gGana = T.NAKSHATRA_GANA[gNak];
-  const ganaScore = bGana === gGana ? 6 : (bGana === 'Deva' && gGana === 'Manushya') || (bGana === 'Manushya' && gGana === 'Deva') ? 5 : (bGana === 'Deva' && gGana === 'Rakshasa') || (bGana === 'Rakshasa' && gGana === 'Deva') ? 1 : 0;
+  const ganaScore = GANA_MATRIX[bGana as 'Deva' | 'Manushya' | 'Rakshasa'][gGana as 'Deva' | 'Manushya' | 'Rakshasa'];
   kootas.push({ key: 'Gana', boy: bNak, girl: gNak, max: 6, score: ganaScore, note: `${bGana} / ${gGana}` });
 
   // 7. Bhakoot (7)
   const d = pad(gSign - bSign, 12);
-  const bhakootDosha = [1, 11, 4, 8, 6].includes(d) || d === 6;
+  // Dosha when the signs are 2/12, 5/9 or 6/8 from each other
+  // (0-based sign difference 1 or 11, 4 or 8, 5 or 7). 7/7 (difference 6) is fine.
+  const bhakootDosha = [1, 11, 4, 8, 5, 7].includes(d);
   const bhakootScore = bhakootDosha ? 0 : 7;
   kootas.push({ key: 'Bhakoot', boy: bSign, girl: gSign, max: 7, score: bhakootScore, note: `${SIGNS[bSign]}/${SIGNS[gSign]}` });
 

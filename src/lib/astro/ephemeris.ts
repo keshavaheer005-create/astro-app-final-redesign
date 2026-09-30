@@ -47,9 +47,13 @@ export interface PlanetPos {
   retrograde: boolean;
 }
 
+// Lunar node: AstroSage (and most Indian panchang software) default to the MEAN
+// node. Set NODE_TYPE=true in the environment to use the osculating (true) node.
+const NODE_ID = process.env.NODE_TYPE === 'true' ? 'SE_TRUE_NODE' : 'SE_MEAN_NODE';
+
 const SWE_IDS: Record<PlanetKey, string> = {
   Su: 'SE_SUN', Mo: 'SE_MOON', Ma: 'SE_MARS', Me: 'SE_MERCURY',
-  Ju: 'SE_JUPITER', Ve: 'SE_VENUS', Sa: 'SE_SATURN', Ra: 'SE_TRUE_NODE', Ke: 'SE_TRUE_NODE',
+  Ju: 'SE_JUPITER', Ve: 'SE_VENUS', Sa: 'SE_SATURN', Ra: NODE_ID, Ke: NODE_ID,
 };
 
 export function calcPlanet(planet: PlanetKey, jdUT: number, sidereal = true): PlanetPos {
@@ -68,6 +72,20 @@ export function calcPlanet(planet: PlanetKey, jdUT: number, sidereal = true): Pl
     speed: planet === 'Ke' ? -speed : speed,
     retrograde: (planet === 'Ke' ? true : speed < 0),
   };
+}
+
+export type OuterKey = 'Ur' | 'Ne' | 'Pl';
+export const OUTER_ORDER: OuterKey[] = ['Ur', 'Ne', 'Pl'];
+const OUTER_IDS: Record<OuterKey, string> = { Ur: 'SE_URANUS', Ne: 'SE_NEPTUNE', Pl: 'SE_PLUTO' };
+
+/** Uranus / Neptune / Pluto (shown in AstroSage's chart, not used in Vedic calculations). */
+export function calcOuterPlanet(key: OuterKey, jdUT: number, sidereal = false): PlanetPos {
+  const s = loadSwe();
+  const flags = sidereal ? FLAGS_SIDEREAL() : FLAGS_TROPICAL();
+  const res = s.calc_ut(jdUT, s.constants[OUTER_IDS[key]], flags);
+  if (res.error) throw new Error(`sweph calc_ut error: ${res.error}`);
+  const [lon, lat, dist, speed] = res.data as number[];
+  return { lon: ((lon % 360) + 360) % 360, lat, dist, speed, retrograde: speed < 0 };
 }
 
 export function calcAllPlanets(jdUT: number, sidereal = true): Record<PlanetKey, PlanetPos> {

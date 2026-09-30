@@ -17,6 +17,21 @@ interface PersonInput {
   placeName?: string;
 }
 
+type MangalLevel = 'none' | 'low' | 'high';
+interface MangalInfo {
+  severity: string;
+  /** AstroSage grading (older saved results don't have it — derived from severity). */
+  level?: MangalLevel;
+  fromAsc: boolean;
+  fromMoon: boolean;
+  fromVenus?: boolean;
+  marsHouseFromAsc: number;
+  marsHouseFromMoon?: number;
+  marsHouseFromVenus?: number;
+}
+const levelOf = (d: MangalInfo): MangalLevel => d.level ?? (d.severity === 'none' ? 'none' : d.severity === 'strong' ? 'high' : 'low');
+const LEVEL_TEXT: Record<MangalLevel, string> = { none: 'No Mangal Dosha', low: 'Low Mangal Dosha', high: 'High Mangal Dosha' };
+
 interface MatchResponse {
   match: {
     total: number;
@@ -30,8 +45,21 @@ interface MatchResponse {
   };
   boySummary: { name: string; ascendant: string; moonSign: string; moonNakshatra: string };
   girlSummary: { name: string; ascendant: string; moonSign: string; moonNakshatra: string };
-  boyMangalDosha: { severity: string; fromAsc: boolean; fromMoon: boolean; marsHouseFromAsc: number };
-  girlMangalDosha: { severity: string; fromAsc: boolean; fromMoon: boolean; marsHouseFromAsc: number };
+  boyMangalDosha: MangalInfo;
+  girlMangalDosha: MangalInfo;
+  /** Optional: older saved results don't have it. */
+  extras?: {
+    dosha: { items: { key: string; present: boolean; cancelled: boolean; pointsLost: number; reasons: string[] }[]; adjustedTotal: number | null };
+    manglik: { boyLevel: 'none' | 'low' | 'high'; girlLevel: 'none' | 'low' | 'high'; compatible: boolean; note: string };
+    conclusion: { lowPoints: boolean; manglikMismatch: boolean; preferable: boolean; text: string };
+    dashakoota: {
+      items: { key: string; pass: boolean; veto: boolean; note: string }[];
+      passed: number;
+      max: number;
+      verdict: 'recommended' | 'acceptable' | 'not_recommended' | 'rejected';
+      note: string;
+    };
+  };
 }
 
 const BLANK: PersonInput = { name: '', dob: '', tob: '', lat: 0, lng: 0, timezone: 'Asia/Kolkata', placeName: '' };
@@ -328,9 +356,108 @@ export function MatchingScreen() {
               name={result.girlSummary.name}
             />
           </div>
+
+          {result.extras && <MatchExtras extras={result.extras} total={result.match.total} boyName={result.boySummary.name} girlName={result.girlSummary.name} />}
         </>
       )}
     </div>
+  );
+}
+
+function MatchExtras({ extras, total, boyName, girlName }: { extras: NonNullable<MatchResponse['extras']>; total: number; boyName: string; girlName: string }) {
+  const { t } = useTranslation();
+  const { manglik, dosha, dashakoota } = extras;
+  const activeDoshas = dosha.items.filter((d) => d.present);
+  const verdictTone = dashakoota.verdict === 'recommended' || dashakoota.verdict === 'acceptable';
+  const boyLv = LEVEL_TEXT[manglik.boyLevel];
+  const girlLv = LEVEL_TEXT[manglik.girlLevel];
+  return (
+    <>
+      {/* AstroSage-style headline */}
+      <GlassCard className="p-4 sm:p-5">
+        <SectionHeader title={t('match.resultsTitle', { defaultValue: 'Horoscope Matching Results' })} icon="scale" tone="rose" />
+        <ul className="space-y-2 text-t14 text-charcoal list-disc pl-5">
+          <li>
+            {t('match.resultsScore', { defaultValue: 'Ashtakoot matching between boy and girl is' })} <b>{total}/36</b>
+          </li>
+          <li>
+            {boyName} — <b>&lsquo;{boyLv}&rsquo;</b>; {girlName} — <b>&lsquo;{girlLv}&rsquo;</b>
+          </li>
+          <li className={extras.conclusion.preferable ? 'text-emerald-deep' : 'text-burgundy'}>
+            <b>{t('match.conclusion', { defaultValue: 'Conclusion' })}:</b> {extras.conclusion.text}
+          </li>
+        </ul>
+      </GlassCard>
+
+      {/* Manglik compatibility */}
+      <GlassCard className="p-4 sm:p-5">
+        <SectionHeader title={t('match.manglikTitle', { defaultValue: 'Manglik compatibility' })} icon="warning" tone="rose" />
+        <div className={cn('rounded-xl px-3.5 py-3 border', manglik.compatible ? 'bg-emerald-soft/70 border-emerald/25' : 'bg-burgundy-soft border-burgundy/25')}>
+          <p className={cn('text-t14 font-semibold', manglik.compatible ? 'text-emerald-deep' : 'text-burgundy')}>
+            {manglik.compatible ? t('match.manglikOk', { defaultValue: 'Mangal Dosha levels agree' }) : t('match.manglikWarn', { defaultValue: 'Mangal Dosha levels differ' })}
+          </p>
+          <p className="text-t12 text-muted-foreground mt-1 leading-relaxed">{manglik.note}</p>
+        </div>
+      </GlassCard>
+
+      {/* Dosha check and cancellations */}
+      <GlassCard className="p-4 sm:p-5">
+        <SectionHeader title={t('match.doshaTitle', { defaultValue: 'Dosha check & cancellations' })} icon="scale" tone="rose" />
+        {activeDoshas.length === 0 ? (
+          <p className="text-t14 text-emerald-deep font-semibold">{t('match.noDosha', { defaultValue: 'No Nadi, Bhakoot or Gana dosha found.' })}</p>
+        ) : (
+          <div className="space-y-2.5">
+            {activeDoshas.map((d) => (
+              <div key={d.key} className={cn('rounded-xl px-3.5 py-2.5 border', d.cancelled ? 'bg-emerald-soft/70 border-emerald/25' : 'bg-burgundy-soft border-burgundy/25')}>
+                <p className={cn('text-t14 font-semibold', d.cancelled ? 'text-emerald-deep' : 'text-burgundy')}>
+                  {d.key} {t('match.dosha.word', { defaultValue: 'dosha' })} —{' '}
+                  {d.cancelled ? t('match.doshaCancelled', { defaultValue: 'cancelled' }) : t('match.doshaActive', { defaultValue: 'active' })}
+                </p>
+                {d.reasons.map((r) => (
+                  <p key={r} className="text-t12 text-muted-foreground mt-0.5 leading-relaxed">• {r}</p>
+                ))}
+              </div>
+            ))}
+            {dosha.adjustedTotal != null && (
+              <p className="text-t12 text-muted-foreground leading-relaxed">
+                {t('match.adjusted', { defaultValue: 'If the cancelled doshas are counted, the score would be' })} <b>{dosha.adjustedTotal}/36</b>{' '}
+                ({t('match.adjustedNote', { defaultValue: 'the official Ashtakoot score stays' })} {total}/36).
+              </p>
+            )}
+          </div>
+        )}
+      </GlassCard>
+
+      {/* Dashakoota */}
+      <GlassCard className="p-4 sm:p-5">
+        <SectionHeader title={t('match.dashaTitle', { defaultValue: 'South Indian Dashakoota (10 Porutham)' })} icon="scale" tone="rose" />
+        <div className={cn('rounded-xl px-3.5 py-3 border mb-3', verdictTone ? 'bg-emerald-soft/70 border-emerald/25' : 'bg-burgundy-soft border-burgundy/25')}>
+          <p className={cn('text-t14 font-semibold', verdictTone ? 'text-emerald-deep' : 'text-burgundy')}>
+            {dashakoota.passed}/{dashakoota.max} · {t(`match.dasha.${dashakoota.verdict}`, { defaultValue: dashakoota.verdict.replace('_', ' ') })}
+          </p>
+          <p className="text-t12 text-muted-foreground mt-1 leading-relaxed">{dashakoota.note}</p>
+        </div>
+        <div className="space-y-2">
+          {dashakoota.items.map((i) => (
+            <div key={i.key} className="flex items-start gap-2.5">
+              <span className={cn('mt-0.5 text-t14 font-bold w-4 shrink-0', i.pass ? 'text-emerald-deep' : 'text-burgundy')} aria-label={i.pass ? 'pass' : 'fail'}>
+                {i.pass ? '✔' : '✘'}
+              </span>
+              <div className="min-w-0">
+                <p className="text-t14 font-medium text-charcoal">
+                  {i.key}
+                  {i.veto && <span className="ml-1.5 rounded-full bg-gold/15 border border-gold/40 px-1.5 py-px text-t12 text-gold align-middle">{t('match.veto', { defaultValue: 'key check' })}</span>}
+                </p>
+                <p className="text-t12 text-muted-foreground leading-relaxed">{i.note}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-t12 text-muted-foreground mt-3 leading-relaxed">
+          {t('match.dashaFoot', { defaultValue: 'Counts run from the bride\'s star to the groom\'s. Schools differ on some poruthams; Rajju and Vedha are treated as vetoes.' })}
+        </p>
+      </GlassCard>
+    </>
   );
 }
 
@@ -351,12 +478,12 @@ function SummaryCard({
 }: {
   title: string;
   summary: { ascendant: string; moonSign: string; moonNakshatra: string };
-  dosha: { severity: string; fromAsc: boolean; fromMoon: boolean; marsHouseFromAsc: number };
+  dosha: MangalInfo;
   titleKey: string;
   name: string;
 }) {
   const { t } = useTranslation();
-  const severityKey = dosha.severity === 'none' ? 'none' : dosha.severity;
+  const level = levelOf(dosha);
   return (
     <GlassCard className="p-4 sm:p-5">
       <p className="text-t12 uppercase tracking-wider text-rose-deep font-semibold">{title}</p>
@@ -374,12 +501,26 @@ function SummaryCard({
           <p className="text-t14 font-semibold text-charcoal truncate">{summary.moonNakshatra}</p>
         </div>
       </div>
-      <div className={cn('mt-3 rounded-xl px-3.5 py-3 border', dosha.severity === 'none' ? 'bg-emerald-soft/70 border-emerald/25' : 'bg-burgundy-soft border-burgundy/25')}>
+      <div className={cn('mt-3 rounded-xl px-3.5 py-3 border', level === 'none' ? 'bg-emerald-soft/70 border-emerald/25' : 'bg-burgundy-soft border-burgundy/25')}>
         <p className="text-t12 uppercase tracking-wide font-semibold text-muted-foreground">{t(titleKey, { name })}</p>
-        <p className={cn('text-t14 font-semibold mt-1', dosha.severity === 'none' ? 'text-emerald-deep' : 'text-burgundy')}>
-          {t(`match.dosha.${severityKey}`)}
+        <p className={cn('text-t14 font-semibold mt-1', level === 'none' ? 'text-emerald-deep' : 'text-burgundy')}>
+          {t(`match.level.${level}`, { defaultValue: LEVEL_TEXT[level] })}
         </p>
-        {dosha.fromAsc && <p className="text-t12 text-burgundy/75 mt-0.5">{t('reports.marsFromAsc', { house: dosha.marsHouseFromAsc })}</p>}
+        <div className="mt-1.5 space-y-0.5">
+          {([
+            ['Lagna', dosha.marsHouseFromAsc, dosha.fromAsc],
+            ['Moon', dosha.marsHouseFromMoon, dosha.fromMoon],
+            ['Venus', dosha.marsHouseFromVenus, dosha.fromVenus],
+          ] as [string, number | undefined, boolean | undefined][])
+            .filter(([, house]) => house != null)
+            .map(([chart, house, hit]) => (
+              <p key={chart} className="text-t12 text-muted-foreground">
+                <span className={cn('font-bold mr-1', hit ? 'text-burgundy' : 'text-emerald-deep')}>{hit ? '●' : '○'}</span>
+                {t('match.marsFrom', { defaultValue: 'Mars in house {{house}} from {{chart}}', house, chart })}
+                {hit ? '' : ` — ${t('match.notDoshaHouse', { defaultValue: 'not a dosha house' })}`}
+              </p>
+            ))}
+        </div>
       </div>
     </GlassCard>
   );

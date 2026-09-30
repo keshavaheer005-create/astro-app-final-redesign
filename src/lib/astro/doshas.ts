@@ -6,21 +6,36 @@ import { calcPlanet, juldayFromUTC } from './ephemeris';
 export interface MangalDoshaResult {
   fromAsc: boolean;
   fromMoon: boolean;
+  /** Mars in a dosha house counted from Venus (AstroSage checks Lagna, Moon and Venus). */
+  fromVenus: boolean;
   marsHouseFromAsc: number;
   marsHouseFromMoon: number;
+  marsHouseFromVenus: number;
+  /**
+   * AstroSage grading: 'high' = dosha in all three charts (Lagna, Moon, Venus),
+   * 'low' = in one or two of them, 'none' = in none.
+   */
+  level: 'none' | 'low' | 'high';
+  /** Mars is in the 2nd from Lagna — a dosha only for South Indian (Sevvai) reckoning. */
+  southIndianSecondHouse: boolean;
   mitigated: boolean;
   reasons: string[];
   severity: 'none' | 'mild' | 'moderate' | 'strong';
 }
 
-const DOSHA_HOUSES = [1, 2, 4, 7, 8, 12];
+// AstroSage's houses: 1, 4, 7, 8, 12 (the 2nd is only counted by South Indian schools).
+const DOSHA_HOUSES = [1, 4, 7, 8, 12];
 
 export function mangalDosha(planets: Record<PlanetKey, { lon: number; house: number; sign: number }>, ascLon: number): MangalDoshaResult {
   const mars = planets.Ma;
   const hAsc = mars.house;
   const hMoon = ((mars.sign - signIndex(planets.Mo.lon) + 12) % 12) + 1;
+  const hVenus = ((mars.sign - planets.Ve.sign + 12) % 12) + 1;
   const fromAsc = DOSHA_HOUSES.includes(hAsc);
   const fromMoon = DOSHA_HOUSES.includes(hMoon);
+  const fromVenus = DOSHA_HOUSES.includes(hVenus);
+  const chartsHit = [fromAsc, fromMoon, fromVenus].filter(Boolean).length;
+  const level: MangalDoshaResult['level'] = chartsHit === 0 ? 'none' : chartsHit === 3 ? 'high' : 'low';
 
   const reasons: string[] = [];
   let mitigated = false;
@@ -35,35 +50,35 @@ export function mangalDosha(planets: Record<PlanetKey, { lon: number; house: num
     mitigated = true;
     reasons.push('Mars is exalted in Capricorn, a classical cancellation');
   }
-  const jupiterAspectHouses = [((planets.Ju.house - 1) % 12) + 1]; // whole-sign aspect = trines + 7th
-  const juTrines = [planets.Ju.house, ((planets.Ju.house + 3) % 12) + 1, ((planets.Ju.house + 7) % 12) + 1, ((planets.Ju.house + 11) % 12) + 1];
-  if (juTrines.includes(hAsc) || juTrines.includes(((hAsc + 6 - 1) % 12) + 1)) {
-    // Jupiter aspecting Mars by trine/7th from its house
-    if (juTrines.includes(mars.house)) {
-      mitigated = true;
-      reasons.push('Jupiter aspects Mars, softening the dosha');
-    }
+  // Jupiter's aspects (whole-sign): conjunction, 5th, 7th, 9th from its own house.
+  const juHouse = planets.Ju.house;
+  const juAspected = [0, 4, 6, 8].map((o) => ((juHouse - 1 + o) % 12) + 1);
+  if (juAspected.includes(mars.house)) {
+    mitigated = true;
+    reasons.push('Jupiter aspects or joins Mars, softening the dosha');
   }
-  void jupiterAspectHouses;
-  if (hAsc === 2 || hAsc === 12) {
-    reasons.push('Dosha from the Lagna in house ' + hAsc + ' is considered milder by many traditions');
+  if (hAsc === 2) {
+    reasons.push('Mars in the 2nd house counts as Sevvai dosham only in South Indian reckoning');
   }
 
-  const both = fromAsc && fromMoon;
-  const severity: MangalDoshaResult['severity'] = !fromAsc && !fromMoon
+  const severity: MangalDoshaResult['severity'] = level === 'none'
     ? 'none'
     : mitigated
       ? 'mild'
-      : both
+      : level === 'high'
         ? 'strong'
         : 'moderate';
 
   return {
     fromAsc,
     fromMoon,
+    fromVenus,
     marsHouseFromAsc: hAsc,
     marsHouseFromMoon: hMoon,
-    mitigated: mitigated || (!fromAsc && !fromMoon),
+    marsHouseFromVenus: hVenus,
+    level,
+    southIndianSecondHouse: hAsc === 2,
+    mitigated: mitigated || level === 'none',
     reasons,
     severity,
   };

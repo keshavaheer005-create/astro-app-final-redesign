@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { computeChart } from '@/lib/astro/chart';
 import { ashtakoota } from '@/lib/astro/matching';
+import { doshaAnalysis, manglikCompatibility, matchConclusion, dashakoota } from '@/lib/astro/matching-extras';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -34,8 +35,18 @@ export async function POST(req: Request) {
     const girlMoon = girlChart.planets.find((p) => p.key === 'Mo')!;
     const match = ashtakoota({ moonLon: boyMoon.lon }, { moonLon: girlMoon.lon });
 
+    // Additional analysis shown beside the (AstroSage-compatible) Ashtakoot score.
+    const manglik = manglikCompatibility(boyChart.mangalDosha, girlChart.mangalDosha);
+    const extras = {
+      dosha: doshaAnalysis(match, boyMoon.lon, girlMoon.lon),
+      manglik,
+      conclusion: matchConclusion(match.total, manglik),
+      dashakoota: dashakoota(match, boyMoon.lon, girlMoon.lon),
+    };
+
     return NextResponse.json({
       match,
+      extras,
       boySummary: {
         name: boyChart.input.name,
         ascendant: boyChart.ascendant.signName,

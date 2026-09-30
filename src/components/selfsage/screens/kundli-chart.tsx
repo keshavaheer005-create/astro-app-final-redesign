@@ -16,6 +16,7 @@ export function KundliChartScreen() {
   const { chart } = useSession();
   const [style, setStyle] = useState<'north' | 'south'>('north');
   const [zodiac, setZodiac] = useState<'vedic' | 'western' | 'both'>('vedic');
+  const [showOuter, setShowOuter] = useState(true);
   const hi = i18n.language === 'hi';
 
   const signName = (i: number) => (hi ? SIGNS_HI[i] : SIGNS[i]);
@@ -38,6 +39,18 @@ export function KundliChartScreen() {
   }
 
   const asc = chart.ascendant;
+
+  // Planets for the charts: degree superscript, retro (*) and combust (^) marks,
+  // plus Uranus/Neptune/Pluto like AstroSage (toggle below the chart).
+  const outer = showOuter ? (chart.outerPlanets ?? []) : [];
+  const vedicPlanets = [
+    ...chart.planets.map((p) => ({ key: p.key, sign: p.sign, retrograde: p.retrograde, deg: p.degInSign, combust: p.combust })),
+    ...outer.map((o) => ({ key: o.key, sign: o.sign, retrograde: o.retrograde, deg: o.degInSign })),
+  ];
+  const westernPlanets = [
+    ...chart.planets.map((p) => ({ key: p.key, sign: Math.floor(p.lonTropical / 30) % 12, retrograde: p.retrograde, deg: p.lonTropical % 30, combust: p.combust })),
+    ...outer.map((o) => ({ key: o.key, sign: Math.floor(o.lonTropical / 30) % 12, retrograde: o.retrograde, deg: o.lonTropical % 30 })),
+  ];
 
   return (
     <div className="space-y-5">
@@ -83,10 +96,23 @@ export function KundliChartScreen() {
         <GlassCard className="p-4 sm:p-6">
           <p className="text-t12 uppercase tracking-wider text-gold font-semibold mb-3">{t('chart.zodiac.vedic')}</p>
           {style === 'north' ? (
-            <NorthChart ascSign={asc.sign} planets={chart.planets.map((p) => ({ key: p.key, sign: p.sign, retrograde: p.retrograde }))} />
+            <NorthChart ascSign={asc.sign} planets={vedicPlanets} />
           ) : (
-            <SouthChart ascSign={asc.sign} planets={chart.planets.map((p) => ({ key: p.key, sign: p.sign, retrograde: p.retrograde }))} />
+            <SouthChart ascSign={asc.sign} planets={vedicPlanets} />
           )}
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-t12 text-charcoal-soft">
+            <span>{t('chart.legend', { defaultValue: '* retrograde · ^ combust · small number = degree in sign' })}</span>
+            <button
+              type="button"
+              onClick={() => setShowOuter((v) => !v)}
+              aria-pressed={showOuter}
+              className="rounded-full border border-gold/40 px-3 py-1 font-semibold text-gold hover:bg-gold/10"
+            >
+              {showOuter
+                ? t('chart.outerOn', { defaultValue: 'Outer planets: on' })
+                : t('chart.outerOff', { defaultValue: 'Outer planets: off' })}
+            </button>
+          </div>
         </GlassCard>
       )}
 
@@ -96,12 +122,12 @@ export function KundliChartScreen() {
           {style === 'north' ? (
             <NorthChart
               ascSign={Math.floor(chart.planets.length ? 0 : 0) + signIndexOfTropicalAsc(chart)}
-              planets={chart.planets.map((p) => ({ key: p.key, sign: Math.floor(p.lonTropical / 30) % 12, retrograde: p.retrograde }))}
+              planets={westernPlanets}
             />
           ) : (
             <SouthChart
               ascSign={signIndexOfTropicalAsc(chart)}
-              planets={chart.planets.map((p) => ({ key: p.key, sign: Math.floor(p.lonTropical / 30) % 12, retrograde: p.retrograde }))}
+              planets={westernPlanets}
             />
           )}
         </GlassCard>

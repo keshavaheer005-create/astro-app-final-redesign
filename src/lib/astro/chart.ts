@@ -4,7 +4,7 @@ import {
   SIGNS, SIGNS_HI, NAKSHATRAS, NAKSHATRAS_HI, PLANETS, SIGN_LORDS,
   nakshatraIndex, padaIndex, signIndex, degInSign, PlanetKey, PLANET_ORDER,
 } from './constants';
-import { calcAllPlanets, calcHouses, ayanamsa, juldayFromUTC, PlanetPos } from './ephemeris';
+import { calcAllPlanets, calcOuterPlanet, OUTER_ORDER, OuterKey, calcHouses, ayanamsa, juldayFromUTC, PlanetPos } from './ephemeris';
 import { vimshottariDasha, dashaSnapshot } from './dasha';
 import { buildVargas, VARGA_LIST } from './varga';
 import { ashtakavarga, isFallbackTables } from './ashtakavarga';
@@ -35,6 +35,30 @@ export interface PlanetPlacement {
   pada: number;
   retrograde: boolean;
   speed: number;
+  /** Within the classical combustion orb of the Sun (Moon..Saturn only). */
+  combust: boolean;
+}
+
+export interface OuterPlacement {
+  key: OuterKey;
+  lon: number; // sidereal
+  lonTropical: number;
+  sign: number;
+  degInSign: number;
+  retrograde: boolean;
+}
+
+// Classical combustion orbs (degrees from the Sun). Mercury/Venus use a
+// smaller orb when retrograde. Rahu/Ketu and the Sun are never combust.
+const COMBUST_ORB: Partial<Record<PlanetKey, [number, number]>> = {
+  Mo: [12, 12], Ma: [17, 17], Me: [14, 12], Ju: [11, 11], Ve: [10, 8], Sa: [15, 15],
+};
+export function isCombust(key: PlanetKey, lon: number, sunLon: number, retro: boolean): boolean {
+  const orb = COMBUST_ORB[key];
+  if (!orb) return false;
+  let d = Math.abs(lon - sunLon) % 360;
+  if (d > 180) d = 360 - d;
+  return d <= (retro ? orb[1] : orb[0]);
 }
 
 export interface ComputedChart {
@@ -45,6 +69,7 @@ export interface ComputedChart {
   moonSign: { index: number; name: string; nameHi: string };
   sunSign: { index: number; name: string; nameHi: string };
   planets: PlanetPlacement[];
+  outerPlanets: OuterPlacement[];
   houses: { index: number; sign: number; signName: string; lord: PlanetKey }[];
   dashas: ReturnType<typeof vimshottariDasha>;
   dashaSnapshot: ReturnType<typeof dashaSnapshot>;
@@ -89,8 +114,17 @@ export function computeChart(input: BirthInput): ComputedChart {
       pada: padaIndex(lon),
       retrograde: t.retrograde,
       speed: t.speed,
+      combust: false,
     });
   }
+  const sunLon = planetLons.Su.lon;
+  for (const pl of planets) pl.combust = isCombust(pl.key, pl.lon, sunLon, pl.retrograde);
+
+  const outerPlanets: OuterPlacement[] = OUTER_ORDER.map((key) => {
+    const t = calcOuterPlanet(key, jd, false);
+    const lon = ((t.lon - ay) % 360 + 360) % 360;
+    return { key, lon, lonTropical: t.lon, sign: signIndex(lon), degInSign: degInSign(lon), retrograde: t.retrograde };
+  });
 
   const ascNak = nakshatraIndex(houses.ascSidereal);
   const moonSignIdx = signIndex(planetLons.Mo.lon);
@@ -133,6 +167,7 @@ export function computeChart(input: BirthInput): ComputedChart {
     moonSign: { index: moonSignIdx, name: SIGNS[moonSignIdx], nameHi: SIGNS_HI[moonSignIdx] },
     sunSign: { index: sunSignIdx, name: SIGNS[sunSignIdx], nameHi: SIGNS_HI[sunSignIdx] },
     planets,
+    outerPlanets,
     houses: houseList,
     dashas,
     dashaSnapshot: dashaSnapshot(dashas),

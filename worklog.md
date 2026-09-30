@@ -507,3 +507,73 @@ Stage Summary:
 - Whole-app mobile sizing audit passed at 320/360/390/768 (+1440 desktop sanity): zero horizontal overflow, zero truncated buttons/labels, onboarding + check-in + AI chat golden paths verified live on Postgres, EN+HI.
 - Files changed: src/components/selfsage/app-shell.tsx, src/components/selfsage/screens/home.tsx, src/components/selfsage/screens/profile.tsx, src/i18n/locales/{en,hi}.json.
 - Next candidates: Plan B geocode multi-source cascade; Plan A cascading date picker; Supabase Auth + guest login-chakra screen; 320px Journal/Acharya press-state polish; Play Store assets.
+
+---
+Task ID: 18
+Agent: lead
+Task: User round 18 — chart layout must match AstroSage (inner diamond + sign numbering); audit Matching + Horoscope against AstroSage/classical rules.
+
+Work Log:
+- ROOT CAUSE (chart): NorthChart drew the outer square + 2 diagonals + a "+" cross (mid-lines) instead of the INNER DIAMOND, so house shapes were wrong (4 diamonds + 8 triangles never formed). It also printed HOUSE numbers + sign names in the middle of each house, where AstroSage prints SIGN numbers (1=Aries..12=Pisces) at each house's inner corner. SouthChart also drew a stray X through the centre 2x2 and a broken oversized rect on "corner" cells.
+- FIX chart-diagram.tsx: NorthChart rebuilt on exact geometry (square + both diagonals + inner diamond; 12 polygons), Lagna diamond tinted, sign number placed at the inner corner of each house (AstroSage positions), planets drawn as SVG text rows per house (diamonds 3/row, triangles 1-2/row), retrograde "(R)"/"(व)" in maroon. SouthChart rebuilt as clean 4x4 grid, centre left open with "Rasi / <Sign> Lagna", asc cell tinted + diagonal slash + "Asc", small house number per cell. Shared by Kundli chart (Vedic + Western) and Reports (varga charts).
+- MATCHING audit vs classical/AstroSage-style tables (sources: Saravali, Jagannatha Hora, astroyogi, freehoroscopesonline):
+  * Bhakoot BUG: dosha list was [1,11,4,8,6] → 7/7 (diff 6) wrongly scored 0 and 6/8 (diff 5,7) wrongly scored 7. Now [1,11,4,8,5,7].
+  * Yoni matrix BUG: sworn-enemy zeros were wrong (Horse–Buffalo, Dog–Deer, Cat–Rat, Serpent–Mongoose, Sheep–Monkey scored 1-3). Replaced with the published symmetric matrix (7 enemy pairs = 0); symmetry validated at module load.
+  * Vashya BUG: simplified rule (same/mutual=2 else 1). Now 5 groups incl. Vanachara (Leo), Keeta (Scorpio), Sagittarius/Capricorn split at 15° using the Moon's degree, and the standard 5x5 matrix (0/1/1.5/2).
+  * Gana: Deva–Rakshasa now 0 and Manushya–Rakshasa 1 (was Deva–Rakshasa 1 / Manushya–Rakshasa 0). NOTE: sources disagree here; chosen = most widely published table (astroyogi). Change GANA_MATRIX in matching-tables.ts if AstroSage differs on a test pair.
+  * Verified OK (no change): Varna, Tara (even remainder good), Graha Maitri, Nadi, nakshatra→yoni/gana/nadi tables, sign lords.
+  * Removed matching-fallback.ts (stale, held the wrong Yoni/Vashya data); matching.ts now imports matching-tables directly.
+- NODE: ephemeris used SE_TRUE_NODE; AstroSage defaults to MEAN node → Rahu/Ketu could differ by up to ~1.5° (sign/nakshatra flips near boundaries). Default now SE_MEAN_NODE; set NODE_TYPE=true for the osculating node.
+- HOROSCOPE audit: gochara benefic-house tables (Sun 3/6/10/11 … Saturn 3/6/11) match classical rules; scoring is our own weighting (AstroSage horoscope text is editorial, cannot be matched numerically).
+- Verification: matching logic compiled + unit-probed with tsc/node (Aries–Scorpio, Aries–Virgo flag Bhakoot; Aries–Libra does not; Horse–Buffalo Yoni 0; Sag/Cap 15° Vashya split). Charts rendered through a harness in Chromium (EN + HI) and compared with the AstroSage Lagna screenshot. NOT run: full app build / browser E2E (tarball has no node_modules) — run `bun run lint && bun run dev` and check /kundli → Chart.
+- TODO (needs real AstroSage data): compare a real birth chart side by side (same DOB/TOB/place, Lahiri, Mean node) to confirm planet degrees; the screenshot pair in this round used different birth data so positions differ by design.
+
+---
+Task ID: 19
+Task: Compare our Matching vs AstroSage screenshot (Boy Gemini/Punarvasu, Girl Libra/Vishakha).
+- 6/8 kootas already matched (Varna 1, Vashya 2, Maitri 5, Gana 0, Bhakoot 0, Nadi 8).
+- Tara: ours 0/3, AstroSage 3/3 (counts 10/19, both remainder 1). Fixed: only remainders 3/5/7 are bad; 1 (Janma) is good.
+- Yoni: ours 1/4, AstroSage 2/4 for Cat/Tiger. Published charts say 1; set Cat–Tiger = 2 (symmetric) to match AstroSage. Other cells may also differ — verify more pairs.
+- Expected total for this pair now 21/36 (AstroSage table sums to 21).
+
+---
+Task ID: 20
+Task: New-person chart vs AstroSage (Virgo asc). Signs/houses already matched; gaps were presentation + outer planets.
+- Engine review: Moshier + Lahiri, sidereal = tropical − ayanamsa, Mean Node → OK. Sign placement matched AstroSage for all 9 grahas on the test chart.
+- ephemeris.ts: calcOuterPlanet (Uranus/Neptune/Pluto). chart.ts: PlanetPlacement.combust (classical orbs: Mo12 Ma17 Me14/12r Ju11 Ve10/8r Sa15), ComputedChart.outerPlanets.
+- chart-diagram.tsx: AstroSage-style labels — degree superscript, * retrograde, ^ combust, outer planets in purple. kundli-chart.tsx: passes deg/combust/outer, legend line + "Outer planets on/off" toggle (Vedic + Western). i18n en/hi keys chart.legend/outerOn/outerOff.
+- Cached charts without outerPlanets/combust are handled (?? []), re-generate a chart to see them.
+- NOT verified: degrees vs AstroSage numerically (need same birth data on both); full app build.
+
+---
+Task ID: 21
+Task: Matching still off on pair Keshav (Pisces/P.Bhadra) & nishu (Libra/Vishakha). AstroSage total 14, ours 16.
+- Vashya: Jalachara(groom)/Manava(bride) AstroSage = 0.5 (ours 1.5). Matrix cells that were 1.5 -> 0.5 (Manava<->Jalachara, Chatushpada->Vanachara [inferred]).
+- Gana: Manushya(boy)/Rakshasa(girl) AstroSage = 0 (ours 1). Now Deva/Rakshasa 0, Manushya/Rakshasa 0 both ways. Deva/Manushya 6 (boy Deva) / 5 (boy Manushya) is NOT yet verified vs AstroSage.
+- Regression pairs (both now match AstroSage exactly): [Pisces P.Bhadra + Libra Vishakha = 14], [Gemini Punarvasu + Libra Vishakha = 21]. Keep as unit tests.
+- Unverified cells: Chatushpada/Vanachara Vashya, Deva/Manushya Gana (asymmetry), most Yoni cells besides Cat-Tiger, Lion-Tiger.
+
+---
+Task ID: 22
+Task: Research AstroSage + popular matching engines, find missing calculations, implement.
+- Research: AstroSage free = Ashtakoot (raw scores, no cancellation adjustments) + Manglik flag. Others add dosha cancellations, Dashakoota (10 Porutham, South Indian) with Rajju/Vedha vetoes, Papasamyam.
+- NEW src/lib/astro/matching-extras.ts:
+  * doshaAnalysis(): Nadi / Bhakoot / Gana cancellation reasons (same nakshatra diff pada, same rashi diff nakshatra, same/friendly Moon-sign lords, Navpancham needs Nadi 8 + Tara 3). Headline Ashtakoot score stays RAW (AstroSage-compatible); an "adjustedTotal" is informational only.
+  * manglikCompatibility(): both / neither / one-sided (+ mitigation) verdict.
+  * dashakoota(): Dina, Gana, Mahendra, Stree Deergha, Yoni, Rasi, Rasyadhipati, Vasya, Rajju*, Vedha* (bride->groom counting; Rajju/Vedha = vetoes).
+- matching-tables.ts: NAKSHATRA_RAJJU (5 limbs), VEDHA_PAIRS (13). matching.ts: exported grahaMaitriScore + SIGN_LORD_KEYS.
+- doshas.ts BUGFIX: Jupiter-aspect check for Mangal dosha mitigation used a wrong house list (duplicate, no 7th aspect); now conj/5th/7th/9th.
+- /api/match returns `extras`; MatchingScreen shows 3 new cards (Manglik compatibility, Dosha check & cancellations, Dashakoota). i18n en/hi added.
+- Verified: Rajju same-limb ordered pairs = 153, Vedha = 26, Vedha outside Rajju = 0 (matches published analysis). Published worked example (Jyeshtha groom/Magha bride): star counts 9/20, rasi 4/10, Dina✔, Mahendra✘, StreeDeergha ✘/✔, Rajju✘, totals 6/10 and 7/10 when swapped — reproduced exactly. Same example's Ashtakoot: 7/8 rows equal, Yoni Deer/Rat: ours 2 vs RoxyAPI 3 (open question, AstroSage value unknown).
+- NOT implemented: Papasamyam (no consensus point table in classical texts; weights are arbitrary) — needs product decision.
+- Conventions that vary by school and could differ from other tools: Rasi porutham (2/6/8/12 fail), Vasya (uses Ashtakoot Vashya >=1), Stree Deergha (>13), Yoni pass (>=2).
+
+---
+Task ID: 23
+Task: Manglik bar differed from AstroSage. AstroSage: Keshav 'Low Mangal Dosha', nishu 'High Mangal Dosha', Conclusion "NOT preferable due to Mangal Dosha and low match points". Ours: both 'present from both Lagna & Moon' (+ '2th' label bug).
+- Root causes: (1) only Lagna+Moon checked, AstroSage also checks VENUS; (2) house 2 counted as a dosha house (AstroSage: 1,4,7,8,12; 2nd is South-Indian only); (3) no Low/High grading; (4) compatibility logic treated 'both manglik' as compatible, AstroSage requires the SAME level.
+- doshas.ts: fromVenus/marsHouseFromVenus, level none|low|high (all 3 charts = high, 1-2 = low), southIndianSecondHouse note; severity derived from level for older screens.
+- matching-extras.ts: manglikCompatibility() = same level → compatible; matchConclusion() reproduces AstroSage's headline ("NOT preferable due to Mangal Dosha and/or low match points", threshold 18).
+- UI: 'Horoscope Matching Results' card (score, both levels, conclusion), summary cards show Low/High/No + Lagna/Moon/Venus rows; label bug fixed ('house 2' not '2th').
+- Verification: Mars/Venus for both births computed independently (JPL approximate elements; both in Libra). Keshav: Lagna h2 ✘, Moon h8 ✔, Venus h1 ✔ = Low ✔; nishu: h12 ✔, h1 ✔, h1 ✔ = High ✔. Conclusion text matches.
+- Assumptions: rule inferred from AstroSage's own page + these 2 data points; benefic-aspect/own-sign cancellations do NOT change the level (AstroSage grades raw; mitigation kept as notes). Verify with more AstroSage Low/None/High examples.
