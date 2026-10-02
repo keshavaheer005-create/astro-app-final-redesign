@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Self Sage</string>
-    <string name="title_activity_main">Self Sage</string>
-    <string name="package_name">com.selfsage.app</string>
-    <string name="custom_url_scheme">com.selfsage.app</string>
-</resources>
