@@ -1,0 +1,63 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Astrovia — Render.com Web Service (Blueprint)
+#
+# The app is a PERSISTENT Node.js server (Next.js `output: "standalone"`),
+# which is what Prisma (Postgres connection pool) and the native Swiss
+# Ephemeris (sweph) bindings require — this must NOT run on serverless.
+#
+# One-click path:
+#   1. Create a Supabase project → copy the connection string (URI)
+#      (use the "Session pooler" URI on port 5432; add ?pgbouncer=true when
+#      using the transaction pooler on 6543) → set DATABASE_URL below/in UI.
+#   2. Push this file to the repo root → Render → New → Blueprint → select
+#      the repo → set the sync:false env vars when prompted.
+#   3. Run migrations once from your machine against the Supabase URL:
+#        DATABASE_URL="<supabase-uri>" bunx prisma migrate deploy
+#   4. (Optional auth) set NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY
+#      and run supabase/schema.sql in the Supabase SQL editor.
+#
+# Notes
+#   • NEXT_PUBLIC_* vars are inlined at BUILD time — set them before the
+#     first build and trigger a rebuild after changing them.
+#   • No persistent disk is required: ephemeris files auto-populate in /tmp
+#     on boot (SWEPH_PATH default) and all state lives in Supabase Postgres.
+#   • embedded-postgres is a dev-only convenience; it is installed but never
+#     started in production (DATABASE_URL points at Supabase).
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  - type: web
+    name: astrovia
+    runtime: node
+    plan: starter
+    region: singapore # closest Render region to India
+    autoDeploy: true
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: node .next/standalone/server.js
+    healthCheckPath: /api
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      # ── Database (required) ───────────────────────────────────────────────
+      # Supabase → Project Settings → Database → Connection string (URI).
+      - key: DATABASE_URL
+        sync: false
+      # ── Session signing (required) ────────────────────────────────────────
+      # Render generates a secure random value on first deploy.
+      - key: SESSION_SECRET
+        generateValue: true
+      # ── Supabase Auth (optional — app activates it when both are present) ─
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      # ── Canonical public URL (used for OAuth redirects) ───────────────────
+      # Set to the final onrender.com (or custom) URL once known.
+      - key: NEXT_PUBLIC_SITE_URL
+        sync: false
+      # ── Split/Capacitor deployments (optional) ────────────────────────────
+      # If the Android WebView does NOT load this URL directly, point the
+      # client at it: set NEXT_PUBLIC_API_BASE_URL to this service's URL and
+      # CAPACITOR_SERVER_URL at `npx cap sync` time on your machine.
+      - key: NEXT_PUBLIC_API_BASE_URL
+        sync: false
