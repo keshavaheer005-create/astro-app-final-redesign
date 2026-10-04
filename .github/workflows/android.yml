@@ -35,7 +35,14 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - uses: android-actions/setup-android@v3
+      # The GitHub Ubuntu runner already ships the Android SDK (ANDROID_HOME),
+      # so no extra SDK action is needed. Just accept licenses and make sure the
+      # platform/build-tools this project compiles against are present.
+      - name: Prepare Android SDK
+        run: |
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKM" --licenses > /dev/null || true
+          "$SDKM" "platforms;android-36" "build-tools;36.0.0"
 
       - uses: gradle/actions/setup-gradle@v4
 
