@@ -211,6 +211,7 @@ export async function syncDailyReminders(opts: {
     body: string;
     channelId: string;
     schedule: { at: Date; allowWhileIdle: boolean };
+    isExactNotification: boolean;
     extra: { target: string };
   }[] = [];
   for (let day = 0; day <= REMINDER_DAYS && notifications.length < REMINDER_DAYS; day++) {
@@ -223,6 +224,11 @@ export async function syncDailyReminders(opts: {
       body: opts.body,
       channelId: REMINDER_CHANNEL,
       schedule: { at, allowWhileIdle: true },
+      // Inexact on purpose. The plugin defaults to EXACT alarms and, when Android has not
+      // granted them, opens the system "Alarms & reminders" screen every time it schedules.
+      // This app does not declare that permission (it would need a Google Play declaration),
+      // so the app is not even listed there and the user would be stuck in a loop.
+      isExactNotification: false,
       extra: { target: 'checkin' },
     });
   }
