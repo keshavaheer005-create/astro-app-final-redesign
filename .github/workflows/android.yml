@@ -18,7 +18,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
       CAPACITOR_SERVER_URL: ${{ github.event.inputs.server_url || 'https://astrosage.onrender.com' }}
@@ -30,7 +30,7 @@ jobs:
         with:
           node-version: 22
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
