@@ -18,7 +18,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
       CAPACITOR_SERVER_URL: ${{ github.event.inputs.server_url || 'https://astrosage.onrender.com' }}
@@ -30,12 +30,19 @@ jobs:
         with:
           node-version: 22
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
 
-      - uses: android-actions/setup-android@v3
+      # The GitHub Ubuntu runner already ships the Android SDK (ANDROID_HOME),
+      # so no extra SDK action is needed. Just accept licenses and make sure the
+      # platform/build-tools this project compiles against are present.
+      - name: Prepare Android SDK
+        run: |
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKM" --licenses > /dev/null || true
+          "$SDKM" "platforms;android-36" "build-tools;36.0.0"
 
       - uses: gradle/actions/setup-gradle@v4
 
@@ -45,11 +52,20 @@ jobs:
       - name: Sync Capacitor (builds offline page, copies plugins into the Android project)
         run: node scripts/prepare-android.mjs && npx cap sync android
 
+      # Safety net: whatever versionCode line is committed, turn it into a plain
+      # number (the GitHub run number, so every Play upload is higher than the last),
+      # then print the top of the file so the log shows exactly what Gradle will read.
+      - name: Set version code and show build file
+        run: |
+          sed -i '/^def appVersionCode/d' android/app/build.gradle
+          sed -i -E "s/^[[:space:]]*versionCode([[:space:]]|\().*/        versionCode ${GITHUB_RUN_NUMBER}/" android/app/build.gradle
+          cat -n android/app/build.gradle | sed -n 1,26p
+
       - name: Build debug APK
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
@@ -62,7 +78,7 @@ jobs:
       - name: Build release bundle
         if: env.HAS_KEYSTORE == 'true'
         working-directory: android
-        run: ./gradlew bundleRelease --no-daemon
+        run: ./gradlew bundleRelease --no-daemon --stacktrace
 
       - name: Sign release bundle
         if: env.HAS_KEYSTORE == 'true'

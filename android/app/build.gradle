@@ -1,5 +1,8 @@
 apply plugin: 'com.android.application'
 
+// Google Play needs a higher versionCode for every upload. GitHub builds use the run number.
+def appVersionCode = (System.getenv("ANDROID_VERSION_CODE") ?: System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
+
 android {
     namespace = "com.astrovia.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -9,7 +12,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         // Google Play needs a higher versionCode for every upload. GitHub builds use the
         // run number automatically; on your own computer set ANDROID_VERSION_CODE to override.
-        versionCode (System.getenv("ANDROID_VERSION_CODE") ?: System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
+        versionCode appVersionCode
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
