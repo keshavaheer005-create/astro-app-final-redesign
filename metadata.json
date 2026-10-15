@@ -1,8 +1,0 @@
-{
-  "name": "Astrovia",
-  "description": "Vedic Wisdom, Personal Growth: Kundli, Panchang, Karma Journal, Matching, Dashas, and Acharya guidance.",
-  "requestFramePermissions": [],
-  "majorCapabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
-}
