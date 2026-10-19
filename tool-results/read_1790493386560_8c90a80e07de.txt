@@ -1,0 +1,502 @@
+   540→                    letterAlert ? 'bg-gold-soft/70 hover:bg-gold-soft' : 'hover:bg-gold-soft/50',
+   541→                  )}
+   542→                  style={{ animationDelay: '50ms', animationFillMode: 'backwards' }}
+   543→                >
+   544→                  <span className={cn('mt-0.5', letterAlert ? 'text-gold' : 'text-gold/80')}><Icon name="journal" size={15} /></span>
+   545→                  <span className="min-w-0">
+   546→                    <span className={cn('block text-t14', letterAlert ? 'font-semibold text-charcoal' : 'text-charcoal')}>
+   547→                      {t(letterAlert ? 'notifications.reflectionNew' : 'notifications.reflectionReady')}
+   548→                    </span>
+   549→                    {letterAlert && <span className="block text-t12 text-muted-foreground">{t('notifications.reflectionNewBody')}</span>}
+   550→                  </span>
+   551→                  {letterAlert && <span className="ml-auto shrink-0 mt-0.5 w-2 h-2 rounded-full bg-gold animate-pulse" aria-hidden />}
+   552→                </button>
+   553→              )}
+   554→              {dashaNow?.next.lord && dashaNow.next.daysLeft <= 7 && dashaNow.next.daysLeft >= 0 && (
+   555→                <button
+   556→                  type="button"
+   557→                  onClick={(e) => {
+   558→                    e.stopPropagation();
+   559→                    document.body.click();
+   560→                    onNavigate('kundli', 'reports');
+   561→                  }}
+   562→                  className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-gold-soft/50 transition-colors duration-150 border-b border-gold/10 animate-in fade-in-0 slide-in-from-bottom-1 duration-300"
+   563→                  style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}
+   564→                >
+   565→                  <span className="mt-0.5 text-gold"><Icon name="clock" size={15} /></span>
+   566→                  <span>
+   567→                    <span className="block text-t14 text-charcoal">
+   568→                      {dashaNow.next.isMahaChange
+   569→                        ? t('notifications.dashaMahaAhead', { next: t(`planet.${dashaNow.next.lord}`), n: dashaNow.next.daysLeft })
+   570→                        : t('notifications.dashaAhead', { next: t(`planet.${dashaNow.next.lord}`), n: dashaNow.next.daysLeft })}
+   571→                    </span>
+   572→                    <span className="block text-t12 text-muted-foreground">{t('notifications.dashaAheadBody')}</span>
+   573→                  </span>
+   574→                </button>
+   575→              )}
+   576→              {skyNotifs.map((item, i) => {
+   577→                const id = skyNotifId(item);
+   578→                const unread = !skySeen.has(id);
+   579→                const whenLabel =
+   580→                  item.daysUntil === 0 ? t('home.today') : item.daysUntil === 1 ? t('home.tomorrow') : t('home.inDays', { n: item.daysUntil });
+   581→                return (
+   582→                  <button
+   583→                    key={id}
+   584→                    type="button"
+   585→                    onClick={(e) => {
+   586→                      e.stopPropagation();
+   587→                      document.body.click();
+   588→                      markSkySeen(id);
+   589→                      useAppStore.getState().pushPendingFocus(`panchang:${item.date}`);
+   590→                      onNavigate('kundli', 'panchang');
+   591→                    }}
+   592→                    className={cn(
+   593→                      'w-full text-left px-4 py-3 flex items-start gap-3 transition-colors duration-150 border-b border-gold/10 animate-in fade-in-0 slide-in-from-bottom-1 duration-300',
+   594→                      unread ? 'bg-gold-faint/60 hover:bg-gold-faint' : 'hover:bg-gold-soft/50',
+   595→                    )}
+   596→                    style={{ animationDelay: `${150 + Math.min(i, 6) * 50}ms`, animationFillMode: 'backwards' }}
+   597→                  >
+   598→                    <span className={cn('mt-0.5 shrink-0', unread ? 'text-gold' : 'text-gold/70')}><Icon name={SKY_ICON[item.kind]} size={15} /></span>
+   599→                    <span className="min-w-0">
+   600→                      <span className={cn('block text-t14 truncate', unread ? 'font-semibold text-charcoal' : 'text-charcoal/85')}>
+   601→                        {language === 'hi' ? item.name.hi : item.name.en}
+   602→                      </span>
+   603→                      <span className="block text-t12 text-muted-foreground">
+   604→                        {new Date(`${item.date}T12:00:00Z`).toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' })}
+   605→                        <span className="text-gold"> · {whenLabel}</span>
+   606→                      </span>
+   607→                    </span>
+   608→                    {unread && <span className="ml-auto shrink-0 mt-0.5 w-2 h-2 rounded-full bg-gold animate-pulse" aria-hidden />}
+   609→                  </button>
+   610→                );
+   611→              })}
+   612→              {checkin && checkin.streak >= 3 && (
+   613→                <div className="px-4 py-3 flex items-start gap-3 border-b border-gold/10 animate-in fade-in-0 slide-in-from-bottom-1 duration-300" style={{ animationDelay: '150ms', animationFillMode: 'backwards' }}>
+   614→                  <span className="mt-0.5 text-emerald-deep"><Icon name="flame" size={15} /></span>
+   615→                  <span className="text-t14 text-charcoal">{t('notifications.streak', { n: checkin.streak })}</span>
+   616→                </div>
+   617→              )}
+   618→              {checkin?.checkedInToday && !checkin.reflection && (checkin?.streak ?? 0) < 3 && skyNotifs.length === 0 && (
+   619→                <div className="px-4 py-6 text-center">
+   620→                  <p className="text-t12 text-muted-foreground">{t('notifications.none')}</p>
+   621→                </div>
+   622→              )}
+   623→            </div>
+   624→          </PopoverContent>
+   625→        </Popover>
+   626→      </header>
+   627→
+   628→      {/* Hero: today's panchang + Acharya CTA */}
+   629→      <GlassCard className="p-5 sm:p-6">
+   630→        <div className="flex items-start justify-between gap-4">
+   631→          <div className="min-w-0">
+   632→            <p className="text-t12 uppercase tracking-wider text-gold font-semibold">{t('home.heroTitle')}</p>
+   633→            {panchang ? (
+   634→              <div className="mt-2.5 space-y-1.5">
+   635→                <p className="text-t16 text-charcoal">
+   636→                  <span className="font-semibold">{t('home.tithi')}:</span>{' '}
+   637→                  {language === 'hi' ? `${panchang.tithi.paksha === 'Shukla' ? 'शुक्ल' : 'कृष्ण'} ${panchang.tithi.nameHi}` : `${panchang.tithi.paksha} ${panchang.tithi.name}`}
+   638→                </p>
+   639→                <p className="text-t14 text-charcoal/80">
+   640→                  <span className="font-semibold">{t('home.nakshatra')}:</span>{' '}
+   641→                  {language === 'hi' ? panchang.nakshatra.nameHi : panchang.nakshatra.name} · {panchang.moonSign.nameHi ?? ''} {language !== 'hi' ? panchang.moonSign.name : ''}
+   642→                </p>
+   643→                {panchang.sunriseISO && (
+   644→                  <p className="text-t12 text-muted-foreground inline-flex items-center gap-1.5">
+   645→                    <Icon name="sunrise" size={13} className="text-gold" />
+   646→                    {t('home.sunrise')}: {new Date(panchang.sunriseISO).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: chart.input.timezone })}
+   647→                  </p>
+   648→                )}
+   649→                {(panchang.moonriseISO || panchang.moonsetISO) && (
+   650→                  <p className="text-t12 text-muted-foreground inline-flex items-center gap-3 flex-wrap">
+   651→                    <span className="inline-flex items-center gap-1.5">
+   652→                      <Icon name="moonrise" size={13} className="text-gold" />
+   653→                      {t('home.moonrise')}: {panchang.moonriseISO ? new Date(panchang.moonriseISO).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: chart.input.timezone }) : '—'}
+   654→                    </span>
+   655→                    <span className="inline-flex items-center gap-1.5">
+   656→                      <Icon name="moonset" size={13} className="text-gold" />
+   657→                      {t('home.moonset')}: {panchang.moonsetISO ? new Date(panchang.moonsetISO).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: chart.input.timezone }) : '—'}
+   658→                    </span>
+   659→                  </p>
+   660→                )}
+   661→                {panchang.choghadiya && (
+   662→                  <LiveNowStrip
+   663→                    choghadiya={panchang.choghadiya}
+   664→                    rahuKaal={panchang.rahuKaal}
+   665→                    tz={chart.input.timezone}
+   666→                    locale={locale}
+   667→                  />
+   668→                )}
+   669→              </div>
+   670→            ) : (
+   671→              <div className="mt-2.5 space-y-2">
+   672→                <div className="h-4 w-44 rounded shimmer" />
+   673→                <div className="h-4 w-36 rounded shimmer" />
+   674→              </div>
+   675→            )}
+   676→          </div>
+   677→          <span className="shrink-0 hidden sm:flex flex-col items-center gap-1">
+   678→            {panchang && (
+   679→              <MoonPhaseGlyph phase={((panchang.tithi.index - 1) + panchang.tithi.percent / 100) / 30} size={38} />
+   680→            )}
+   681→            {panchang && (
+   682→              <span className="text-t12 text-muted-foreground">{t(phaseKeyOf(((panchang.tithi.index - 1) + panchang.tithi.percent / 100) / 30))}</span>
+   683→            )}
+   684→            {!panchang && <Icon name="sun" size={40} strokeWidth={1.2} className="text-gold/70" />}
+   685→          </span>
+   686→        </div>
+   687→        <button
+   688→          type="button"
+   689→          onClick={() => onNavigate('acharya')}
+   690→          className="mt-4 w-full glass-ink sheen-sweep rounded-2xl px-4 py-3.5 flex items-center gap-3 text-left transition-transform duration-250 ease-out hover:-translate-y-0.5 active:scale-[0.99] group"
+   691→        >
+   692→          <AcharyaAvatar size={44} className="shrink-0" />
+   693→          <span className="flex-1 min-w-0">
+   694→            <span className="block text-t14 font-semibold text-gold-grad font-serif">{t('home.talkToAcharya')}</span>
+   695→            <span className="block text-t12 text-[#cdb98e] truncate">{t('home.acharyaByline')}</span>
+   696→          </span>
+   697→          <Icon name="chevron-right" size={18} className="text-gold transition-transform duration-250 group-hover:translate-x-0.5" />
+   698→        </button>
+   699→      </GlassCard>
+   700→
+   701→      {/* Sky ahead — upcoming purnima / ekadashi / sankranti / festivals */}
+   702→      {sky && sky.length > 0 && (
+   703→        <section aria-label={t('home.skyAhead')} className="stagger-in" style={{ animationDelay: '40ms', animationFillMode: 'backwards' }}>
+   704→          <SectionHeader title={t('home.skyAhead')} icon="moon" />
+   705→          <div className="relative" role="list">
+   706→            <span className="sky-fade sky-fade-l" aria-hidden="true" />
+   707→            <span className="sky-fade sky-fade-r" aria-hidden="true" />
+   708→            <div className="sky-strip no-scrollbar flex gap-2.5 overflow-x-auto pb-1 px-0.5">
+   709→              {sky.map((item, i) => {
+   710→                const whenLabel =
+   711→                  item.daysUntil === 0 ? t('home.today') : item.daysUntil === 1 ? t('home.tomorrow') : t('home.inDays', { n: item.daysUntil });
+   712→                return (
+   713→                  <button
+   714→                    key={`${item.kind}-${item.date}`}
+   715→                    type="button"
+   716→                    role="listitem"
+   717→                    onClick={() => {
+   718→                      useAppStore.getState().pushPendingFocus(`panchang:${item.date}`);
+   719→                      onNavigate('kundli', 'panchang');
+   720→                    }}
+   721→                    aria-label={`${language === 'hi' ? item.name.hi : item.name.en}, ${whenLabel}`}
+   722→                    className={cn(
+   723→                      'sky-chip group/chip shrink-0 min-w-[148px] max-w-[190px] text-left glass rounded-xl px-3 py-2.5',
+   724→                      'transition-all duration-250 ease-out hover:-translate-y-0.5 hover:shadow-[0_6px_18px_-8px_rgba(201,162,39,0.45)] active:scale-[0.97]',
+   725→                      'animate-in fade-in-0 slide-in-from-left-2 focus-visible:ring-2 focus-visible:ring-gold/60 focus-visible:outline-none',
+   726→                    )}
+   727→                    style={{ animationDelay: `${Math.min(i, 8) * 45}ms`, animationFillMode: 'backwards' }}
+   728→                  >
+   729→                    <span className="flex items-center gap-2">
+   730→                      <span className="shrink-0 w-7 h-7 rounded-full bg-gold-soft/70 border border-gold/25 flex items-center justify-center transition-transform duration-250 group-hover/chip:scale-110">
+   731→                        <Icon name={SKY_ICON[item.kind]} size={14} className="text-gold" />
+   732→                      </span>
+   733→                      <span className="min-w-0">
+   734→                        <span className="block text-t14 font-medium text-charcoal truncate">{language === 'hi' ? item.name.hi : item.name.en}</span>
+   735→                        <span className="block text-t12 text-muted-foreground truncate">
+   736→                          {new Date(`${item.date}T12:00:00Z`).toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' })}
+   737→                          <span className="text-gold"> · {whenLabel}</span>
+   738→                        </span>
+   739→                      </span>
+   740→                    </span>
+   741→                  </button>
+   742→                );
+   743→              })}
+   744→            </div>
+   745→          </div>
+   746→        </section>
+   747→      )}
+   748→
+   749→      {/* Dasha transition countdown — ink card */}
+   750→      {dashaNow && dashaNow.next.lord && (
+   751→        <GlassCard className="p-5 sm:p-6 glass-ink relative overflow-hidden">
+   752→          <div className="flex items-start justify-between gap-3">
+   753→            <div className="min-w-0">
+   754→              <p className="text-t12 uppercase tracking-wider text-gold font-semibold">{t('dasha.cardTitle')}</p>
+   755→              <p className="mt-2 text-t16 font-serif text-gold-grad font-semibold">
+   756→                {t('dasha.current', { maha: t(`planet.${dashaNow.mahaLord}`), antar: dashaNow.antarLord ? t(`planet.${dashaNow.antarLord}`) : '' })}
+   757→              </p>
+   758→              <p className="mt-1 text-t14 text-[#cdb98e]">
+   759→                {dashaNow.next.daysLeft <= 0
+   760→                  ? t('dasha.endsToday')
+   761→                  : dashaNow.next.isMahaChange
+   762→                    ? t('dasha.mahaChange', { next: t(`planet.${dashaNow.next.lord}`) })
+   763→                    : t('dasha.endsIn', { n: dashaNow.next.daysLeft, next: t(`planet.${dashaNow.next.lord}`) })}
+   764→                <span className="text-[#a5947a]"> · {new Date(`${dashaNow.next.dateISO}T12:00:00Z`).toLocaleDateString(locale, { day: 'numeric', month: 'short' })}</span>
+   765→              </p>
+   766→            </div>
+   767→            <button
+   768→              type="button"
+   769→              onClick={() => onNavigate('kundli', 'reports')}
+   770→              className="shrink-0 text-t12 text-gold hover:text-gold-light underline underline-offset-4 decoration-gold/30 transition-colors duration-200"
+   771→            >
+   772→              {t('dasha.viewReports')}
+   773→            </button>
+   774→          </div>
+   775→          {/* Antardasha progress — thin gold bar on ink */}
+   776→          <div className="mt-4 h-1.5 rounded-full bg-white/10 overflow-hidden" role="progressbar" aria-valuenow={dashaNow.antarPercent} aria-valuemin={0} aria-valuemax={100}>
+   777→            <div className="h-full gold-grad rounded-full transition-all duration-500" style={{ width: `${dashaNow.antarPercent}%` }} />
+   778→          </div>
+   779→          <div className="mt-1.5 flex justify-between text-t12 text-[#a5947a]">
+   780→            <span>{t(`planet.${dashaNow.mahaLord}`)}-{dashaNow.antarLord ? t(`planet.${dashaNow.antarLord}`) : ''}</span>
+   781→            <span>{dashaNow.antarPercent}%</span>
+   782→          </div>
+   783→        </GlassCard>
+   784→      )}
+   785→
+   786→      {/* Daily check-in */}
+   787→      <GlassCard id="daily-checkin" className={cn('p-5 sm:p-6', flashCheckin && 'focus-flash')}>
+   788→        <AnimatePresence mode="wait">
+   789→          {checkin?.checkedInToday ? (
+   790→            <motion.div
+   791→              key="done"
+   792→              initial={{ opacity: 0, y: 8 }}
+   793→              animate={{ opacity: 1, y: 0 }}
+   794→              exit={{ opacity: 0, y: -8 }}
+   795→              className="flex items-center gap-4"
+   796→            >
+   797→              <span className="shrink-0 w-12 h-12 rounded-full gold-grad flex items-center justify-center text-charcoal">
+   798→                <Icon name="check" size={24} strokeWidth={2} />
+   799→              </span>
+   800→              <div className="flex-1 min-w-0">
+   801→                <p className="text-t16 font-semibold text-charcoal">{t('home.checkinDone')}</p>
+   802→                <p className="text-t12 text-muted-foreground">{t('home.checkinDoneBody')}</p>
+   803→              </div>
+   804→              <div className="text-right shrink-0">
+   805→                <span className="inline-flex items-center gap-1 text-emerald-deep font-semibold text-t16">
+   806→                  <Icon name="flame" size={18} className="flame-pulse" />
+   807→                  {checkin.streak}
+   808→                </span>
+   809→                <p className="text-t12 text-muted-foreground">{t('home.streak', { n: checkin.streak })}</p>
+   810→              </div>
+   811→            </motion.div>
+   812→          ) : checkinError ? (
+   813→            <ErrorState message={t('common.networkError')} onRetry={loadCheckin} />
+   814→          ) : !checkin ? (
+   815→            <div className="space-y-3 py-2">
+   816→              <div className="h-5 w-40 rounded shimmer" />
+   817→              <div className="h-9 rounded-xl shimmer" />
+   818→              <div className="h-9 rounded-xl shimmer" />
+   819→            </div>
+   820→          ) : (
+   821→            <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -8 }}>
+   822→              <div className="flex items-center justify-between">
+   823→                <h2 className="font-serif text-t20 font-semibold text-charcoal">{t('home.checkinTitle')}</h2>
+   824→                <span className="inline-flex items-center gap-1 text-t12 text-muted-foreground">
+   825→                  <Icon name="flame" size={14} className="text-gold" />
+   826→                  {checkin.streak > 0 ? t('home.streak', { n: checkin.streak }) : t('home.streakNew')}
+   827→                </span>
+   828→              </div>
+   829→
+   830→              <div className="mt-4 space-y-4">
+   831→                <MoodSlider
+   832→                  label={t('home.mood')}
+   833→                  value={mood}
+   834→                  onChange={setMood}
+   835→                  lowLabel={language === 'hi' ? 'भारी' : 'Heavy'}
+   836→                  highLabel={language === 'hi' ? 'उजला' : 'Bright'}
+   837→                />
+   838→                <MoodSlider
+   839→                  label={t('home.energy')}
+   840→                  value={energy}
+   841→                  onChange={setEnergy}
+   842→                  lowLabel={language === 'hi' ? 'थकान' : 'Drained'}
+   843→                  highLabel={language === 'hi' ? 'जोश' : 'Charged'}
+   844→                />
+   845→                <Textarea
+   846→                  id="checkin-note"
+   847→                  value={note}
+   848→                  onChange={(e) => setNote(e.target.value)}
+   849→                  placeholder={t('home.notePlaceholder')}
+   850→                  rows={2}
+   851→                  className="resize-none rounded-xl border-gold/25 bg-white/70 text-t14 focus-visible:ring-gold/30 max-h-24"
+   852→                  maxLength={280}
+   853→                />
+   854→                {/* Dasha-grounded note prompts — antardasha-aware, tap to insert */}
+   855→                {dashaNow?.mahaLord && !note && (() => {
+   856→                  const maha = dashaNow.mahaLord;
+   857→                  const antar = dashaNow.antarLord ?? null;
+   858→                  // With an antardasha: lead with its lord (most specific), then the
+   859→                  // maha lord, then one Navagraha neighbour that isn't already shown.
+   860→                  const lords = antar
+   861→                    ? [antar, maha, (PROMPT_LORDS[antar] ?? ['Su', 'Mo', 'Ju']).find((l) => l !== antar && l !== maha) ?? 'Mo']
+   862→                        .filter((v, i, a) => a.indexOf(v) === i).slice(0, 3)
+   863→                    : PROMPT_LORDS[maha] ?? ['Su', 'Mo', 'Ju'];
+   864→                  const promptOf = (lord: string) => (lord === antar ? t(`home.prompt2.${lord}`) : t(`home.prompt.${lord}`));
+   865→                  return (
+   866→                    <div className="rounded-xl bg-gold-faint/40 border border-gold/20 px-3 py-2.5">
+   867→                      <p className="text-t12 text-muted-foreground flex items-center gap-1.5">
+   868→                        <Icon name="sparkle" size={12} className="text-gold" />
+   869→                        {antar
+   870→                          ? t('home.promptLabelAntar', { maha: t(`planet.${maha}`), antar: t(`planet.${antar}`) })
+   871→                          : t('home.promptLabel', { maha: t(`planet.${maha}`) })}
+   872→                      </p>
+   873→                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+   874→                        {lords.map((lord) => (
+   875→                          <button
+   876→                            key={lord}
+   877→                            type="button"
+   878→                            onClick={() => {
+   879→                              setNote(promptOf(lord));
+   880→                              document.getElementById('checkin-note')?.focus();
+   881→                            }}
+   882→                            className="inline-flex items-center gap-1 rounded-full bg-white/70 border border-gold/30 px-2.5 py-1 text-t12 text-charcoal/80 hover:border-gold/60 hover:bg-gold-faint active:scale-95 transition-all duration-250"
+   883→                          >
+   884→                            <span className="text-gold font-semibold">{t(`planet.${lord}`)}</span>
+   885→                            <span className="max-w-52 truncate">{promptOf(lord)}</span>
+   886→                          </button>
+   887→                        ))}
+   888→                      </div>
+   889→                    </div>
+   890→                  );
+   891→                })()}
+   892→                {mood <= 2 && <p className="text-t12 text-maroon/80 italic">{t('home.checkinLow')}</p>}
+   893→                <GoldButton onClick={submitCheckin} disabled={saving} className="w-full">
+   894→                  {saving ? t('common.loading') : justSaved ? t('common.saved') : t('home.checkinSubmit')}
+   895→                  {!saving && <Icon name="check" size={16} />}
+   896→                </GoldButton>
+   897→              </div>
+   898→            </motion.div>
+   899→          )}
+   900→        </AnimatePresence>
+   901→      </GlassCard>
+   902→
+   903→      {/* Weekly reflection letter (ink card) */}
+   904→      <div>
+   905→        <SectionHeader title={t('home.weeklyTitle')} icon="journal" />
+   906→        <GlassCard id="weekly-letter" ink className={cn('sheen-sweep p-5 sm:p-6', flashLetter && 'focus-flash')}>
+   907→          {checkin?.reflection ? (
+   908→            <>
+   909→              <button type="button" onClick={() => setLetterOpen((v) => !v)} className="w-full text-left">
+   910→                <div className="flex items-center justify-between gap-3">
+   911→                  <div className="min-w-0">
+   912→                    <p className="text-t12 uppercase tracking-wider text-gold font-semibold flex items-center gap-1.5">
+   913→                      {t('home.weeklyReady')}
+   914→                      {letterAlert && (
+   915→                        <span className="inline-flex items-center gap-1 rounded-full bg-gold/20 border border-gold/40 px-1.5 py-0.5 text-[9px] font-bold tracking-normal text-gold-light animate-pulse">
+   916→                          <span className="w-1 h-1 rounded-full bg-gold-light" />
+   917→                          {t('notifications.reflectionNewShort')}
+   918→                        </span>
+   919→                      )}
+   920→                    </p>
+   921→                    <p className="font-serif text-t20 mt-1 text-[#f0e4c3] truncate">
+   922→                      {checkin.reflection.reflectionText.split('\n')[0].slice(0, 80)}…
+   923→                    </p>
+   924→                    {weekRangeLabel && <p className="mt-1 text-t12 text-[#a5947a] italic">{weekRangeLabel}</p>}
+   925→                  </div>
+   926→                  <span className="shrink-0 flex flex-col items-center gap-1" aria-hidden>
+   927→                    <span className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gold/40 bg-gold/10 rotate-45">
+   928→                      <span className="block w-3.5 h-3.5 rounded-[2px] bg-gradient-to-br from-[#E8C568] to-[#C9A227] shadow-[0_0_10px_rgba(232,197,104,0.45)]" />
+   929→                    </span>
+   930→                    <Icon name="chevron-down" size={16} className={cn('text-gold transition-transform duration-250', letterOpen && 'rotate-180')} />
+   931→                  </span>
+   932→                </div>
+   933→              </button>
+   934→              <AnimatePresence>
+   935→                {letterOpen && (
+   936→                  <motion.div
+   937→                    initial={{ opacity: 0, height: 0 }}
+   938→                    animate={{ opacity: 1, height: 'auto' }}
+   939→                    exit={{ opacity: 0, height: 0 }}
+   940→                    transition={{ duration: 0.3, ease: 'easeOut' }}
+   941→                    className="overflow-hidden"
+   942→                  >
+   943→                    <p className="mt-4 whitespace-pre-wrap text-t14 leading-relaxed text-[#e8dcbf] letter-body">
+   944→                      {checkin.reflection.reflectionText}
+   945→                    </p>
+   946→                    <div className="ornament-divider mt-4" style={{ color: 'rgba(232,197,104,0.45)' }} aria-hidden>✦</div>
+   947→                    <div className="mt-3 flex items-center gap-2 flex-wrap">
+   948→                      <button
+   949→                        type="button"
+   950→                        onClick={toggleLetterAudio}
+   951→                        className="inline-flex items-center gap-2 rounded-full bg-gold/15 border border-gold/40 px-4 py-1.5 text-t12 font-medium text-gold-light hover:bg-gold/25 active:scale-95 transition-all duration-250"
+   952→                      >
+   953→                        <Icon name={audioState === 'playing' ? 'pause' : 'speaker'} size={14} />
+   954→                        {audioState === 'loading' ? t('letter.loadingAudio') : audioState === 'playing' ? t('letter.stop') : t('letter.listen')}
+   955→                        {audioState === 'loading' && <span className="w-2 h-2 rounded-full bg-gold animate-pulse" />}
+   956→                      </button>
+   957→                      <button
+   958→                        type="button"
+   959→                        onClick={() => window.print()}
+   960→                        className="inline-flex items-center gap-2 rounded-full border border-gold/25 px-4 py-1.5 text-t12 font-medium text-[#cdb98e] hover:bg-gold/15 hover:text-gold-light active:scale-95 transition-all duration-250"
+   961→                      >
+   962→                        <Icon name="download" size={14} />
+   963→                        {t('letter.export')}
+   964→                      </button>
+   965→                    </div>
+   966→                  </motion.div>
+   967→                )}
+   968→              </AnimatePresence>
+   969→            </>
+   970→          ) : (
+   971→            <div className="flex items-center gap-4">
+   972→              <span className="shrink-0 inline-flex items-center justify-center w-12 h-12 rounded-full bg-gold/15 text-gold">
+   973→                <Icon name="journal" size={22} />
+   974→              </span>
+   975→              <div className="flex-1 min-w-0">
+   976→                <p className="text-t14 text-[#e8dcbf]">{t('home.weeklyEmpty')}</p>
+   977→                {checkin && (
+   978→                  <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
+   979→                    <div
+   980→                      className="h-full gold-grad rounded-full transition-[width] duration-500"
+   981→                      style={{ width: `${Math.min(100, (checkin.weekEntryCount / 3) * 100)}%` }}
+   982→                    />
+   983→                  </div>
+   984→                )}
+   985→                {checkin && <p className="mt-1 text-t12 text-[#a5947a]">{t('home.weeklyProgress', { n: checkin.weekEntryCount })}</p>}
+   986→              </div>
+   987→            </div>
+   988→          )}
+   989→        </GlassCard>
+   990→      </div>
+   991→
+   992→      {/* Print-only letterhead view — revealed by the Export button (window.print) */}
+   993→      {checkin?.reflection && (
+   994→        <div id="letter-print" aria-hidden="true" hidden>
+   995→          <p className="lp-brand">Self Sage</p>
+   996→          <p className="lp-byline">{t('letter.printByline')}</p>
+   997→          {weekRangeLabel && <p className="lp-week">{weekRangeLabel}</p>}
+   998→          <div className="lp-rule" />
+   999→          <p className="lp-body">{checkin.reflection.reflectionText}</p>
+  1000→          <p className="lp-sign">{t('letter.printSignature')}</p>
+  1001→          <div className="lp-foot">
+  1002→            <span>Self Sage · {t('home.weeklyTitle')}</span>
+  1003→            <span>{dateLine}</span>
+  1004→          </div>
+  1005→        </div>
+  1006→      )}
+  1007→
+  1008→      {/* Feature grid */}
+  1009→      {!chart && (
+  1010→        <GlassCard className="p-5 flex items-center gap-4 border-maroon/25">
+  1011→          <span className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-maroon-soft text-maroon shrink-0">
+  1012→            <Icon name="warning" size={20} />
+  1013→          </span>
+  1014→          <div className="flex-1 min-w-0">
+  1015→            <p className="text-t14 font-semibold text-charcoal">{t('home.noChart')}</p>
+  1016→            <p className="text-t12 text-muted-foreground">{t('home.noChartBody')}</p>
+  1017→          </div>
+  1018→          <GoldButton onClick={() => onNavigate('profile')} className="shrink-0 h-9 px-4 text-t12">{t('profile.addChart')}</GoldButton>
+  1019→        </GlassCard>
+  1020→      )}
+  1021→
+  1022→      {features.sections.map((section, si) => (
+  1023→        <section key={section.titleKey} aria-label={t(section.titleKey)}>
+  1024→          {si > 0 && <div className="ornament-divider my-6">✦</div>}
+  1025→          <SectionHeader title={t(section.titleKey)} />
+  1026→          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+  1027→            {section.items.map((item) => (
+  1028→              <GlassCard
+  1029→                key={item.titleKey}
+  1030→                onClick={() => onNavigate('kundli', item.view)}
+  1031→                className="p-4 sm:p-5 group"
+  1032→              >
+  1033→                <span className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gold-soft/80 text-gold transition-all duration-250 group-hover:gold-grad group-hover:text-charcoal">
+  1034→                  <Icon name={item.icon} size={20} />
+  1035→                </span>
+  1036→                <p className="mt-3 text-t14 font-semibold text-charcoal">{t(item.titleKey)}</p>
+  1037→                <p className="text-t12 text-muted-foreground mt-0.5 leading-snug">{t(item.bodyKey)}</p>
+  1038→              </GlassCard>
+  1039→            ))}
+
+[showing lines 540-1039 of 1098; use offset=1040 with limit to continue reading]
