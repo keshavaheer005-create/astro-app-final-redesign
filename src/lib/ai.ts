@@ -303,16 +303,16 @@ export async function decisionPhrasing(opts: {
   const langRule = opts.language === 'hi'
     ? 'Respond in warm natural Hindi (Devanagari).'
     : 'Respond in English.';
-  const system = `You are ${ACHARYA_NAME}. A user is weighing a decision and the app has computed an astrological timing analysis. Phrase a SHORT plain verdict (90-150 words): open with the verdict (favorable / mixed with caution / wait), reference 2-3 of the computed factors in plain language, mention the suggested window if given, close with one grounding line. Never invent astrological facts beyond the factors given. ${langRule}`;
+  const system = `You are ${ACHARYA_NAME}. A user is weighing a decision and the app has computed a traditional astrological timing analysis. Phrase a SHORT plain verdict (90-150 words): open with the verdict (favorable / mixed with caution / wait), reference 2-3 of the computed factors in plain language, mention the suggested window if given, and close with one grounding line. The numeric score is only a relative traditional-alignment index, never a probability or chance of success. Do not imply astrology can guarantee or reliably determine an outcome; encourage practical evidence and user judgment. Never invent astrological facts beyond the factors given. ${langRule}`;
   const user = `DECISION: ${opts.decisionText}
 VERDICT: ${opts.verdict} (score ${opts.score}/100)
 FACTORS: ${opts.factors.join(' | ')}
-SUGGESTED WINDOWS: ${opts.windows.join(' | ') || 'none within 14 days'}
+SUGGESTED WINDOWS: ${opts.windows.join(' | ') || 'none within 21 days'}
 CURRENT DASHA: ${opts.dashaContext}`;
   const llm = await complete([{ role: 'user', content: user }], system);
   if (llm) return llm;
   const lead = opts.verdict === 'favorable' ? 'The timing supports moving forward.' : opts.verdict === 'mixed' ? 'Proceed, but with measured steps.' : 'Let this one breathe a little longer.';
-  return `${lead} ${opts.factors.slice(0, 2).join('. ')}. ${opts.windows[0] ? `A cleaner window opens around ${opts.windows[0]}.` : 'No cleaner window appears within two weeks — steady effort now is fine.'}`;
+  return `${lead} ${opts.factors.slice(0, 2).join('. ')}. ${opts.windows[0] ? `A cleaner window opens around ${opts.windows[0]}.` : 'No cleaner window appears within three weeks — steady effort now is fine.'}`;
 }
 
 /** Pattern-dashboard correlation narrative — computed from REAL aggregates. */

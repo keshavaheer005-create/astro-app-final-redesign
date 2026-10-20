@@ -11,6 +11,7 @@ import { dignityOf } from '@/lib/astro/dignity';
 import { daysSince as daysIn, daysUntil, pctBetween } from '@/lib/dates';
 import { NorthChart } from './chart-diagram';
 import { cn } from '@/lib/utils';
+import { AskAIAction } from '../ask-ai-action';
 
 const BAV_KEYS: PlanetKey[] = ['Su', 'Mo', 'Ma', 'Me', 'Ju', 'Ve', 'Sa'];
 
@@ -91,6 +92,14 @@ export function ReportsScreen() {
         >
           <Icon name="timeline" size={14} /> {t('timeline.open')}
         </GhostButton>
+        {ds && (
+          <AskAIAction
+            className="mt-2"
+            compact
+            label={t('ai.explain')}
+            question={`Explain my current Vimshottari period: Mahadasha ${ds.mahaLord}, Antardasha ${ds.antarLord ?? 'not available'}, Antardasha dates ${ds.antarStart ?? 'unknown'} to ${ds.antarEnd ?? 'unknown'}. Use the planets' verified placement and house lordships in my saved chart. Give a balanced explanation of themes and practical reflection points without making certain predictions.`}
+          />
+        )}
       </GlassCard>
 
       {/* ── Divisional charts ── */}
@@ -104,6 +113,12 @@ export function ReportsScreen() {
             </Chip>
           ))}
         </div>
+        <AskAIAction
+          className="mb-2"
+          compact
+          label={t('ai.explain')}
+          question={`Explain my ${selectedVarga} divisional chart (${VARGA_INFO[selectedVarga as keyof typeof VARGA_INFO].en}) in the context of my natal chart. Use its ascendant and planet signs that are available in the saved chart, explain the relevant life area, and avoid inventing placements or treating the reading as certainty.`}
+        />
         {(() => {
           const vc = chart.divisionalCharts[selectedVarga as keyof typeof chart.divisionalCharts];
           if (!vc) return null;

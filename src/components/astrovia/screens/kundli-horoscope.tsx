@@ -6,6 +6,7 @@ import { Icon } from '../icons';
 import { GlassCard, SlidingPillTabs, ProgressBar, EmptyState, PageLoader, ErrorState, SectionHeader } from '../ui-primitives';
 import { api, useSession } from '../session-context';
 import { useAppStore } from '@/store/app';
+import { AskAIAction } from '../ask-ai-action';
 
 type Period = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
@@ -108,6 +109,11 @@ export function HoroscopeScreen() {
                 </span>
               ))}
             </div>
+            <AskAIAction
+              className="mt-4"
+              label={t('ai.explain')}
+              question={`Explain my ${period} horoscope summary using my saved birth chart. Headline: ${data.headlineKey}; score: ${data.score}/100; dasha note: ${data.dashaNote}; supportive transits: ${data.highlights.join(', ') || 'none listed'}; challenging transits: ${data.cautions.join(', ') || 'none listed'}. Explain the actual factors behind the result, identify practical areas of focus, and avoid deterministic or fear-based claims.`}
+            />
           </GlassCard>
 
           <GlassCard className="p-4 sm:p-5">
@@ -138,6 +144,12 @@ export function HoroscopeScreen() {
                 </div>
               ))}
             </div>
+            <AskAIAction
+              className="mt-3"
+              compact
+              label={t('ai.explain')}
+              question={`Explain the current planetary-transit summary for my ${period} horoscope. ${data.transits.map((tr) => `${t(`planet.${tr.key}`)}: house ${tr.houseFromMoon} from Moon, ${tr.note}${tr.benefic ? ', traditionally benefic' : ''}`).join('; ')}. Connect only relevant transits to my verified natal chart and current dasha. Explain the limits of this simplified summary; avoid guaranteed outcomes.`}
+            />
           </GlassCard>
         </>
       )}

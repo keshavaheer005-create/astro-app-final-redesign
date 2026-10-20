@@ -25,12 +25,22 @@ import {
   type ChartSnapshot,
 } from './charts';
 import {
+  deleteAllSavedInsights,
+  deleteSavedInsightsForChart,
+  readSavedInsights,
+  removeSavedInsight,
+  saveInsight,
+  type SavedInsight,
+} from './insights';
+import {
   deleteAllChatHistories,
   deleteChatHistory,
+  readCachedChatSummaries,
   readChatHistory,
   writeChatHistory,
   type CachedChatHistory,
   type CachedChatMessage,
+  type CachedChatSummary,
 } from './chat';
 
 export {
@@ -40,12 +50,20 @@ export {
   readChartSnapshot,
   writeChartSnapshot,
   deleteChartSnapshot,
+  readCachedChatSummaries,
   readChatHistory,
   writeChatHistory,
   deleteChatHistory,
   type ChartSnapshot,
   type CachedChatHistory,
   type CachedChatMessage,
+  type CachedChatSummary,
+  readSavedInsights,
+  saveInsight,
+  removeSavedInsight,
+  deleteAllSavedInsights,
+  deleteSavedInsightsForChart,
+  type SavedInsight,
 };
 
 /**
@@ -82,7 +100,7 @@ function writeAccountPointer(userId: string | null): void {
 async function purgeForeignEntries(userId: string): Promise<number> {
   const prefix = `${userId}|`;
   let removed = 0;
-  for (const store of ['charts', 'chat'] as const) {
+  for (const store of ['charts', 'chat', 'meta'] as const) {
     const keys = await keysOf(store);
     const foreign = keys.filter((k) => !k.startsWith(prefix));
     for (const key of foreign) {
@@ -103,7 +121,7 @@ export async function adoptAccount(userId: string): Promise<{ switched: boolean;
   const previous = readAccountPointer();
   let purged = 0;
   const switched = previous !== null && previous !== userId;
-  if (previous && previous !== userId) purged += await deleteAllChartSnapshots(previous) + (await deleteAllChatHistories(previous));
+  if (previous && previous !== userId) purged += await deleteAllChartSnapshots(previous) + (await deleteAllChatHistories(previous)) + (await deleteAllSavedInsights(previous));
   // Even without a pointer (first run after an upgrade, or a cleared
   // localStorage), never leave another account's rows readable.
   purged += await purgeForeignEntries(userId);
@@ -121,9 +139,11 @@ export async function clearAccountCache(userId?: string | null): Promise<void> {
   if (target) {
     await deleteAllChartSnapshots(target);
     await deleteAllChatHistories(target);
+    await deleteAllSavedInsights(target);
   } else {
     await deleteByPrefix('charts', '');
     await deleteByPrefix('chat', '');
+    await deleteByPrefix('meta', '');
   }
   if (!userId || userId === readAccountPointer()) writeAccountPointer(null);
   clearSwrCaches();
@@ -151,6 +171,7 @@ export function clearSwrCaches(): void {
 export async function clearAllClientCaches(): Promise<void> {
   await deleteByPrefix('charts', '');
   await deleteByPrefix('chat', '');
+  await deleteByPrefix('meta', '');
   clearSwrCaches();
   writeAccountPointer(null);
 }

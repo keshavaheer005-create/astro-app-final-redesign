@@ -3,28 +3,22 @@ import { db } from '@/lib/db';
 import { ensureUser, memberGuard } from '@/lib/session';
 import { getActiveChart } from '@/lib/active-chart';
 import { computeChartCached as computeChart } from '@/lib/astro/chart-cache';
-import { calcPlanet, juldayFromUTC, utcFromJulday } from '@/lib/astro/ephemeris';
-import { moonNakshatraNow, GOCHARA_BENEFIC } from '@/lib/astro/horoscope';
+import { calcAllPlanets, juldayFromUTC } from '@/lib/astro/ephemeris';
+import { GOCHARA_BENEFIC } from '@/lib/astro/horoscope';
 import { NAKSHATRAS, TITHIS, norm360, signIndex } from '@/lib/astro/constants';
 import { decisionPhrasing } from '@/lib/ai';
-import { timeInZone } from '@/lib/tz';
+import { timeInZone, ymdInZone } from '@/lib/tz';
+import { memo } from '@/lib/cache';
+import { buildPredictiveOutlook, classifyDecisionTopic, findDecisionWindows, predictionThemeHouses } from '@/lib/astro/prediction-engine';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-const AVOID_TITHI_IDX = [3, 8, 13]; // Chaturthi, Navami, Chaturdashi (0-based within paksha)
-const AVOID_NAKSHATRAS = new Set([
-  'Ardra', 'Ashlesha', 'Magha', 'Jyeshtha', 'Mula', 'Shatabhisha', 'Krittika',
-]);
-const GOOD_NAKSHATRAS = new Set([
-  'Pushya', 'Hasta', 'Anuradha', 'Shravana', 'Dhanishta', 'Revati', 'Punarvasu', 'Swati', 'Chitra', 'Uttara Phalguni',
-]);
-
 /**
  * POST /api/decision-timing
  * body { decisionText, language? }
- * Computes REAL factors: current dasha lords' gochara, today's panchang quality,
- * Moon transit from natal Moon; scans the next 14 days for cleaner windows.
+ * Computes current dasha, gochara and Panchang factors, then ranks day-level
+ * windows for the user's inferred life-area theme over the next three weeks.
  */
 export async function POST(req: Request) {
   try {
@@ -51,6 +45,10 @@ export async function POST(req: Request) {
     const ds = chart.dashaSnapshot;
     const now = new Date();
     const jdNow = juldayFromUTC(now);
+    const topic = classifyDecisionTopic(decision);
+    const transitSnapshot = calcAllPlanets(jdNow, true);
+    const outlook = buildPredictiveOutlook(chart, transitSnapshot, now);
+    const themeOutlook = topic === 'general' ? null : outlook.themes.find((theme) => theme.id === topic) ?? null;
 
     const factors: string[] = [];
     let score = 55;
@@ -64,21 +62,44 @@ export async function POST(req: Request) {
       score += dashaGood ? 10 : -8;
     }
 
-    // 2. Today's Moon transit from natal Moon
-    const moonNow = calcPlanet('Mo', jdNow, true);
+    // 2. Add topic-specific chart activation without turning it into a probability.
+    if (themeOutlook && topic !== 'general') {
+      const topicHouses = predictionThemeHouses(topic);
+      factors.push(`Question theme: ${topic}; houses considered ${topicHouses.join(', ')}; divisional lens ${themeOutlook.varga}.`);
+      const evidence = themeOutlook.signals.slice(0, 3).map((signal) => {
+        if (signal.code === 'dasha_house') return `${signal.planet} dasha activates house ${signal.house}`;
+        if (signal.code === 'dasha_lordship') return `${signal.planet} rules house ${signal.house}`;
+        if (signal.code === 'transit_aspect') return `${signal.planet} transit contacts house ${signal.house}`;
+        if (signal.code === 'sav_transit_strength') return `${signal.planet} transit sign has ${signal.bindus} SAV bindus`;
+        if (signal.code === 'natal_lord_dignity') return `${signal.planet} as life-area lord is ${signal.dignity}`;
+        if (signal.code === 'varga_anchor') return `${signal.planet} is placed in ${signal.varga} sign ${signal.sign}`;
+        if (signal.code === 'd9_alignment') return `${signal.planet} has same-sign D1/D9 alignment`;
+        return '';
+      }).filter(Boolean);
+      if (evidence.length) factors.push(`Topic-specific factors: ${evidence.join('; ')}.`);
+      if (themeOutlook.activationCount > 0) score += Math.min(6, themeOutlook.activationCount * 2);
+      if (themeOutlook.tone === 'supportive') score += 6;
+      if (themeOutlook.tone === 'reflective') score -= 4;
+      factors.push(`Traditional ${topic} lens: ${themeOutlook.tone}; this is a qualitative rule summary, not a success probability.`);
+      if (outlook.ashtakavargaApprox) factors.push('Ashtakavarga values are approximate in this chart and were excluded from the topical lens.');
+    }
+
+    // 3. Today's Moon transit from natal Moon
+    const moonNow = transitSnapshot.Mo;
     const houseFromMoon = ((signIndex(moonNow.lon) - natalMoonSign) % 12 + 12) % 12 + 1;
     const moonGood = GOCHARA_BENEFIC.Mo.includes(houseFromMoon);
     factors.push(`Moon transits ${houseFromMoon}th from your natal Moon sign today — ${moonGood ? 'a supportive gochara position' : 'not among the Moon\u2019s favorable stations'}`);
     score += moonGood ? 12 : -10;
 
-    // 3. Today's panchang quality
-    const nak = moonNakshatraNow(now);
-    const tithiElong = norm360(moonNow.lon - calcPlanet('Su', jdNow, true).lon);
+    // 4. Today's panchang quality
+    const nakIndex = Math.floor(norm360(moonNow.lon) / (360 / 27));
+    const nak = { index: nakIndex, name: NAKSHATRAS[nakIndex] };
+    const tithiElong = norm360(moonNow.lon - transitSnapshot.Su.lon);
     const tithiIdx0 = Math.floor(tithiElong / 12);
     const tithiName = TITHIS[tithiIdx0 % 15];
-    const nakGood = GOOD_NAKSHATRAS.has(nak.name);
-    const nakBad = AVOID_NAKSHATRAS.has(nak.name);
-    const tithiBad = AVOID_TITHI_IDX.includes(tithiIdx0 % 15);
+    const nakGood = ['Pushya', 'Hasta', 'Anuradha', 'Shravana', 'Dhanishta', 'Revati', 'Punarvasu', 'Swati', 'Chitra', 'Uttara Phalguni'].includes(nak.name);
+    const nakBad = ['Ardra', 'Ashlesha', 'Magha', 'Jyeshtha', 'Mula', 'Shatabhisha', 'Krittika'].includes(nak.name);
+    const tithiBad = [3, 8, 13].includes(tithiIdx0 % 15);
     factors.push(`Today runs on ${nak.name} nakshatra, ${tithiName} tithi — ${nakGood ? 'a steady star for starting things' : nakBad ? 'a star better suited to planning than launching' : 'a neutral star'}`);
     score += nakGood ? 10 : nakBad ? -10 : 0;
     if (tithiBad) {
@@ -86,24 +107,21 @@ export async function POST(req: Request) {
       score -= 6;
     }
 
-    // 4. Saturn's pressure (Sade Sati)
+    // 5. Saturn's pressure (Sade Sati)
     if (chart.sadeSati.active) {
       factors.push(`Sade Sati is active (${chart.sadeSati.phase} phase) — Saturn advises slower, well-documented moves`);
       score -= 6;
     }
 
-    // 5. Scan next 14 days for cleaner windows (Moon gochara + nakshatra quality)
-    const windows: string[] = [];
-    for (let day = 1; day <= 14 && windows.length < 3; day++) {
-      const d = new Date(now.getTime() + day * 86400000);
-      const jd = juldayFromUTC(d);
-      const m = calcPlanet('Mo', jd, true);
-      const h = ((signIndex(m.lon) - natalMoonSign) % 12 + 12) % 12 + 1;
-      const n = moonNakshatraNow(d);
-      if (GOCHARA_BENEFIC.Mo.includes(h) && GOOD_NAKSHATRAS.has(n.name)) {
-        windows.push(d.toISOString().slice(0, 10));
-      }
-    }
+    // 6. Scan the next 21 local calendar days, ranked by the requested theme.
+    // Cache the expensive ephemeris scan per chart, local day and topic.
+    const localToday = ymdInZone(saved.timezone, now);
+    const rankedWindows = memo(
+      `decision-windows|${saved.id}|${localToday}|${topic}`,
+      3 * 60 * 60 * 1000,
+      () => findDecisionWindows(chart, topic, now, saved.timezone, 21),
+    );
+    const windows = rankedWindows.map((window) => window.date);
 
     const bounded = Math.max(5, Math.min(95, score));
     const verdict: 'favorable' | 'mixed' | 'wait' = bounded >= 68 ? 'favorable' : bounded >= 48 ? 'mixed' : 'wait';
@@ -116,7 +134,7 @@ export async function POST(req: Request) {
       score: bounded,
       factors,
       windows,
-      dashaContext,
+      dashaContext: `${dashaContext}${topic !== 'general' ? `; question theme: ${topic}` : ''}`,
     });
 
     await db.decisionCheck.create({
@@ -124,7 +142,7 @@ export async function POST(req: Request) {
         userId: user.id,
         chartId: saved.id,
         decisionText: decision.slice(0, 500),
-        verdict: JSON.stringify({ verdict, score: bounded, factors, windows }),
+        verdict: JSON.stringify({ verdict, score: bounded, factors, windows, topic }),
       },
     });
 
@@ -133,6 +151,8 @@ export async function POST(req: Request) {
       score: bounded,
       factors,
       windows,
+      topic,
+      methodNote: 'traditional_interpretation_not_certainty',
       narrative: phrased,
       todayLabel: {
         nakshatra: NAKSHATRAS[nak.index],

@@ -17,7 +17,7 @@
  *   • everything is scoped to one account AND one chart, so switching family
  *     profiles cannot show another person's conversation.
  */
-import { deleteByPrefix, deleteKey, readEnvelope, writeEnvelope } from './idb';
+import { deleteByPrefix, deleteKey, keysOf, readEnvelope, writeEnvelope } from './idb';
 
 export type ChatRole = 'user' | 'assistant';
 
@@ -36,11 +36,26 @@ export interface CachedChatHistory {
   savedAt: number;
 }
 
+export interface CachedChatSummary {
+  id: string;
+  title: string;
+  preview: string;
+  updatedAt: string;
+  messageCount: number;
+}
+
 /** How much recent conversation is kept on the device. */
 export const MAX_CACHED_MESSAGES = 40;
+/** Keep offline instant-open cache bounded even if the user creates many chats. */
+export const MAX_CACHED_CONVERSATIONS = 12;
 
-export function chatCacheKey(userId: string, chartId: string): string {
-  return `${userId}|${chartId}`;
+/**
+ * Legacy history keeps its original key so existing installs can still paint
+ * their old transcript. New conversations add a conversation id to the key,
+ * preventing one chat from flashing into another while the server responds.
+ */
+export function chatCacheKey(userId: string, chartId: string, conversationId?: string): string {
+  return conversationId ? `${userId}|${chartId}|${conversationId}` : `${userId}|${chartId}`;
 }
 
 /**
@@ -70,40 +85,110 @@ export function trimChatHistory(
   return confirmed.length > max ? confirmed.slice(confirmed.length - max) : confirmed;
 }
 
-export async function readChatHistory(userId: string, chartId: string): Promise<CachedChatHistory | null> {
+export async function readChatHistory(
+  userId: string,
+  chartId: string,
+  conversationId?: string,
+): Promise<CachedChatHistory | null> {
   if (!userId || !chartId) return null;
-  const env = await readEnvelope<{ userId: string; chartId: string; messages: CachedChatMessage[] }>(
-    'chat',
-    chatCacheKey(userId, chartId),
-  );
+  const env = await readEnvelope<{
+    userId: string;
+    chartId: string;
+    conversationId?: string;
+    messages: CachedChatMessage[];
+  }>('chat', chatCacheKey(userId, chartId, conversationId));
   if (!env?.value) return null;
-  const { userId: storedUser, chartId: storedChart, messages } = env.value;
-  if (storedUser !== userId || storedChart !== chartId) return null;
+  const { userId: storedUser, chartId: storedChart, conversationId: storedConversation, messages } = env.value;
+  if (storedUser !== userId || storedChart !== chartId || storedConversation !== conversationId) return null;
   if (!Array.isArray(messages) || messages.length === 0) return null;
   return { messages: trimChatHistory(messages), savedAt: env.savedAt };
+}
+
+async function pruneConversationCache(userId: string, chartId: string, keepKey: string): Promise<void> {
+  const prefix = `${userId}|${chartId}|`;
+  const keys = (await keysOf('chat')).filter((key) => key.startsWith(prefix));
+  if (keys.length <= MAX_CACHED_CONVERSATIONS) return;
+  const entries = await Promise.all(keys.map(async (key) => {
+    const env = await readEnvelope<{ userId: string; chartId: string; conversationId?: string; messages: CachedChatMessage[] }>('chat', key);
+    return { key, savedAt: env?.savedAt ?? 0 };
+  }));
+  entries.sort((a, b) => {
+    if (a.key === keepKey) return -1;
+    if (b.key === keepKey) return 1;
+    return b.savedAt - a.savedAt;
+  });
+  await Promise.all(entries.slice(MAX_CACHED_CONVERSATIONS).map(({ key }) => deleteKey('chat', key)));
+}
+
+/**
+ * Fast local summaries for the history drawer. This only reads the already
+ * bounded, account+chart scoped chat cache; the server list replaces this
+ * provisional list as soon as it responds.
+ */
+export async function readCachedChatSummaries(userId: string, chartId: string): Promise<CachedChatSummary[]> {
+  if (!userId || !chartId) return [];
+  const legacyKey = chatCacheKey(userId, chartId);
+  const prefix = `${userId}|${chartId}|`;
+  const keys = (await keysOf('chat')).filter((key) => key === legacyKey || key.startsWith(prefix));
+  const summaries = await Promise.all(keys.map(async (key): Promise<(CachedChatSummary & { savedAt: number }) | null> => {
+    const envelope = await readEnvelope<{
+      userId: string;
+      chartId: string;
+      conversationId?: string;
+      messages: CachedChatMessage[];
+    }>('chat', key);
+    const value = envelope?.value;
+    if (!value || value.userId !== userId || value.chartId !== chartId || !Array.isArray(value.messages)) return null;
+    const conversationId = key === legacyKey ? undefined : key.slice(prefix.length);
+    if (value.conversationId !== conversationId) return null;
+    const messages = trimChatHistory(value.messages);
+    if (!messages.length) return null;
+    const firstUser = messages.find((message) => message.role === 'user');
+    const last = messages[messages.length - 1];
+    const time = last.createdAt && !Number.isNaN(Date.parse(last.createdAt))
+      ? new Date(last.createdAt).toISOString()
+      : new Date(envelope.savedAt).toISOString();
+    return {
+      id: conversationId ?? 'legacy',
+      title: firstUser?.content.replace(/\s+/g, ' ').trim().slice(0, 72) || 'Astrovia AI chat',
+      preview: last.content.replace(/\s+/g, ' ').trim().slice(0, 72),
+      updatedAt: time,
+      messageCount: messages.length,
+      savedAt: envelope.savedAt,
+    };
+  }));
+  return summaries
+    .filter((item): item is CachedChatSummary & { savedAt: number } => Boolean(item))
+    .sort((a, b) => b.savedAt - a.savedAt)
+    .slice(0, MAX_CACHED_CONVERSATIONS + 1)
+    .map(({ savedAt: _savedAt, ...summary }) => summary);
 }
 
 export async function writeChatHistory(
   userId: string,
   chartId: string,
   messages: ReadonlyArray<Partial<CachedChatMessage> & { streaming?: boolean; pending?: boolean }>,
+  conversationId?: string,
 ): Promise<void> {
   if (!userId || !chartId) return;
   const trimmed = trimChatHistory(messages);
   if (trimmed.length === 0) {
-    await deleteChatHistory(userId, chartId);
+    await deleteChatHistory(userId, chartId, conversationId);
     return;
   }
-  await writeEnvelope('chat', chatCacheKey(userId, chartId), {
+  const key = chatCacheKey(userId, chartId, conversationId);
+  await writeEnvelope('chat', key, {
     userId,
     chartId,
+    ...(conversationId ? { conversationId } : {}),
     messages: trimmed,
   });
+  if (conversationId) void pruneConversationCache(userId, chartId, key);
 }
 
-export async function deleteChatHistory(userId: string, chartId: string): Promise<void> {
+export async function deleteChatHistory(userId: string, chartId: string, conversationId?: string): Promise<void> {
   if (!userId || !chartId) return;
-  await deleteKey('chat', chatCacheKey(userId, chartId));
+  await deleteKey('chat', chatCacheKey(userId, chartId, conversationId));
 }
 
 /** Delete every cached conversation for one account. */

@@ -739,6 +739,61 @@
   }
 }
 
+/* ── Lightweight Acharya chat elements ──────────────────────────────────── */
+.astro-chat-orbit {
+  position: relative;
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(46, 112, 87, 0.22);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.75), rgba(232,197,104,0.08));
+  animation: astro-chat-orbit-spin 18s linear infinite;
+}
+.astro-chat-orbit::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(201, 162, 39, 0.45);
+  border-right-color: rgba(46, 112, 87, 0.18);
+  border-radius: 999px;
+}
+.astro-chat-orbit > span {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: #c9a227;
+  box-shadow: 0 0 0 2px rgba(201,162,39,0.12);
+}
+.astro-chat-orbit-sm {
+  width: 22px;
+  height: 22px;
+}
+.astro-chat-orbit-sm::before { inset: 4px; }
+.astro-chat-orbit-sm > span { width: 4px; height: 4px; }
+@keyframes astro-chat-orbit-spin {
+  to { transform: rotate(360deg); }
+}
+.astro-ai-textarea {
+  resize: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  line-height: 1.45;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 162, 39, 0.35) transparent;
+}
+.astro-ai-textarea::-webkit-scrollbar { width: 4px; }
+.astro-ai-textarea::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(201, 162, 39, 0.35);
+}
+
 /* Honour the OS-level reduced-motion accessibility setting */
 @media (prefers-reduced-motion: reduce) {
   *,

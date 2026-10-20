@@ -21,6 +21,7 @@ import { activeIndex, pratyantarsFor, type DashaPeriod } from '@/lib/astro/praty
 import { daysSince, daysUntil, pctBetween, todayIso } from '@/lib/dates';
 import { count, end, start } from '@/lib/perf';
 import { cn } from '@/lib/utils';
+import { AskAIAction } from '../ask-ai-action';
 
 interface TransitPosition {
   key: PlanetKey;
@@ -202,6 +203,12 @@ export function TimelineScreen() {
           </p>
         )}
         <ProgressBar value={pct} className="mt-2" />
+        <AskAIAction
+          compact
+          className="mt-2"
+          label={t('ai.explain')}
+          question={`Explain my current ${t(labelKey)} period ruled by ${planetName(lord)} (${startIso ?? 'start date unavailable'} to ${endIso ?? 'end date unavailable'}). Use my saved chart, relevant houses/lordships, dignity, current antardasha and transits when available. Keep the interpretation practical, non-deterministic and grounded in verified placements.`}
+        />
       </div>
     );
   };
@@ -423,6 +430,14 @@ export function TimelineScreen() {
               </li>
             ))}
           </ul>
+        )}
+        {transits && (
+          <AskAIAction
+            className="mt-3"
+            compact
+            label={t('ai.explain')}
+            question={`Explain my current planetary transits in a chart-grounded way. Current transits: ${transits.positions.map((p) => `${planetName(p.key)} in ${signName(p.sign)} ${p.degInSign.toFixed(1)} degrees; house from Lagna ${p.houseFromLagna ?? 'unavailable'}, from Moon ${p.houseFromMoon}; tone ${p.note}${p.retrograde ? ', retrograde' : ''}`).join('; ')}. Connect only the most relevant transits to my natal placements and current dasha; do not invent aspects or promise outcomes.`}
+          />
         )}
       </GlassCard>
     </div>

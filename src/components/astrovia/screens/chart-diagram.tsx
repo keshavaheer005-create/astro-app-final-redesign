@@ -34,7 +34,7 @@ const planetColor = (p: ChartPlanet) =>
   OUTER_KEYS.includes(p.key) ? '#6b5b95' : p.retrograde && !isNode(p.key) ? '#6B2737' : '#7a5c0a';
 
 /** Draw planet abbreviations (+ degree superscript + marks) as SVG text, wrapped into centred rows. */
-function PlanetText({ items, cx, cy, perRow, hi, size = 13 }: { items: ChartPlanet[]; cx: number; cy: number; perRow: number; hi: boolean; size?: number }) {
+function PlanetText({ items, cx, cy, perRow, hi, size = 13, house, onAskPlanet, planetName }: { items: ChartPlanet[]; cx: number; cy: number; perRow: number; hi: boolean; size?: number; house: number; onAskPlanet?: (planet: ChartPlanet, house: number) => void; planetName?: (key: ChartKey) => string }) {
   if (items.length === 0) return null;
   const rows: ChartPlanet[][] = [];
   for (let i = 0; i < items.length; i += perRow) rows.push(items.slice(i, i + perRow));
@@ -46,7 +46,16 @@ function PlanetText({ items, cx, cy, perRow, hi, size = 13 }: { items: ChartPlan
         <text key={r} x={cx} y={top + r * rowH} textAnchor="middle" dominantBaseline="middle" fontSize={size} fontWeight={700}>
           {row.map((p, i) => (
             <React.Fragment key={p.key}>
-              <tspan dx={i === 0 ? 0 : 8} fill={planetColor(p)}>{hi ? HI_ABBR[p.key] : SHORT[p.key]}</tspan>
+              <tspan
+                dx={i === 0 ? 0 : 8}
+                fill={planetColor(p)}
+                role={onAskPlanet ? 'button' : undefined}
+                tabIndex={onAskPlanet ? 0 : undefined}
+                aria-label={onAskPlanet ? `Ask AI about ${planetName?.(p.key) ?? p.key}, house ${house}` : undefined}
+                style={onAskPlanet ? { cursor: 'pointer', outline: 'none' } : undefined}
+                onClick={onAskPlanet ? (event) => { event.stopPropagation(); onAskPlanet(p, house); } : undefined}
+                onKeyDown={onAskPlanet ? (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); onAskPlanet(p, house); } } : undefined}
+              >{hi ? HI_ABBR[p.key] : SHORT[p.key]}</tspan>
               {p.deg != null && (
                 <tspan dy={-4} fontSize={Math.round(size * 0.62)} fontWeight={600} fill={planetColor(p)}>
                   {String(Math.floor(p.deg)).padStart(2, '0')}
@@ -73,7 +82,7 @@ function PlanetText({ items, cx, cy, perRow, hi, size = 13 }: { items: ChartPlan
  * 12 = Pisces) in the corner nearest the chart centre — the house itself is
  * identified by its fixed position.
  */
-export function NorthChart({ ascSign, planets, className }: { ascSign: number; planets: ChartPlanet[]; className?: string }) {
+export function NorthChart({ ascSign, planets, className, onAskPlanet, onAskHouse, planetName }: { ascSign: number; planets: ChartPlanet[]; className?: string; onAskPlanet?: (planet: ChartPlanet, house: number) => void; onAskHouse?: (house: number, sign: number) => void; planetName?: (key: ChartKey) => string }) {
   const { i18n } = useTranslation();
   const hi = i18n.language === 'hi';
 
@@ -110,7 +119,7 @@ export function NorthChart({ ascSign, planets, className }: { ascSign: number; p
   ];
 
   return (
-    <svg viewBox="0 0 400 400" className={cn('w-full max-w-md mx-auto', className)} role="img" aria-label="North Indian chart">
+    <svg viewBox="0 0 400 400" className={cn('w-full max-w-md mx-auto', className)} role={onAskHouse || onAskPlanet ? 'group' : 'img'} aria-label="North Indian chart">
       {/* Lagna (house 1) tint */}
       <polygon points={shapes[0]} fill="rgba(201,162,39,0.10)" />
 
@@ -126,7 +135,19 @@ export function NorthChart({ ascSign, planets, className }: { ascSign: number; p
         const [nx, ny] = numPos[h];
         const pp = planetPos[h];
         return (
-          <g key={h}>
+          <g key={h} onClick={onAskHouse ? () => onAskHouse(h + 1, sign) : undefined} style={onAskHouse ? { cursor: 'pointer' } : undefined}>
+            {onAskHouse && (
+              <polygon
+                points={shapes[h]}
+                fill="transparent"
+                stroke="none"
+                role="button"
+                tabIndex={0}
+                aria-label={`Ask AI about house ${h + 1}, ${SIGNS[sign]}`}
+                style={{ cursor: 'pointer', outline: 'none' }}
+                onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onAskHouse(h + 1, sign); } }}
+              />
+            )}
             <text
               x={nx}
               y={ny}
@@ -139,7 +160,7 @@ export function NorthChart({ ascSign, planets, className }: { ascSign: number; p
             >
               {sign + 1}
             </text>
-            <PlanetText items={inHouse} cx={pp.at[0]} cy={pp.at[1]} perRow={pp.perRow} hi={hi} size={inHouse.length > 4 ? 11 : inHouse.length > 3 ? 12 : 13} />
+            <PlanetText items={inHouse} cx={pp.at[0]} cy={pp.at[1]} perRow={pp.perRow} hi={hi} house={h + 1} onAskPlanet={onAskPlanet} planetName={planetName} size={inHouse.length > 4 ? 11 : inHouse.length > 3 ? 12 : 13} />
           </g>
         );
       })}
@@ -152,7 +173,7 @@ export function NorthChart({ ascSign, planets, className }: { ascSign: number; p
  * houses rotate. 4×4 grid; the centre 2×2 is left open (no lines through it),
  * the ascendant cell is marked with the classic diagonal slash + "Asc".
  */
-export function SouthChart({ ascSign, planets, className }: { ascSign: number; planets: ChartPlanet[]; className?: string }) {
+export function SouthChart({ ascSign, planets, className, onAskPlanet, onAskHouse, planetName }: { ascSign: number; planets: ChartPlanet[]; className?: string; onAskPlanet?: (planet: ChartPlanet, house: number) => void; onAskHouse?: (house: number, sign: number) => void; planetName?: (key: ChartKey) => string }) {
   const { i18n } = useTranslation();
   const hi = i18n.language === 'hi';
 
@@ -168,13 +189,28 @@ export function SouthChart({ ascSign, planets, className }: { ascSign: number; p
   const houseOf = (sign: number) => (((sign - ascSign) % 12) + 12) % 12 + 1;
 
   return (
-    <svg viewBox="0 0 400 400" className={cn('w-full max-w-md mx-auto', className)} role="img" aria-label="South Indian chart">
+    <svg viewBox="0 0 400 400" className={cn('w-full max-w-md mx-auto', className)} role={onAskHouse || onAskPlanet ? 'group' : 'img'} aria-label="South Indian chart">
       {cells.map(({ sign, col, row }) => {
         const x = at(col), y = at(row);
         const isAsc = sign === ascSign;
         const inSign = planets.filter((p) => p.sign === sign);
         return (
-          <g key={sign}>
+          <g key={sign} onClick={onAskHouse ? () => onAskHouse(houseOf(sign), sign) : undefined} style={onAskHouse ? { cursor: 'pointer' } : undefined}>
+            {onAskHouse && (
+              <rect
+                x={x}
+                y={y}
+                width={cell}
+                height={cell}
+                fill="transparent"
+                stroke="none"
+                role="button"
+                tabIndex={0}
+                aria-label={`Ask AI about house ${houseOf(sign)}, ${SIGNS[sign]}`}
+                style={{ cursor: 'pointer', outline: 'none' }}
+                onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onAskHouse(houseOf(sign), sign); } }}
+              />
+            )}
             <rect x={x} y={y} width={cell} height={cell} fill={isAsc ? 'rgba(201,162,39,0.10)' : 'none'} stroke={LINE} strokeWidth={LINE_W} />
             {isAsc && (
               <>
@@ -185,7 +221,7 @@ export function SouthChart({ ascSign, planets, className }: { ascSign: number; p
             )}
             {/* house number, small, top-right */}
             <text x={x + cell - 7} y={y + 14} textAnchor="end" fontSize={10} fill="#a68a3a">{houseOf(sign)}</text>
-            <PlanetText items={inSign} cx={x + cell / 2} cy={y + cell / 2 + 6} perRow={2} hi={hi} size={inSign.length > 4 ? 12 : 13} />
+            <PlanetText items={inSign} cx={x + cell / 2} cy={y + cell / 2 + 6} perRow={2} hi={hi} house={houseOf(sign)} onAskPlanet={onAskPlanet} planetName={planetName} size={inSign.length > 4 ? 12 : 13} />
           </g>
         );
       })}

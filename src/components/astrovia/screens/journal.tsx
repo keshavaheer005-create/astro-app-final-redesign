@@ -514,7 +514,7 @@ function DecisionDialog({ open, onOpenChange, hasChart }: { open: boolean; onOpe
             >
               <p className={cn('font-serif text-t20 font-bold', result.verdict === 'wait' ? 'text-burgundy' : 'text-charcoal')}>
                 {t('decision.verdict.' + result.verdict)}
-                <span className="text-t12 text-muted-foreground font-normal ml-2">{result.score}/100</span>
+                <span className="text-t12 text-muted-foreground font-normal ml-2">{t('decision.alignmentScore', { score: result.score })}</span>
               </p>
               <p className="mt-1.5 text-t14 text-charcoal/85 leading-relaxed">{result.narrative}</p>
             </div>

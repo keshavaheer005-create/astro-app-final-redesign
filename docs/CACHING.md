@@ -9,7 +9,7 @@ the design the code in `src/lib/client-cache/`, `src/lib/api.ts` and
 
 ---
 
-## 1. The four caches (and what each is for)
+## 1. The cache layers (and what each is for)
 
 | Cache | Lives in | Survives reload | Survives restart | Used for |
 | --- | --- | --- | --- | --- |
@@ -17,16 +17,19 @@ the design the code in `src/lib/client-cache/`, `src/lib/api.ts` and
 | SWR — `apiSWR()` | `localStorage`, `astrovia:swr:` | yes | yes | "Today" data: Panchang, sky highlights, Dasha-now, today's check-in, transits (`transits|<chartId>|<day>`, 6 h freshness) |
 | Chart snapshots — `client-cache/charts.ts` | IndexedDB `charts` | yes | yes | The last server-confirmed computed chart per account + chart |
 | Acharya history — `client-cache/chat.ts` | IndexedDB `chat` | yes | yes | Up to 40 recent confirmed turns per account + chart |
+| Saved AI insights — `client-cache/insights.ts` | IndexedDB `meta` | yes | yes | Up to 80 saved replies per account + chart, with a 16 KB content cap |
 
 They do not overlap: the server memo never leaves the server, SWR holds
-public/derived daily data, and the two IndexedDB stores hold private,
-account-scoped data.
+public/derived daily data, and IndexedDB stores hold private, account-scoped
+data. The `meta` store is also used for the private saved-insight list; its key
+and each entry are checked against both the confirmed account and active chart.
 
 ## 2. Key policy
 
 ```
 charts/<userId>|<chartId>      → { userId, chartId, engineVersion, chart }
 chat/<userId>|<chartId>        → { userId, chartId, messages[] }
+meta/<userId>|<chartId>|saved-insights:v1 → { userId, chartId, items[] }
 localStorage: astrovia:swr:<userId>|<scope>|<url>|<body>
 localStorage: astrovia:cache:account:v1  → userId only (switch detector)
 ```
@@ -62,15 +65,20 @@ localStorage: astrovia:cache:account:v1  → userId only (switch detector)
    an interrupted stream cannot become fake history.
 4. The cached list is bounded to the newest 40 confirmed turns.
 
+### Saved AI insights
+1. Each saved reply is written to `meta` under an account-and-chart key; values are checked against both ids on read.
+2. Content is bounded to 16 KB per insight and the list to 80 items per chart.
+3. Deleting a chart removes that chart's saved insights; account switching, sign-out and full cache clearing also purge them.
+
 ## 4. Purge points (all implemented)
 
 | Event | Action | Code |
 | --- | --- | --- |
-| Sign out | Delete this account's charts + chat + SWR copies | `clearAccountCache(userId)` in `profile.tsx` |
-| Different account signs in | Wipe previous account, then any foreign rows (`purgeForeignEntries`) | `adoptAccount()` in `session-context.tsx` |
-| Chart deleted | Delete that chart's snapshot (server cascades its chat) | `forgetChartSnapshot(id)` in `profile.tsx` |
+| Sign out | Delete this account's charts + chat + saved insights + SWR copies | `clearAccountCache(userId)` in `profile.tsx` |
+| Different account signs in | Wipe previous account, then any foreign rows (`purgeForeignEntries`), including `meta` insights | `adoptAccount()` in `session-context.tsx` |
+| Chart deleted | Delete that chart's snapshot and its local saved insights (server cascades its chat) | `forgetChartSnapshot(id)` in `profile.tsx` |
 | Chart edited | The server returns the recomputed chart, which replaces this chart's snapshot | `/api/charts` PUT + `refreshChart` |
-| "Delete all my data" | Full device purge after the server confirms | `clearAllClientCaches()` in `profile.tsx` |
+| "Delete all my data" | Full device purge after the server confirms, including saved insights | `clearAllClientCaches()` in `profile.tsx` |
 | Build changes schema/engine | Version mismatch → entry ignored and deleted | `readEnvelope`, `pruneStaleSnapshots` |
 | User clears device copies | Full device purge | "Clear device copies" in Profile |
 

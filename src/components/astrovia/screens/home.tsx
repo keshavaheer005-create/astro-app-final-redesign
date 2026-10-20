@@ -15,6 +15,9 @@ import { apiSWR, apiSWRWrite } from '@/lib/api';
 import { useAuthPrompt } from '../auth-prompt';
 import { useAppStore } from '@/store/app';
 import { QuickToolsSheet } from '../quick-tools-sheet';
+import { AskAIAction } from '../ask-ai-action';
+import { SavedInsightsCard } from '../saved-insights-card';
+import { PredictiveOutlookCard } from '../predictive-outlook-card';
 import { normalizeToolIds, toolsFromIds } from '@/lib/quick-tools';
 import { cn, choghName } from '@/lib/utils';
 
@@ -880,6 +883,59 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
         </button>
       </GlassCard>
 
+      {/* Daily Astro Briefing and contextual shortcuts reuse data already loaded
+          on Home; the buttons only hand a draft to Acharya and never auto-send. */}
+      <GlassCard className="p-4 sm:p-5 glass-tint-emerald relative overflow-hidden">
+        <div className="pointer-events-none absolute -top-10 -right-8 h-28 w-28 rounded-full bg-emerald/12 blur-2xl" aria-hidden="true" />
+        <div className="relative flex items-start gap-3">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-emerald/20 bg-white/65 text-emerald-deep">
+            <Icon name="sparkle" size={19} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="font-serif text-t18 font-semibold text-emerald-grad">{t('home.dailyBriefing.title')}</h2>
+            <p className="mt-1 text-t12 leading-relaxed text-muted-foreground">{t('home.dailyBriefing.subtitle')}</p>
+            {panchang && (
+              <p className="mt-2 text-t12 text-charcoal/80">
+                {language === 'hi' ? panchang.nakshatra.nameHi : panchang.nakshatra.name}
+                {dashaNow ? ` · ${t(`planet.${dashaNow.mahaLord}`)}${dashaNow.antarLord ? ` / ${t(`planet.${dashaNow.antarLord}`)}` : ''}` : ''}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="relative mt-3 flex flex-wrap gap-2">
+          <AskAIAction
+            label={t('ai.dailyBriefing')}
+            question={`Prepare a useful, personalized daily astrology briefing for today from my saved birth chart. Current Mahadasha: ${dashaNow?.mahaLord ?? 'read from chart context'}; current Antardasha: ${dashaNow?.antarLord ?? 'read from chart context'}. Today's Tithi: ${panchang ? `${panchang.tithi.paksha} ${panchang.tithi.name}` : 'read available Panchang context'}; Nakshatra: ${panchang ? panchang.nakshatra.name : 'read available Panchang context'}; Moon sign today: ${panchang?.moonSign.name ?? 'read available Panchang context'}. Give a concise theme, helpful focus, caution, and one practical reflection. Cite the actual chart factors used, avoid deterministic promises, and do not invent placements.`}
+          />
+          <AskAIAction
+            compact
+            label={t('ai.explainToday')}
+            question={`Explain today's Panchang in a practical way for me, using my saved birth chart when relevant. Today's Tithi: ${panchang ? `${panchang.tithi.paksha} ${panchang.tithi.name}` : 'use available Panchang context'}; Nakshatra: ${panchang ? panchang.nakshatra.name : 'use available Panchang context'}; Moon sign: ${panchang?.moonSign.name ?? 'use available Panchang context'}. Distinguish tradition from certainty and avoid generic fear-based claims.`}
+          />
+        </div>
+        <div className="relative mt-3 border-t border-emerald/15 pt-3">
+          <p className="mb-2 text-t12 font-semibold uppercase tracking-wide text-emerald-deep">{t('home.smartExplore.title')}</p>
+          <div className="flex flex-wrap gap-2">
+            {dashaNow && (
+              <AskAIAction
+                compact
+                label={t('ai.currentDasha')}
+                question={`Explain what my current Vimshottari period means in traditional Vedic astrology. Current Mahadasha: ${dashaNow.mahaLord}; Antardasha: ${dashaNow.antarLord ?? 'not available'}; antardasha end date: ${dashaNow.antarEnd}. Connect only to verified placements in my saved chart and give balanced, practical themes without claiming certainty.`}
+              />
+            )}
+            <AskAIAction
+              compact
+              label={t('home.smartExplore.moon')}
+              question={`Explain today's Moon and Nakshatra context for me using my saved birth chart. Today's Nakshatra: ${panchang ? panchang.nakshatra.name : 'use available Panchang data'}; today's Moon sign: ${panchang?.moonSign.name ?? 'use available Panchang data'}. Keep it practical, chart-grounded and non-deterministic.`}
+            />
+          </div>
+        </div>
+      </GlassCard>
+
+      {chart && <PredictiveOutlookCard chartId={activeChartId} timezone={chart.input.timezone} />}
+
+      <SavedInsightsCard />
+
       {/* Daily affirmation — grounded in the running maha-dasha lord */}
       {dashaNow?.mahaLord && (
         <div
@@ -899,6 +955,12 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
               {t('home.affirm.season', { maha: t(`planet.${dashaNow.mahaLord}`), nakshatra: language === 'hi' ? panchang.nakshatra.nameHi : panchang.nakshatra.name })}
             </p>
           )}
+          <AskAIAction
+            compact
+            className="mt-3"
+            label={t('ai.explain')}
+            question={`Explain why a reflection for ${dashaNow.mahaLord} Mahadasha may fit my current Vedic chart period. Use my actual natal chart, current Antardasha ${dashaNow.antarLord ?? 'if available'}, and today's Panchang Nakshatra ${panchang?.nakshatra.name ?? 'if available'}. Avoid treating a short affirmation as a factual prediction.`}
+          />
         </div>
       )}
 

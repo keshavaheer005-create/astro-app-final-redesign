@@ -11,6 +11,7 @@ import { ashtakavarga, isFallbackTables } from './ashtakavarga';
 import { mangalDosha, sadeSati } from './doshas';
 import { panchangFor } from './panchang';
 import { zonedToUTC, ymdInZone, weekdayInZone } from '@/lib/tz';
+import { buildPredictiveOutlook, predictiveContextLine } from './prediction-engine';
 
 export interface BirthInput {
   name: string;
@@ -206,17 +207,35 @@ export function compactChartContext(chart: ComputedChart): string {
   }
   const md = chart.mangalDosha;
   lines.push(`Mangal dosha: ${md.level === 'none' ? 'none' : `${md.level} (Mars from Lagna h${md.marsHouseFromAsc}, from Moon h${md.marsHouseFromMoon}, from Venus h${md.marsHouseFromVenus})`}${md.mitigated && md.level !== 'none' ? ' — mitigated' : ''}; Sade sati: ${chart.sadeSati.active ? `active (${chart.sadeSati.phase})` : 'not active'}`);
-  lines.push(currentTransitLine(chart));
-  const sav = chart.ashtakavarga.sav;
-  lines.push(`Sarvashtakavarga of key signs: ascendant ${sav[chart.ascendant.sign]}, moon ${sav[chart.moonSign.index]}, 10th house sign ${sav[(chart.ascendant.sign + 9) % 12]}`);
-  lines.push(transitStrengthLine(chart));
+  // Reuse one ephemeris snapshot for current transits, SAV strength and the
+  // predictive context block; avoids recalculating all grahas several times
+  // during every Acharya request.
+  const asOf = new Date();
+  const transitSnapshot = calcAllPlanets(juldayFromUTC(asOf), true);
+  lines.push(currentTransitLine(chart, asOf, transitSnapshot));
+  const sav = chart.ashtakavarga?.sav;
+  if (sav && sav.length === 12) {
+    lines.push(`Sarvashtakavarga of key signs: ascendant ${sav[chart.ascendant.sign]}, moon ${sav[chart.moonSign.index]}, 10th house sign ${sav[(chart.ascendant.sign + 9) % 12]}`);
+  }
+  lines.push(transitStrengthLine(chart, asOf, transitSnapshot));
+  lines.push(predictiveContextLine(buildPredictiveOutlook(chart, transitSnapshot, asOf)));
+  // D9/D10 are particularly relevant for relationship and career questions.
+  const d9 = chart.divisionalCharts?.D9;
+  const d10 = chart.divisionalCharts?.D10;
+  if (d9 && d10) {
+    lines.push(`Varga anchors: D9 Navamsa ascendant ${SIGNS[d9.ascSign]}, planets ${PLANET_ORDER.filter((k) => k !== 'Ra' && k !== 'Ke').map((k) => `${k}=${SIGNS[d9.planets[k]]}`).join(', ')}; D10 Dasamsa ascendant ${SIGNS[d10.ascSign]}, planets ${PLANET_ORDER.filter((k) => k !== 'Ra' && k !== 'Ke').map((k) => `${k}=${SIGNS[d10.planets[k]]}`).join(', ')}.`);
+  }
   return lines.join('\n');
 }
 
 /** Where every graha is transiting right now, as houses from the natal Lagna and Moon (gochara). */
-export function currentTransitLine(chart: ComputedChart, when: Date = new Date()): string {
+export function currentTransitLine(
+  chart: ComputedChart,
+  when: Date = new Date(),
+  positions?: ReturnType<typeof calcAllPlanets>,
+): string {
   try {
-    const t = calcAllPlanets(juldayFromUTC(when), true);
+    const t = positions ?? calcAllPlanets(juldayFromUTC(when), true);
     const asc = chart.ascendant.sign, moon = chart.moonSign.index;
     const parts = (['Su', 'Mo', 'Ma', 'Me', 'Ju', 'Ve', 'Sa', 'Ra', 'Ke'] as PlanetKey[]).map((k) => {
       const sign = Math.floor(t[k].lon / 30) % 12;
@@ -235,10 +254,13 @@ export function currentTransitLine(chart: ComputedChart, when: Date = new Date()
  * SAV gochara rule: a sign with 29+ bindus supports any planet's transit,
  * 25-28 is average, below 25 strains the planet's significations.
  */
-export function transitStrengthLine(chart: ComputedChart, when: Date = new Date()): string {
+export function transitStrengthLine(
+  chart: ComputedChart,
+  when: Date = new Date(),
+  positions?: ReturnType<typeof calcAllPlanets>,
+): string {
   try {
-    const jd = juldayFromUTC(when);
-    const transit = calcAllPlanets(jd, true);
+    const transit = positions ?? calcAllPlanets(juldayFromUTC(when), true);
     const sav = chart.ashtakavarga.sav;
     const label = (b: number) => (b >= 29 ? 'supportive' : b >= 25 ? 'neutral' : 'demanding');
     const parts = (['Sa', 'Ju', 'Ra', 'Su'] as PlanetKey[]).map((k) => {

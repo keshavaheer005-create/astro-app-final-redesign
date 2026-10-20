@@ -4,7 +4,9 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Icon } from '../icons';
 import { GlassCard, Segmented, SectionHeader, EmptyState, DignityChip } from '../ui-primitives';
-import { NorthChart, SouthChart } from './chart-diagram';
+import { NorthChart, SouthChart, type ChartPlanet, type ChartKey } from './chart-diagram';
+import { openAcharyaWithPrompt, planetPrompt } from '@/lib/acharya-handoff';
+import { AskAIAction } from '../ask-ai-action';
 import { useSession } from '../session-context';
 import { PLANET_ORDER, SIGNS, SIGNS_HI } from '@/lib/astro/constants';
 import { dignityOf } from '@/lib/astro/dignity';
@@ -20,6 +22,23 @@ export function KundliChartScreen() {
   const hi = i18n.language === 'hi';
 
   const signName = (i: number) => (hi ? SIGNS_HI[i] : SIGNS[i]);
+  const planetLabel = (key: ChartKey) => t(`planet.${key}`, { defaultValue: key });
+  const askPlanet = (planet: ChartPlanet, house: number) => {
+    const natal = chart?.planets.find((item) => item.key === planet.key);
+    openAcharyaWithPrompt(planetPrompt({
+      planet: planetLabel(planet.key),
+      sign: signName(planet.sign),
+      house,
+      degree: planet.deg,
+      nakshatra: natal?.nakshatraName,
+      retrograde: planet.retrograde,
+      combust: planet.combust,
+      divisionalChart: zodiac === 'western' ? 'Western zodiac view' : 'Vedic D1 / Rashi chart',
+    }));
+  };
+  const askHouse = (house: number, sign: number) => openAcharyaWithPrompt(
+    `Explain house ${house} (${signName(sign)}) in my saved birth chart using Vedic astrology. Identify the house topics, sign and lord, planets placed here, relevant aspects, and how my current Vimshottari dasha may activate it. Use only chart placements you can verify and distinguish traditional interpretation from certainty.`,
+  );
 
   const agreement = useMemo(() => {
     if (!chart) return { same: [] as string[], different: [] as string[] };
@@ -96,9 +115,9 @@ export function KundliChartScreen() {
         <GlassCard className="p-4 sm:p-6">
           <p className="text-t12 uppercase tracking-wider text-gold font-semibold mb-3">{t('chart.zodiac.vedic')}</p>
           {style === 'north' ? (
-            <NorthChart ascSign={asc.sign} planets={vedicPlanets} />
+            <NorthChart ascSign={asc.sign} planets={vedicPlanets} onAskPlanet={askPlanet} onAskHouse={askHouse} planetName={planetLabel} />
           ) : (
-            <SouthChart ascSign={asc.sign} planets={vedicPlanets} />
+            <SouthChart ascSign={asc.sign} planets={vedicPlanets} onAskPlanet={askPlanet} onAskHouse={askHouse} planetName={planetLabel} />
           )}
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-t12 text-charcoal-soft">
             <span>{t('chart.legend', { defaultValue: '* retrograde · ^ combust · small number = degree in sign' })}</span>
@@ -123,11 +142,17 @@ export function KundliChartScreen() {
             <NorthChart
               ascSign={Math.floor(chart.planets.length ? 0 : 0) + signIndexOfTropicalAsc(chart)}
               planets={westernPlanets}
+              onAskPlanet={askPlanet}
+              onAskHouse={askHouse}
+              planetName={planetLabel}
             />
           ) : (
             <SouthChart
               ascSign={signIndexOfTropicalAsc(chart)}
               planets={westernPlanets}
+              onAskPlanet={askPlanet}
+              onAskHouse={askHouse}
+              planetName={planetLabel}
             />
           )}
         </GlassCard>
@@ -150,7 +175,7 @@ export function KundliChartScreen() {
 
       {/* Planets table */}
       <GlassCard className="p-4 sm:p-5">
-        <SectionHeader title={t('chart.planetsTable')} icon="list" />
+        <div className="flex items-center justify-between gap-2 flex-wrap"><SectionHeader title={t('chart.planetsTable')} icon="list" /><AskAIAction compact label={t('ai.explain')} question={`Explain the planet placements table in my birth chart. Walk through the planets, signs, houses, dignity, nakshatras and retrograde/combust status that are actually present, then relate the most important placements to my current dasha. Avoid generic claims not supported by my chart.`} /></div>
         <div className="overflow-x-auto scroll-slim -mx-1 px-1">
           <table className="w-full text-t14 min-w-[520px]">
             <thead>
@@ -166,10 +191,10 @@ export function KundliChartScreen() {
               {chart.planets.map((p) => (
                 <tr key={p.key} className="border-b border-gold/10 last:border-0 hover:bg-gold-soft/40 transition-colors duration-150">
                   <td className="py-2.5">
-                    <span className="inline-flex items-center gap-1.5 font-semibold text-charcoal">
-                      {t(`planet.${p.key}`)}
+                    <button type="button" onClick={() => askPlanet({ key: p.key as ChartKey, sign: p.sign, deg: p.degInSign, retrograde: p.retrograde, combust: p.combust }, p.house)} aria-label={`Ask AI about ${t(`planet.${p.key}`)}`} className="inline-flex items-center gap-1.5 rounded-lg text-left font-semibold text-charcoal transition-colors hover:text-emerald-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/50">
+                      {t(`planet.${p.key}`)} <span aria-hidden="true" className="text-emerald-deep text-t12">✦</span>
                       {p.retrograde && <span className="text-t12 text-burgundy font-bold">℞</span>}
-                    </span>
+                    </button>
                   </td>
                   <td className="py-2.5 text-charcoal/85">
                     <span className="inline-flex items-center gap-1.5 flex-wrap">
@@ -180,7 +205,7 @@ export function KundliChartScreen() {
                   </td>
                   <td className="py-2.5 text-muted-foreground">{p.degInSign.toFixed(2)}°</td>
                   <td className="py-2.5 text-charcoal/85">{p.nakshatraName} <span className="text-t12 text-muted-foreground">·{p.pada}</span></td>
-                  <td className="py-2.5"><span className="inline-flex w-7 h-7 items-center justify-center rounded-full bg-gold-soft text-t12 font-bold text-[#8a6d10]">{p.house}</span></td>
+                  <td className="py-2.5"><button type="button" onClick={() => askHouse(p.house, p.sign)} aria-label={`Ask AI about house ${p.house}`} className="inline-flex w-7 h-7 items-center justify-center rounded-full bg-gold-soft text-t12 font-bold text-[#8a6d10] hover:bg-emerald-soft hover:text-emerald-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/50">{p.house}</button></td>
                 </tr>
               ))}
               <tr className="hover:bg-gold-soft/40 transition-colors duration-150">

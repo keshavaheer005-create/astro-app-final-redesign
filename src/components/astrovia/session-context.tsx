@@ -6,6 +6,7 @@ import { attachNativeAuthListener, authGateway } from '@/lib/supabase/client';
 import {
   adoptAccount,
   deleteChartSnapshot,
+  deleteSavedInsightsForChart,
   readChartSnapshot,
   writeChartSnapshot,
 } from '@/lib/client-cache';
@@ -299,6 +300,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     const userId = userIdRef.current;
     if (!userId || !chartId) return;
     void deleteChartSnapshot(userId, chartId);
+    void deleteSavedInsightsForChart(userId, chartId);
     if (chartIdRef.current === chartId) {
       chartIdRef.current = null;
       setActiveChartId(null);

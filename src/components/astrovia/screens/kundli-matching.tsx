@@ -9,6 +9,7 @@ import { api, useSession } from '../session-context';
 import { useAuthPrompt } from '../auth-prompt';
 import { LocationCombobox } from '../location-combobox';
 import { cn } from '@/lib/utils';
+import { AskAIAction } from '../ask-ai-action';
 
 interface PersonInput {
   name: string;
@@ -324,6 +325,13 @@ export function MatchingScreen() {
                   <Icon name="share" size={13} />
                   {shareState === 'done' ? t('match.shareCopied') : t('match.share')}
                 </button>
+                <div className="mt-2">
+                  <AskAIAction
+                    compact
+                    label={t('ai.explain')}
+                    question={`Explain this Kundli compatibility result for ${result.boySummary.name} and ${result.girlSummary.name}. Total Guna score ${result.match.total}/${result.match.max}; verdict ${result.match.verdict}; Nadi Dosha ${result.match.nadiDosha ? 'present' : 'not reported'}; Bhakoot Dosha ${result.match.bhakootDosha ? 'present' : 'not reported'}; Gana Dosha ${result.match.ganaDosha ? 'present' : 'not reported'}. Koota breakdown: ${result.match.kootas.map((k) => `${k.key} ${k.score}/${k.max}: ${k.note}`).join('; ')}. Mangal levels: ${levelOf(result.boyMangalDosha)} and ${levelOf(result.girlMangalDosha)}. Explain strengths, limits and traditional context respectfully; do not present compatibility as a guarantee of relationship success.`}
+                  />
+                </div>
               </div>
             </div>
           </GlassCard>

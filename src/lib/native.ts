@@ -91,8 +91,10 @@ export async function nativeSpeechTranscribe(language: 'en' | 'hi'): Promise<str
   const { matches } = await SpeechRecognition.start({
     language: language === 'hi' ? 'hi-IN' : 'en-US',
     maxResults: 1,
+    // Keep recognition in-app. popup:true opens the system/Google speech UI,
+    // which breaks the app's inline listening experience.
     partialResults: false,
-    popup: true,
+    popup: false,
   });
   const text = matches?.[0];
   if (!text) return null;

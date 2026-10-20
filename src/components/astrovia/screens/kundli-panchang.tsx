@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { api, useSession } from '../session-context';
 import { useAppStore } from '@/store/app';
 import { cn, choghName } from '@/lib/utils';
+import { AskAIAction } from '../ask-ai-action';
 import { MuhuratFinder } from './kundli-muhurat';
 import { PanchangMuhurtaCards, type MuhurtaPayload, type PersonalPayload } from './panchang-muhurta-cards';
 
@@ -257,6 +258,10 @@ export function PanchangScreen() {
                   </GlassCard>
                 ))}
               </div>
+              <AskAIAction
+                label={t('ai.explain')}
+                question={`Explain the Panchang for ${date} in a practical, chart-grounded way. Tithi: ${data.tithi.paksha} ${data.tithi.name}; Nakshatra: ${data.nakshatra.name}; Yoga: ${data.yoga.name}; Karana: ${data.karana.name}; Moon sign: ${data.moonSign.name}; Sun sign: ${data.sunSign.name}; weekday: ${data.weekday}. Explain traditional meaning and reasonable everyday reflection; distinguish cultural/traditional interpretation from certainty and avoid fear-based advice.`}
+              />
 
               {/* Today's observances — festivals, ekadashi, sankranti (tap → significance) */}
               {observance && observance.festivals.length > 0 && (

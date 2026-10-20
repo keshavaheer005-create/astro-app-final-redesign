@@ -9,7 +9,7 @@ export type IconName =
   | 'warning' | 'info' | 'check' | 'x' | 'chevron-right' | 'chevron-down'
   | 'chevron-up' | 'chevron-left' | 'arrow-right' | 'arrow-left' | 'send' | 'plus'
   | 'edit' | 'lotus' | 'om' | 'compass' | 'list' | 'download' | 'refresh'
-  | 'book' | 'scale' | 'handshake' | 'timeline' | 'grid' | 'eye' | 'logout'
+  | 'book' | 'bookmark' | 'scale' | 'handshake' | 'timeline' | 'grid' | 'eye' | 'logout'
   | 'speaker' | 'pause' | 'share' | 'mic' | 'mic-off';
 
 const PATHS: Record<IconName, React.ReactNode> = {
@@ -195,6 +195,7 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M5.5 11.5a6.5 6.5 0 0 0 10.2 5.3M18.5 11.5c0 .9-.18 1.7-.5 2.5M12 18v3M8.5 21h7M4 4l16 16" />
     </>
   ),
+  bookmark: <path d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-3.8L6 21V4.5Z" />,
   book: (
     <>
       <path d="M12 6.5C10.5 5 8.3 4.5 4 4.7v13.6c4.3-.2 6.5.3 8 1.7 1.5-1.4 3.7-1.9 8-1.7V4.7c-4.3-.2-6.5.3-8 1.8Z" />
