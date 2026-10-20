@@ -1,0 +1,933 @@
+# MASTER GEMINI PLAN: Full-App Premium UI Refinement, Visual Consistency, Bug Fixing, and Performance Optimization
+
+## 1. Your Role and Mission
+
+Act as a senior product designer, Apple-quality UI/UX specialist, frontend architect, visual QA engineer, animation engineer, and debugging specialist.
+
+Your task is to thoroughly audit and improve my existing premium application across **every screen, route, component, interaction, modal, tab, chat interface, and responsive layout**.
+
+My application already has a distinctive premium identity. I do not want you to replace it with a new design. I want you to identify areas where the current implementation falls short of its existing quality and refine those areas until the entire application feels consistent, seamless, polished, reliable, and intentionally designed.
+
+The application must continue to work inside a mobile WebView, including on phones with limited processing power and memory. The service is hosted on Render, and the existing backend, API integrations, and calculation engine must continue working as they currently do.
+
+**Your objective is to elevate the existing application to a cohesive, Apple-inspired premium experience without losing its original identity, breaking existing functionality, or degrading performance.**
+
+This is a refinement and repair project, not a complete redesign.
+
+---
+
+## 2. First Principle: Inspect Everything Before Changing Anything
+
+Before modifying a single component, fully investigate the existing application.
+
+Do not immediately begin adding gradients, changing CSS, installing libraries, replacing components, or rewriting entire files.
+
+First understand what already exists, how it works, and which parts are already well designed.
+
+### 2.1 Perform a complete repository audit
+
+Inspect the available project source code and identify:
+
+- The frontend framework and architecture.
+- The application entry point and routing configuration.
+- Every existing screen, page, route, and major component.
+- Shared layouts, reusable components, and design-system files.
+- Global CSS, component styles, utility classes, and theme definitions.
+- CSS variables, color tokens, gradients, shadows, borders, radii, and spacing rules.
+- Typography, font loading, icon libraries, and asset usage.
+- Liquid Glass styling and backdrop effects.
+- Existing transitions, animations, hover effects, and touch interactions.
+- Mobile-specific styles, breakpoints, viewport handling, and WebView behavior.
+- Chat interfaces, AI input areas, chat history menus, tabs, and conversation views.
+- API integration, loading states, asynchronous behavior, and error handling.
+- Any existing console errors, framework warnings, failed network requests, or rendering problems that can be observed.
+- Repeated CSS declarations, conflicting styles, duplicated components, and inconsistent design patterns.
+- Existing performance optimizations and possible regressions.
+
+Search the entire codebase, not just the homepage or the most visible components.
+
+Identify which styles are global and which are local. Determine whether different pages use separate layout systems, independent background declarations, different theme wrappers, or inconsistent component implementations.
+
+Do not assume that a component is broken merely because its code looks unusual. Verify its behavior and understand its purpose first.
+
+### 2.2 Inspect the running application
+
+When a working browser, preview, or debugging environment is available, inspect the actual application rather than relying exclusively on source code.
+
+Visit every accessible route and inspect each page under relevant states.
+
+Examples include:
+
+- Initial loading.
+- Normal content loaded.
+- Empty content.
+- API loading.
+- API errors.
+- Selected and unselected tabs.
+- Open and closed menus.
+- Open dialogs and bottom sheets.
+- Expanded and collapsed components.
+- Switching between existing and new chats.
+- Long messages and long AI responses.
+- Keyboard open and closed.
+- Scrolling near the top, middle, and bottom of long pages.
+- Switching between screens repeatedly.
+- Returning to a screen after navigation.
+
+Test the app at representative mobile dimensions, particularly narrow phone screens and common Android WebView sizes. Also check desktop or wider layouts wherever the existing app supports them.
+
+If a browser preview or device simulator is not available, inspect the source thoroughly and explicitly identify which visual or runtime behaviors remain unverified.
+
+Do not claim to have tested a screen you have not actually accessed.
+
+### 2.3 Create an audit report
+
+Before making changes, summarize:
+
+1. What is already working well.
+2. What visual inconsistencies exist.
+3. What functional bugs or interaction glitches exist.
+4. What parts of the design system are inconsistent.
+5. Which screens have the largest quality gaps.
+6. What might be affecting performance.
+7. Which fixes are low risk and which require extra caution.
+8. Which files and components are likely responsible for each issue.
+
+Prioritize actual, observed problems over speculative redesign ideas.
+
+Then create an ordered implementation plan and begin executing it in controlled stages. Do not stop after producing a report if the code can be modified and tested in the available environment.
+
+---
+
+## 3. Preserve the Existing Brand and Design Identity
+
+My app's core design direction is already premium. Your job is to strengthen its consistency, not make it look like a different application.
+
+The visual reference should be the existing implementation, including its established colors, typography, layouts, Liquid Glass effects, and overall atmosphere.
+
+Do not impose an unrelated design system on top of it.
+
+### 3.1 Discover the actual theme
+
+The known brand palette includes:
+
+- **Gold:** the principal brand color.
+- **White:** a foundational surface and contrast color.
+- **Rose or red:** an existing supporting accent.
+- **Burgundy:** an existing deeper accent.
+- **Emerald or green:** an existing supporting accent.
+
+There may be another established color that I have not recalled. Find it by inspecting the actual design tokens, source styles, gradients, icons, screens, and existing components.
+
+Do not invent an additional brand color just to complete the palette.
+
+Determine which colors are already being used, what role each color serves, and which screens or tabs they belong to.
+
+Create a color-usage map based on the existing implementation.
+
+For example, a rose-oriented tab may use a rose-toned accent, a burgundy-oriented feature may use a restrained burgundy treatment, and an emerald-oriented feature may use an emerald treatment. However, make these associations only when they match the existing application.
+
+Gold should remain an important part of the overall brand identity without being indiscriminately applied to every element.
+
+### 3.2 Establish a consistent token system
+
+If the existing application already has good design tokens, preserve and improve them rather than replacing them unnecessarily.
+
+Centralize or rationalize values where appropriate for:
+
+- Primary and secondary colors.
+- Brand accent colors.
+- Surface colors and backgrounds.
+- Gradient definitions.
+- Typography and text hierarchy.
+- Spacing.
+- Corner radii.
+- Shadows and elevation.
+- Transparency and blur.
+- Transitions and animation durations.
+- Interactive states.
+- Focus and accessibility treatments.
+
+Remove conflicting or redundant values when doing so is safe.
+
+Use semantic tokens for reusable patterns, such as primary surfaces, glass surfaces, muted text, subtle highlights, interactive controls, and feature-specific accents.
+
+The goal is consistency and easier maintenance, not adding an unnecessary abstraction layer.
+
+---
+
+## 4. Premium Surface Design: Borderless, Seamless, and Refined
+
+One of the most important requirements is improving how cards, boxes, panels, and content groups look throughout the application.
+
+Some cards or boxes may currently appear too ordinary, outlined, harsh, separated, or visually disconnected from the rest of the interface.
+
+Inspect them individually and improve them where necessary.
+
+### 4.1 Eliminate unnecessary visible card borders
+
+For ordinary content cards and panels, the default design direction should be **seamless and visually borderless**, inspired by high-quality Apple interface design.
+
+Where the existing design uses or would benefit from a borderless treatment:
+
+- Remove unnecessary visible one-pixel outlines.
+- Avoid default gray borders around every card.
+- Avoid harsh separators that fragment the interface.
+- Create depth with carefully controlled surfaces, soft gradients, subtle shadows, and lighting.
+- Use spacing and visual grouping to communicate structure.
+- Maintain sufficient contrast between content and its surrounding background.
+- Ensure neighboring surfaces blend naturally into the overall interface.
+
+Do not simply remove all borders mechanically. Preserve separators, focus rings, selected states, and other outlines when they are necessary for usability, accessibility, or clear interaction feedback.
+
+The objective is to remove visual clutter, not remove useful interface information.
+
+### 4.2 Improve surface quality
+
+Examine the existing cards and determine the most appropriate treatment for each.
+
+Potential treatments include:
+
+- Soft, low-contrast surface gradients.
+- Subtle gold-tinted highlights.
+- Carefully controlled translucent surfaces.
+- Gentle ambient shadows.
+- Refined edge lighting where appropriate.
+- Subtle differences in surface brightness.
+- Better corner radii and proportional padding.
+- Cleaner relationships between cards and backgrounds.
+- More deliberate spacing between grouped elements.
+
+Choose treatments based on the existing component, its purpose, and the active feature's theme.
+
+Do not apply every visual effect to every component.
+
+Some components should remain visually quiet. Others may deserve a more expressive appearance.
+
+The overall interface should feel like a coherent premium product rather than a collection of independently decorated cards.
+
+### 4.3 Apply gradients with restraint
+
+Use gradients derived from the established brand palette.
+
+For example, gold-to-warm-white, subtle gold-to-transparent, or appropriate feature-specific accent gradients may work well for certain components if they fit the existing visual identity.
+
+Use rose, burgundy, or emerald accents where the feature or tab already uses those colors.
+
+Gradients should be smooth, sophisticated, and controlled. Avoid overly saturated fills, rainbow effects, excessive multicolor gradients, or combinations that make the interface look cheap.
+
+Do not give every box the same strong gold gradient.
+
+Vary the treatment according to component hierarchy, existing theme, content importance, and the page background.
+
+Gradients should enhance the app's design, not compete with its content.
+
+### 4.4 Preserve visual hierarchy
+
+Keep the distinction between primary actions, secondary actions, supporting information, and background content clear.
+
+Do not make every button, card, or heading equally prominent.
+
+Use stronger treatments for important actions and quieter treatments for supporting elements.
+
+The final result should feel premium because of its restraint, precision, consistency, and attention to detail—not because every component has multiple effects.
+
+---
+
+## 5. Liquid Glass and Existing Premium Effects
+
+My application already uses Liquid Glass-style styling and smooth transitions in certain areas.
+
+Preserve and refine these existing effects.
+
+Do not remove them merely to make implementation easier. Do not duplicate the effect unnecessarily if the application already implements it correctly.
+
+First understand the existing Liquid Glass technique and identify which components use it.
+
+Examine:
+
+- Transparency.
+- Background blur.
+- Gradient layers.
+- Highlights and reflections.
+- Surface depth.
+- Shadows.
+- Corner clipping.
+- Borders and edge lighting.
+- Layering order.
+- Interaction states.
+- Animation and transition behavior.
+
+Where the current implementation is inconsistent, bring it into alignment with the established design.
+
+Make sure the effect looks appropriate over different backgrounds and content, including chat screens, overlays, menus, and scrolling interfaces.
+
+### Performance requirements
+
+Liquid Glass must not become an excuse for expensive rendering.
+
+Avoid:
+
+- Excessive nested backdrop filters.
+- Large areas of continuously animated blur.
+- Unnecessary overlapping translucent layers.
+- Repeated expensive CSS filters.
+- Animations that trigger layout recalculation on every frame.
+- Re-rendering large components because of minor interaction changes.
+- Effects that make text difficult to read.
+
+Prefer efficient CSS transitions, transforms, opacity changes, and appropriately scoped effects.
+
+Where blur is necessary, keep its area and intensity appropriate. Do not replace an important existing effect with an opaque surface without a compelling reason.
+
+If a particular effect causes measurable performance problems, investigate a more efficient implementation that preserves its essential appearance.
+
+---
+
+## 6. Audit and Fix Every Interaction and Transition
+
+Inspect the entire application for missing transitions, abrupt state changes, broken animations, laggy gestures, inconsistent button behavior, and other interaction glitches.
+
+The app should feel responsive, deliberate, and fluid.
+
+### 6.1 Buttons
+
+Inspect every interactive button, including:
+
+- Primary buttons.
+- Secondary buttons.
+- Icon-only buttons.
+- Header controls.
+- Tab controls.
+- Chat send buttons.
+- Menu triggers.
+- Modal actions.
+- Back and close buttons.
+- Expand and collapse controls.
+- Retry actions.
+- Any custom Liquid Glass buttons.
+
+Ensure that each button has appropriate feedback.
+
+Where it fits the existing visual system, introduce or refine:
+
+- Smooth color or gradient changes.
+- Small opacity or highlight changes.
+- Subtle scale or surface-depth feedback.
+- Consistent transition durations.
+- Clear disabled states.
+- Consistent loading states.
+- Visible focus feedback where appropriate.
+
+Do not make interactions exaggerated or slow. The interface should feel immediate and refined.
+
+Ensure that transitions never prevent the action from running. Avoid unnecessary delays before navigation or API calls.
+
+Check that buttons cannot accidentally submit twice or trigger duplicate network requests when clicked repeatedly.
+
+### 6.2 Tabs and segmented controls
+
+Inspect every tab interface.
+
+Check for:
+
+- Incorrect active-tab styling.
+- Abrupt transitions.
+- Incorrect theme colors.
+- Content appearing before the active state updates.
+- Broken indicators.
+- Horizontal overflow.
+- Misaligned text or icons.
+- Incorrect swipe behavior.
+- State mismatch between tabs and displayed content.
+
+Use consistent animation behavior for active indicators, background changes, and content transitions.
+
+Keep the active state visually clear while maintaining the existing design.
+
+Do not add swipe navigation where it conflicts with horizontal scrolling or another intentional gesture.
+
+### 6.3 Page and panel transitions
+
+Inspect navigation between pages, cards, dialogs, bottom sheets, drawers, and expanded views.
+
+Use transitions appropriate to the original app.
+
+Improve abrupt or missing transitions when they make the app feel inconsistent, but preserve established motion patterns when they already work well.
+
+Avoid adding animation to every change simply because animation is possible.
+
+Check the behavior of rapid navigation, repeated taps, browser history where applicable, and back-button handling on mobile.
+
+### 6.4 Swiping and touch gestures
+
+Explicitly test the areas where users can swipe or scroll.
+
+Investigate:
+
+- Swipes that do nothing.
+- Accidental horizontal navigation.
+- Scroll gestures captured by the wrong container.
+- Touch targets that overlap.
+- Elements that become stuck after a gesture.
+- Menus that close unexpectedly.
+- Gestures that conflict with input fields.
+- Scroll locking after dialogs close.
+- Unwanted page movement behind an overlay.
+- Swipe actions that trigger more than once.
+
+Only preserve or improve intended gestures. Do not introduce new swipe behavior that changes the app's established navigation unexpectedly.
+
+### 6.5 Loading and feedback
+
+Loading states should feel integrated with the premium theme.
+
+Inspect spinners, skeletons, progress indicators, disabled actions, and asynchronous transitions.
+
+Avoid sudden layout shifts when content loads.
+
+When appropriate, retain the structure of the page while showing loading feedback. Do not show fake results before the actual response arrives.
+
+Use the established theme for these states rather than introducing generic, visually disconnected components.
+
+---
+
+## 7. High-Priority Investigation: Chat Interface and AI Input Components
+
+The chat interface needs special attention because I have noticed inconsistencies in this area.
+
+Inspect all chat-related components, including:
+
+- The main chat screen.
+- The AI message composer or text input box.
+- Send buttons.
+- Input attachments or secondary controls, if present.
+- Chat tabs and conversation navigation.
+- The menu listing previous conversations.
+- Individual conversation views.
+- The transition between different conversations.
+- Assistant and user message surfaces.
+- Loading and response-generation states.
+- Long messages and scrolling behavior.
+- Empty conversations and first-message states.
+- Any AI-related toolbar, menu, or overlay.
+
+### 7.1 Fix the old-chat background inconsistency
+
+There is a specific existing issue that must be investigated.
+
+When I open the menu containing other or previous chats and select an old conversation, that conversation sometimes displays a white background instead of the application's original background and premium styling.
+
+This is not merely a styling suggestion. Treat it as a potential bug that requires root-cause analysis.
+
+Investigate possible causes, including:
+
+- A separate chat route using the wrong layout.
+- An incorrect background color or fallback style.
+- A chat component that does not inherit the global theme.
+- A missing or inconsistent CSS class.
+- A higher-specificity style overriding the intended background.
+- Inline styles overriding theme variables.
+- Theme initialization occurring too late.
+- Missing background styles during asynchronous rendering.
+- A reused chat component retaining stale state.
+- A route transition that renders the conversation outside the expected application shell.
+- A light/dark theme mismatch.
+- Conversation-loading logic that causes a visual flash.
+- A component that receives different styling when loaded from chat history.
+- Missing CSS or assets in a particular navigation path.
+
+These are hypotheses to investigate, not assumptions about the confirmed cause.
+
+Compare how a new conversation and an old conversation are rendered. Find the precise reason for the difference.
+
+**Fix the underlying cause instead of adding a temporary white-background override or applying a superficial patch to one chat screen.**
+
+Verify that:
+
+1. A new conversation displays the correct background.
+2. An existing conversation displays the same appropriate application background.
+3. Opening a conversation from chat history does not cause a white flash or unrelated theme.
+4. Switching between several old conversations preserves consistent styling.
+5. Going back to the chat list and reopening a conversation does not introduce visual regressions.
+6. Loading, error, and empty states preserve the same visual theme.
+7. The chat interface still works with real API data.
+
+If different conversation types are supposed to have different backgrounds, verify the original design rules before changing them. Do not erase a deliberate distinction by mistake.
+
+### 7.2 Refine the AI text composer
+
+Inspect the AI text box and its surrounding controls.
+
+Make it feel like a deliberate part of the premium product.
+
+Check:
+
+- Container shape and radius.
+- Surface and gradient quality.
+- Input text color.
+- Placeholder color and contrast.
+- Internal padding.
+- Vertical alignment.
+- Send-button placement.
+- Icon sizing.
+- Keyboard behavior.
+- Multiline behavior.
+- Focus and blur transitions.
+- Disabled state.
+- Sending state.
+- Long-message scrolling.
+- Small-screen responsiveness.
+- Relationship with the background and nearby content.
+- Behavior when the keyboard opens or closes.
+
+If the text box uses a glass surface, ensure the effect matches other glass components. It should not suddenly become opaque, outlined, or visually unrelated.
+
+Do not create a new composer design if the existing one only needs refinement.
+
+### 7.3 Refine chat history and menus
+
+Chat history menus and navigation panels must feel like part of the same application.
+
+Ensure that:
+
+- Backgrounds match the existing theme.
+- Active and selected conversations have consistent styling.
+- Text and icons use correct contrast.
+- Hover, focus, pressed, and selected states are intentional.
+- Dialogs and menus open and close smoothly.
+- Scroll behavior works naturally.
+- Long conversation names do not break the layout.
+- Loading older conversations does not flash unrelated styles.
+- Returning to the main chat view preserves the correct state and background.
+
+Correct any component that looks as if it belongs to a different website or a different theme.
+
+---
+
+## 8. Audit Every Screen for Visual Inconsistency
+
+Inspect the whole app—not only the chat area.
+
+For every screen, evaluate:
+
+### Layout
+- Uneven or inconsistent padding.
+- Misaligned components.
+- Unnecessary vertical or horizontal gaps.
+- Crowded content.
+- Inconsistent component heights.
+- Poorly balanced empty space.
+- Unintended overflow.
+- Misaligned headings and section content.
+- Different layout patterns for components that should share a common structure.
+
+### Typography
+- Different font weights for equivalent elements.
+- Inconsistent heading scales.
+- Poor line spacing.
+- Text that wraps unexpectedly.
+- Low-contrast secondary labels.
+- Placeholder styles that differ from the rest of the app.
+- Overly large or small text.
+- Missing font loading or font fallback behavior.
+
+### Surfaces
+- Cards that look too flat.
+- Cards with unnecessarily visible outlines.
+- Inconsistent corner radii.
+- Shadows that are too strong.
+- Abrupt background-color changes.
+- Incorrect gradients.
+- Components using incompatible glass effects.
+- Content that appears detached from its background.
+
+### Colors
+- Incorrect accent colors for a feature.
+- Gold used too aggressively or inconsistently.
+- Conflicting backgrounds.
+- Unintended pure-white areas.
+- Inconsistent text colors.
+- Color differences between selected and unselected states.
+- Accent colors that no longer match the existing theme.
+
+### Icons and controls
+- Inconsistent icon size.
+- Incorrect alignment.
+- Uneven spacing between icons and text.
+- Unusual button proportions.
+- Missing feedback.
+- Unclear disabled states.
+- Inconsistent interaction styling.
+
+Fix verified inconsistencies systematically using shared components and tokens wherever possible.
+
+Avoid patching every screen separately if the problem comes from a shared component. However, do not force unrelated components to share styling merely to reduce the amount of code.
+
+---
+
+## 9. Responsive UI and Mobile WebView Compatibility
+
+The web app must remain reliable in the mobile WebView where users actually use it.
+
+Test and improve the following, as relevant to the current project:
+
+- Viewport dimensions and scaling.
+- Safe areas and device insets.
+- Fixed and sticky positioning.
+- Header and bottom navigation placement.
+- Virtual keyboard appearance and dismissal.
+- Input focus and scrolling.
+- Touch target dimensions.
+- Nested scrolling.
+- Horizontal overflow.
+- Page scrolling behind dialogs.
+- Overscroll behavior.
+- Dynamic viewport height changes.
+- Long pages and large responses.
+- Modals near screen edges.
+- Chat composer positioning.
+- Rounded screen corners.
+- Device rotation if supported by the current app.
+
+Be particularly careful with `100vh`, `position: fixed`, nested scroll containers, keyboard resizing, and mobile Safari or Android WebView differences if these patterns occur in the source.
+
+Do not apply global overflow restrictions or viewport changes without checking their effects on the entire application.
+
+The app must remain usable on narrower screens. Fix actual layout issues while retaining the original proportions and hierarchy.
+
+Do not treat desktop browser success as proof that the mobile WebView behaves correctly.
+
+---
+
+## 10. Performance Is a Core Requirement
+
+The visual refinement must not make the application slower.
+
+The app runs through an existing web frontend and mobile WebView, and its service is hosted on Render. Avoid adding unnecessary client rendering work, network traffic, heavy assets, libraries, or backend requests.
+
+Understand which work happens on the user's device and which happens on the server.
+
+Purely visual CSS effects generally affect client-side rendering; they should not be moved onto the backend merely because the service is hosted on Render. Nevertheless, unnecessary requests, oversized payloads, repeated API calls, server-side rendering regressions, or inefficient backend operations can affect overall responsiveness.
+
+### 10.1 Performance audit
+
+Investigate:
+
+- Slow screen transitions.
+- Excessive component re-rendering.
+- Long JavaScript tasks.
+- Unnecessary event listeners.
+- Repeated API requests.
+- Duplicate network calls on navigation.
+- Layout shifts.
+- Excessive DOM complexity.
+- Expensive filters and backdrop blur.
+- Repeated animations.
+- Memory leaks.
+- Event handlers not cleaned up when components unmount.
+- Large image or font assets.
+- Unnecessary dependencies.
+- Excessive timers, polling, or retry loops.
+- Slow list rendering.
+- Lag during scrolling or swiping.
+- Slow keyboard and input interactions.
+- Resource loading problems.
+
+Only claim a performance issue is confirmed when it is supported by profiling, measurements, or reproducible behavior.
+
+### 10.2 Optimize visual effects carefully
+
+When introducing or refining transitions and gradients:
+
+- Prefer transform and opacity animations when they reproduce the desired effect.
+- Avoid animating properties that repeatedly trigger expensive layout calculations where possible.
+- Avoid perpetual animations that offer no meaningful user benefit.
+- Avoid adding multiple expensive blur layers to every card.
+- Limit unnecessary repaint areas.
+- Load fonts and assets efficiently.
+- Avoid adding large animation libraries for minor effects.
+- Respect reduced-motion preferences where supported.
+- Keep touch interactions responsive during animations.
+
+Do not sacrifice a signature premium effect without first exploring an efficient implementation.
+
+### 10.3 Verify performance
+
+Use the available browser, device, and profiling tools to compare behavior before and after the changes.
+
+Check for regressions in:
+
+- Initial loading.
+- Navigation.
+- Scroll smoothness.
+- Button response.
+- Chat switching.
+- Text input.
+- Rendering large responses.
+- API-related loading states.
+
+When supported, capture measurable before-and-after results. If the required profiling tools are unavailable, state that performance has not been conclusively measured.
+
+Do not assume that fewer lines of code necessarily means better performance.
+
+---
+
+## 11. Find and Fix Functional Bugs Without Rewriting the App
+
+Perform a complete debugging pass alongside the visual review.
+
+Inspect for:
+
+- JavaScript or framework exceptions.
+- Console warnings with meaningful impact.
+- CSS errors and unexpected overrides.
+- Invalid component state transitions.
+- Broken navigation.
+- Buttons that do not work.
+- Duplicate event handlers.
+- Unhandled promises.
+- Requests that fail silently.
+- Invalid or incomplete API responses.
+- Stale data after navigation.
+- Incorrect loading-state transitions.
+- Forms that submit multiple times.
+- Unintended full-page refreshes.
+- Menus that remain open.
+- Overlays that block further interactions.
+- Lost scroll position when it should be preserved.
+- Race conditions between network requests.
+- Components rendering stale state.
+- Chat data appearing in the wrong conversation.
+- Backgrounds or theme state changing after navigation.
+- Inconsistent styling after returning from another screen.
+
+For each reproducible issue:
+
+1. Identify the affected screen or component.
+2. Record how to reproduce the issue.
+3. Find the probable root cause.
+4. Confirm it with the available evidence.
+5. Implement the smallest safe fix.
+6. Retest the affected flow.
+7. Test nearby screens and shared components for regressions.
+
+Do not indiscriminately refactor working systems just because you noticed an opportunity to change them.
+
+Prefer minimal, targeted, well-validated changes unless a deeper architectural problem makes a broader fix necessary.
+
+---
+
+## 12. Preserve the Existing Backend and Business Logic
+
+This task is primarily about frontend quality, UI consistency, interaction behavior, and WebView reliability.
+
+Do not change the backend architecture simply to implement styling improvements.
+
+Preserve the current API contract and all existing calculation logic. Do not move calculations into the frontend or replace server responses with demo data.
+
+Do not introduce additional API requests solely for decorative UI behavior.
+
+If a frontend bug is caused by incorrect API handling, investigate the interaction and make the smallest correct fix without changing server-side business rules unnecessarily.
+
+If a backend change is genuinely required, explain why, determine its impact, and keep it separate from unrelated visual refinements.
+
+Do not expose private credentials or weaken authentication while debugging.
+
+---
+
+## 13. Do Not Redesign Everything
+
+This requirement overrides any temptation to start over.
+
+**Keep the existing layout structure, established visual language, brand colors, important design decisions, and working features unless there is a demonstrated reason to change them.**
+
+Specifically:
+
+- Do not replace the whole application theme.
+- Do not change every card just for visual novelty.
+- Do not invent a new navigation system.
+- Do not change the application's information architecture.
+- Do not remove features to simplify the design.
+- Do not rebuild components that already work well without a clear benefit.
+- Do not replace the typography system unnecessarily.
+- Do not introduce unrelated colors or gradients.
+- Do not install unnecessary UI libraries.
+- Do not make the entire app look identical if specific features intentionally use different established accents.
+- Do not introduce excessive animations or decorative elements.
+- Do not make sweeping CSS replacements without understanding their scope.
+- Do not apply global overrides as a shortcut for fixing individual components.
+- Do not overwrite working application logic with a generic template.
+
+Keep approximately the same visual identity, interaction model, and screen structure.
+
+Improve the areas that are inconsistent, unfinished, buggy, or visibly below the quality of the app's best-designed components.
+
+A successful result should look like a more polished version of the same application—not an entirely new product.
+
+---
+
+## 14. Implementation Plan and Priority Order
+
+Proceed in the following order so that visual refinements do not hide underlying bugs.
+
+### Phase 1 — Baseline and audit
+
+Inspect source code and the running app.
+
+Record existing behavior, visual issues, console errors, network problems, and performance concerns.
+
+Create a screen inventory and prioritized defect list.
+
+### Phase 2 — Critical functional and rendering bugs
+
+Fix issues that make screens unusable, change the wrong state, break navigation, display the wrong background, interfere with scrolling, or cause buttons and gestures to behave incorrectly.
+
+Investigate the old-chat white-background issue during this phase.
+
+Prioritize correctness before decorative polish.
+
+### Phase 3 — Design-system consistency
+
+Map the existing colors, theme variants, typography, spacing, gradients, shadows, border styles, Liquid Glass components, and interaction states.
+
+Introduce or refine shared tokens only where doing so improves consistency and maintainability.
+
+### Phase 4 — Surface and component refinement
+
+Improve cards, boxes, panels, buttons, tabs, inputs, dialogs, overlays, and menus.
+
+Remove unnecessary visible card outlines and use controlled borderless surfaces with appropriate gradients, spacing, contrast, and depth.
+
+Keep the established aesthetic.
+
+### Phase 5 — Chat and AI experience
+
+Fix the conversation background inconsistency at its root.
+
+Refine the chat composer, history menu, message surfaces, loading states, transitions, keyboard behavior, and switching between conversations.
+
+Validate with actual conversation data wherever possible.
+
+### Phase 6 — Motion and gesture polish
+
+Make button feedback, tabs, page transitions, swipes, drawers, and overlays consistent.
+
+Fix existing glitches before introducing new animations.
+
+### Phase 7 — Responsive and WebView verification
+
+Test layouts, safe areas, keyboard behavior, scroll interactions, and fixed elements on supported device dimensions.
+
+Resolve issues that are specific to mobile browsers and WebViews.
+
+### Phase 8 — Performance verification
+
+Investigate whether the changes cause additional work, expensive rendering, network traffic, or memory usage.
+
+Optimize any demonstrated regressions without unnecessarily removing signature visual features.
+
+### Phase 9 — Regression testing and final refinement
+
+Retest all routes and important user journeys.
+
+Revisit the initial audit and confirm which defects have been fixed.
+
+Make final visual adjustments based on direct comparison with the original application.
+
+---
+
+## 15. Testing Checklist
+
+Before completing the work, verify as many of the following as the available environment permits.
+
+### Visual consistency
+
+- The brand palette remains consistent.
+- Gold and white remain foundational colors.
+- Existing rose, burgundy, emerald, and other discovered accents are used appropriately.
+- The established Liquid Glass visual identity is preserved.
+- Unnecessary visible borders have been removed from relevant cards.
+- Gradients are tasteful, restrained, and theme-appropriate.
+- Equivalent components have consistent spacing, radii, and typography.
+- Screens do not unexpectedly switch to unrelated backgrounds or styles.
+
+### Interaction quality
+
+- Buttons respond promptly.
+- Tabs update the correct content.
+- Transitions are consistent.
+- Swiping and scrolling work correctly.
+- Dialogs and menus close correctly.
+- Keyboard behavior does not break layouts.
+- Disabled and loading states are clear.
+- Repeated taps do not trigger unintended duplicate actions.
+
+### Chat and AI
+
+- New chats preserve the intended theme.
+- Old chats preserve the intended theme.
+- Switching conversations does not produce a white background flash.
+- Conversation history loads correctly.
+- The composer remains usable with the keyboard open.
+- Long conversations remain scrollable.
+- Real API responses display correctly.
+- Empty, loading, and error states remain visually consistent.
+
+### Technical quality
+
+- No new runtime errors have been introduced.
+- Important existing errors have been addressed or documented.
+- API contracts remain intact.
+- No unnecessary requests have been added.
+- Existing functionality remains available.
+- No critical CSS or JavaScript behavior has been broken.
+- Mobile layouts have been checked.
+- Performance has not been assumed to be acceptable without verification.
+
+---
+
+## 16. How to Report Your Work
+
+Maintain a practical implementation checklist as you work.
+
+For each significant issue, record:
+
+- Issue and affected screen.
+- Severity.
+- Evidence or reproduction steps.
+- Root cause, when confirmed.
+- Files changed.
+- Fix implemented.
+- Verification performed.
+- Remaining uncertainty or limitation.
+
+At the end, provide a concise final report containing:
+
+1. The most important problems found.
+2. The bugs actually fixed.
+3. The design inconsistencies refined.
+4. How the old-chat background problem was addressed.
+5. Which components and shared styles were modified.
+6. Any performance improvements that were measured.
+7. Which tests and builds were actually run.
+8. Which screens were visually verified.
+9. Which problems remain unresolved and why.
+
+Distinguish between completed changes, tested behavior, and recommendations that have not yet been implemented.
+
+Do not claim that the entire app is bug-free or that visual parity is perfect unless the available testing supports that conclusion.
+
+---
+
+## 17. Start Now
+
+Begin by fully scanning the existing project and understanding its current design system and behavior.
+
+Then identify the highest-priority bugs and inconsistencies, create the implementation plan, and work through it methodically.
+
+Preserve what is already good. Refine what is not. Fix root causes instead of applying superficial patches.
+
+**The final result must feel like the same premium app, only more coherent, more polished, more seamless, more responsive, and more reliable—with its original identity intact and no unnecessary performance cost.**
+
+Do not migrate to Flutter during this task. First stabilize and refine the existing web application. Any future decision to move to Flutter should come only after the web UI, interactions, functionality, and performance have been thoroughly evaluated.
