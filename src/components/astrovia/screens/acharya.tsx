@@ -940,7 +940,7 @@ export function AcharyaScreen() {
           type="button"
           onClick={() => focusMode ? setFocusMode(false) : openHistory()}
           aria-label={focusMode ? t('acharya.exitFocus') : t('acharya.history')}
-          className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/60 bg-white/45 text-emerald-deep transition-colors duration-200 hover:bg-white/75 active:scale-95"
+          className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/45 text-emerald-deep transition-colors duration-200 hover:bg-white/75 active:scale-95"
         >
           <Icon name={focusMode ? 'arrow-left' : 'list'} size={19} />
         </button>
@@ -950,7 +950,7 @@ export function AcharyaScreen() {
             onClick={openHistory}
             aria-label={t('acharya.history')}
             title={t('acharya.history')}
-            className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/60 bg-white/40 text-emerald-deep transition-colors duration-200 hover:bg-white/75 active:scale-95"
+            className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/40 text-emerald-deep transition-colors duration-200 hover:bg-white/75 active:scale-95"
           >
             <Icon name="list" size={17} />
           </button>
@@ -965,24 +965,13 @@ export function AcharyaScreen() {
             {t('acharya.subtitle')}
           </p>
         </div>
-        {!focusMode && visibleMessages.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setFocusMode(true)}
-            aria-label={t('acharya.focusReader')}
-            title={t('acharya.focusReader')}
-            className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/60 bg-white/40 text-emerald-deep transition-colors duration-200 hover:bg-white/75 active:scale-95"
-          >
-            <Icon name="eye" size={18} />
-          </button>
-        )}
         <button
           type="button"
           onClick={startNewChat}
           disabled={loading || conversationId === null}
           aria-label={t('acharya.newChat')}
           title={t('acharya.newChat')}
-          className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald/15 to-gold/15 border border-emerald/20 text-emerald-deep transition-all duration-200 hover:border-emerald/40 hover:from-emerald/20 hover:to-gold/25 active:scale-95 disabled:opacity-40"
+          className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald/15 to-gold/15 text-emerald-deep transition-all duration-200 hover:border-emerald/40 hover:from-emerald/20 hover:to-gold/25 active:scale-95 disabled:opacity-40"
         >
           <Icon name="plus" size={19} />
         </button>
@@ -1097,14 +1086,14 @@ export function AcharyaScreen() {
           e.preventDefault();
           ask(input);
         }}
-        className="shrink-0 pt-1.5"
+        className="shrink-0 pt-3"
         style={{ paddingBottom: 'max(0.375rem, env(safe-area-inset-bottom))' }}
       >
         <div
           className={cn(
-            'glass glass-tint-emerald mx-auto w-full max-w-3xl rounded-[26px] px-1.5 py-1.5',
+            'glass glass-tint-emerald mx-auto w-full max-w-3xl rounded-[26px] border-0 px-1.5 py-1.5',
             'shadow-[0_12px_36px_rgba(42,36,32,0.12)] transition-all duration-250',
-            'focus-within:border-emerald/50 focus-within:shadow-[0_14px_40px_rgba(62,142,110,0.18)]',
+            'focus-within:border-0 focus-within:shadow-[0_14px_40px_rgba(62,142,110,0.18)]',
             (!chart || loading) && 'opacity-60',
           )}
         >
@@ -1183,17 +1172,25 @@ export function AcharyaScreen() {
           />
           <mot.aside
             key="acharya-history-drawer"
-            initial={{ x: -320, opacity: 0.98 }}
+            initial={{ x: '-100%', opacity: 0.98 }}
             animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -320, opacity: 0.98 }}
+            exit={{ x: '-100%', opacity: 0.98 }}
             transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed inset-y-0 left-0 z-[91] flex w-[min(88vw,360px)] flex-col border-r border-white/70 bg-[#fbf8f0] shadow-[18px_0_50px_rgba(36,31,27,0.18)]"
+            className="fixed inset-0 z-[91] flex w-full flex-col bg-[#fbf8f0] shadow-[0_18px_50px_rgba(36,31,27,0.14)]"
             style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))', paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
             role="dialog"
             aria-modal="true"
             aria-label={t('acharya.historyTitle')}
           >
-            <div className="relative flex items-center gap-3 border-b border-emerald/10 px-4 pb-4 pt-2">
+            <div className="relative flex items-center gap-3 px-4 pb-4 pt-3">
+              <button
+                type="button"
+                onClick={() => setHistoryOpen(false)}
+                aria-label={t('common.back')}
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/65 text-emerald-deep transition-colors duration-150 hover:bg-white active:scale-95"
+              >
+                <Icon name="arrow-left" size={19} />
+              </button>
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald/15 to-gold/20 text-emerald-deep">
                 <Icon name="chat" size={20} />
               </div>
@@ -1232,7 +1229,7 @@ export function AcharyaScreen() {
 
               {!historyLoading && conversations.length === 0 && !historyError && (
                 <div className="px-4 py-10 text-center">
-                  <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-[20px] border border-gold/20 bg-gradient-to-br from-white to-gold/10 text-gold">
+                  <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-[20px] bg-gradient-to-br from-white to-gold/10 text-gold">
                     <Icon name="lotus" size={25} />
                   </div>
                   <p className="text-t14 font-semibold text-charcoal">{t('acharya.noHistory')}</p>
@@ -1251,10 +1248,10 @@ export function AcharyaScreen() {
                         onClick={() => selectConversation(item)}
                         disabled={loading || requestLockRef.current}
                         className={cn(
-                          'group flex w-full items-start gap-2.5 rounded-2xl border border-transparent px-3 py-3 text-left transition-colors duration-150 active:scale-[0.99] disabled:opacity-50',
+                          'group flex w-full items-start gap-2.5 rounded-2xl px-3 py-3 text-left transition-colors duration-150 active:scale-[0.99] disabled:opacity-50',
                           conversationId === item.id
-                            ? 'border-emerald/20 bg-emerald-soft/75'
-                            : 'hover:border-emerald/10 hover:bg-white/75',
+                            ? 'bg-emerald-soft/75'
+                            : 'hover:bg-white/75',
                         )}
                       >
                         <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/80 text-emerald-deep shadow-[inset_0_0_0_1px_rgba(46,112,87,0.08)]">
@@ -1276,7 +1273,7 @@ export function AcharyaScreen() {
                   type="button"
                   onClick={() => void loadConversations(true)}
                   disabled={historyLoading}
-                  className="mx-1 mt-1 flex min-h-11 w-[calc(100%-0.5rem)] items-center justify-center gap-2 rounded-xl border border-emerald/15 bg-white/65 px-3 text-t12 font-semibold text-emerald-deep transition-colors duration-150 hover:bg-white disabled:opacity-50"
+                  className="mx-1 mt-1 flex min-h-11 w-[calc(100%-0.5rem)] items-center justify-center gap-2 rounded-xl bg-white/65 px-3 text-t12 font-semibold text-emerald-deep transition-colors duration-150 hover:bg-white disabled:opacity-50"
                 >
                   {historyLoading ? <span className="astro-chat-orbit astro-chat-orbit-sm" aria-hidden="true"><span /></span> : <Icon name="chevron-down" size={14} />}
                   {t('acharya.loadOlder')}

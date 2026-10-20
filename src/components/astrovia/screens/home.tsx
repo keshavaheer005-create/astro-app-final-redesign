@@ -885,10 +885,10 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
 
       {/* Daily Astro Briefing and contextual shortcuts reuse data already loaded
           on Home; the buttons only hand a draft to Acharya and never auto-send. */}
-      <GlassCard className="p-4 sm:p-5 glass-tint-emerald relative overflow-hidden">
+      <GlassCard className="p-4 sm:p-5 glass-tint-emerald border-0 relative overflow-hidden">
         <div className="pointer-events-none absolute -top-10 -right-8 h-28 w-28 rounded-full bg-emerald/12 blur-2xl" aria-hidden="true" />
         <div className="relative flex items-start gap-3">
-          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-emerald/20 bg-white/65 text-emerald-deep">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/65 text-emerald-deep">
             <Icon name="sparkle" size={19} />
           </span>
           <div className="min-w-0 flex-1">
@@ -913,7 +913,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
             question={`Explain today's Panchang in a practical way for me, using my saved birth chart when relevant. Today's Tithi: ${panchang ? `${panchang.tithi.paksha} ${panchang.tithi.name}` : 'use available Panchang context'}; Nakshatra: ${panchang ? panchang.nakshatra.name : 'use available Panchang context'}; Moon sign: ${panchang?.moonSign.name ?? 'use available Panchang context'}. Distinguish tradition from certainty and avoid generic fear-based claims.`}
           />
         </div>
-        <div className="relative mt-3 border-t border-emerald/15 pt-3">
+        <div className="relative mt-3 pt-3">
           <p className="mb-2 text-t12 font-semibold uppercase tracking-wide text-emerald-deep">{t('home.smartExplore.title')}</p>
           <div className="flex flex-wrap gap-2">
             {dashaNow && (

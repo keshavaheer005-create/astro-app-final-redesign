@@ -84,7 +84,7 @@ export function PredictiveOutlookCard({ chartId, timezone }: { chartId: string |
     <GlassCard className="relative overflow-hidden p-4 sm:p-5 glass-tint-violet">
       <div className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-violet/10 blur-2xl" aria-hidden="true" />
       <div className="relative flex items-start gap-3">
-        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-violet/20 bg-white/70 text-violet-deep">
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/70 text-violet-deep">
           <Icon name="planet" size={19} />
         </span>
         <div className="min-w-0 flex-1">
@@ -103,8 +103,8 @@ export function PredictiveOutlookCard({ chartId, timezone }: { chartId: string |
               aria-expanded={active}
               onClick={() => setExpanded((current) => current === theme.id ? null : theme.id)}
               className={cn(
-                'tap-sm min-h-[82px] rounded-2xl border px-3 py-3 text-left transition-[background,border-color,transform] duration-200 active:scale-[.98]',
-                active ? 'border-violet/40 bg-violet-soft/65 shadow-[inset_0_1px_0_rgba(255,255,255,.8)]' : 'border-gold/15 bg-white/50 hover:bg-white/75',
+                'tap-sm min-h-[82px] rounded-2xl px-3 py-3 text-left transition-[background,transform] duration-200 active:scale-[.98]',
+                active ? 'bg-violet-soft/65 shadow-[inset_0_1px_0_rgba(255,255,255,.8)]' : 'bg-white/50 hover:bg-white/75',
               )}
             >
               <span className="flex items-center justify-between gap-2">
@@ -129,13 +129,13 @@ export function PredictiveOutlookCard({ chartId, timezone }: { chartId: string |
       )}
 
       {chosen && (
-        <div className="relative mt-3 rounded-2xl border border-violet/20 bg-white/65 p-3.5 animate-in fade-in-50 duration-180" aria-live="polite">
+        <div className="relative mt-3 rounded-2xl bg-white/65 p-3.5 animate-in fade-in-50 duration-180" aria-live="polite">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="font-serif text-t16 font-semibold text-charcoal">{t(`prediction.theme.${chosen.id}`)}</p>
               <p className="mt-0.5 text-t12 text-muted-foreground">{t('prediction.varga', { varga: chosen.varga })}</p>
             </div>
-            <span className="shrink-0 rounded-full border border-gold/20 bg-gold-faint px-2 py-1 text-[10px] font-semibold text-charcoal/75">{activeDasha}</span>
+            <span className="shrink-0 rounded-full bg-gold-faint px-2 py-1 text-[10px] font-semibold text-charcoal/75">{activeDasha}</span>
           </div>
           {chosen.signals.length ? (
             <ul className="mt-3 space-y-2">

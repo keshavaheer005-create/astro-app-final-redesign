@@ -38,12 +38,12 @@ export function SavedInsightsCard() {
 
   return (
     <section aria-label={t('home.savedInsights.title')} className="stagger-in" style={{ animationDelay: '55ms', animationFillMode: 'backwards' }}>
-      <GlassCard className="p-4 sm:p-5">
+      <GlassCard className="p-4 sm:p-5 border-0">
         <SectionHeader title={t('home.savedInsights.title')} icon="bookmark" />
         <p className="-mt-1 mb-3 text-t12 text-muted-foreground">{t('home.savedInsights.subtitle', { count: items.length })}</p>
         <div className="space-y-2">
           {items.slice(0, 3).map((item) => (
-            <div key={item.id} className={cn('rounded-2xl border px-3 py-3 transition-colors duration-150', expandedId === item.id ? 'border-emerald/30 bg-emerald-soft/45' : 'border-gold/15 bg-white/50')}>
+            <div key={item.id} className={cn('rounded-2xl px-3 py-3 transition-colors duration-150', expandedId === item.id ? 'bg-emerald-soft/45' : 'bg-white/50')}>
               <div className="flex items-start gap-2.5">
                 <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/75 text-emerald-deep">
                   <Icon name="bookmark" size={15} />
@@ -57,7 +57,7 @@ export function SavedInsightsCard() {
                 </button>
               </div>
               {expandedId === item.id && (
-                <div className="mt-3 border-t border-emerald/15 pt-3">
+                <div className="mt-3 pt-3">
                   <p className="whitespace-pre-wrap text-t13 leading-relaxed text-charcoal/90 max-h-40 overflow-y-auto scroll-slim">{item.content}</p>
                   <AskAIAction
                     className="mt-3"
