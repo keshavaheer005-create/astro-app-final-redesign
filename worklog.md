@@ -121,3 +121,23 @@ VERIFICATION LIMITS (honest):
 
 Stage Summary:
 - ALL 9 phases complete. Final report delivered to user.
+
+---
+Task ID: chat-unify-1
+Agent: lead (continued session)
+Task: Fix Acharya chat — old conversations opened in a flat white fullscreen overlay (no app background, composer pushed to the very bottom); unify the old-conversation window with the current chat window. Provide preview + test credentials.
+
+Work Log:
+- Root cause: selectConversation() set focusMode=true → AcharyaScreen rendered a `fixed inset-0 z-[9997] bg-cream` overlay covering ChakraBackdrop/ScreenGradient (premium bg) and anchored the composer with mt-auto at the 100dvh bottom edge. The earlier "-z-10 atmosphere inside the overlay" patch didn't change the take-over feel, per user.
+- Fix (src/components/astrovia/screens/acharya.tsx): removed the focusMode state and ALL branches — old conversations now load in the SAME in-flow window as the current chat (identical bg, header, composer). Header title shows the active conversation title when one is open; left button always opens the history drawer; Android Back/Escape/body-scroll-lock now apply to the history drawer only; MessageRow lost its focusMode prop; removed the unused ChakraBackdrop/ScreenGradient overlay import (drawer still uses them, import restored).
+- Verified: tsc 0 errors; eslint 0 errors; 76/76 unit tests (bun test ./tests/unit — note: `bun run test` globs upload/ copies, use ./tests/unit); Playwright run: sign-in → Acharya → history → "Saturn transit and career doubt" renders in normal window (bottom nav visible, composer above nav, emerald+mandala bg), reply streamed in-thread (screenshots shots/chat-old-convo-fixed.png, chat-old-convo-reply.png).
+- Env: killed stray scaffold dev server; embedded Postgres (from prior session) still serving :5432 with persisted pgdata; dev server restarted on :3000 (bun run dev, .env DATABASE_URL → local PG).
+- New: scripts/seed-demo.ts — idempotent demo seed (scrypt password hash matches /api/auth format; computeChart for chartData; 2 old conversations × 3d/5d ago in meta.conversationId format; 3 check-ins with dashaPeriodSnapshot).
+- Demo account: demo@astrovia.app / astrovia123 (chart: Aarav Sharma, 1995-08-20 09:15 New Delhi; Moon dasha context; 2 seeded old conversations + 1 fresh from API smoke test).
+- AI: NVIDIA_API_KEY absent → acharya-health reports legacy-zai provider; z-ai SDK fallback streams grounded replies (verified end-to-end via curl SSE + UI).
+- Exported updated source: download/astrovia-chat-history-unified.zip (no node_modules/.next/pgdata/.env).
+
+Stage Summary:
+- Old-conversation window == current-chat window (user's complaint fixed at the layout root, not papered over).
+- Preview live on :3000 (behind :81 Caddy) with working login + seeded history; AI replies via z-ai fallback.
+- Next plan stages: continue MASTER PLAN audit — Home/Kundli/Journal/Profile consistency sweep, then performance passes per plan §5+.

@@ -1,0 +1,1308 @@
+     1→'use client';
+     2→
+     3→import React, { useCallback, useEffect, useRef, useState } from 'react';
+     4→import { createPortal } from 'react-dom';
+     5→import { useTranslation } from 'react-i18next';
+     6→import { AnimatePresence, m as mot } from 'framer-motion';
+     7→import ReactMarkdown, { type Components } from 'react-markdown';
+     8→import { Icon, AcharyaAvatar } from '../icons';
+     9→import { GoldButton } from '../ui-primitives';
+    10→import { api, useSession } from '../session-context';
+    11→import { useAuthPrompt } from '../auth-prompt';
+    12→import { apiUrl, notifySignInRequired } from '@/lib/api';
+    13→import { readCachedChatSummaries, readChatHistory, writeChatHistory, readSavedInsights, saveInsight, removeSavedInsight, type SavedInsight } from '@/lib/client-cache';
+    14→import { count, end, start } from '@/lib/perf';
+    15→import { isNative, nativeSpeechStop, nativeSpeechTranscribe } from '@/lib/native';
+    16→import { useAppStore } from '@/store/app';
+    17→import { cn } from '@/lib/utils';
+    18→
+    19→interface Msg {
+    20→  id: string;
+    21→  role: 'user' | 'assistant';
+    22→  content: string;
+    23→  createdAt?: string;
+    24→  streaming?: boolean;
+    25→  /** Streamed reply the server has not confirmed yet — never persisted, no TTS. */
+    26→  pending?: boolean;
+    27→  /** Journal entry date this exchange refers to ("discuss this note" thread). */
+    28→  journalRef?: string;
+    29→}
+    30→
+    31→interface ConversationSummary {
+    32→  id: string;
+    33→  title: string;
+    34→  preview: string;
+    35→  updatedAt: string;
+    36→  messageCount: number;
+    37→}
+    38→
+    39→const LEGACY_CONVERSATION_ID = 'legacy';
+    40→// Kept in module memory (not persisted). Navigating between tabs keeps the
+    41→// current conversation, while a full app/WebView restart naturally creates a
+    42→// fresh chat the next time Acharya opens.
+    43→const sessionConversationIds = new Map<string, string>();
+    44→// New ids have no server transcript yet, so opening one should show the welcome
+    45→// state immediately without issuing an empty-history network request.
+    46→const freshConversationIds = new Set<string>();
+    47→
+    48→function makeConversationId(): string {
+    49→  try {
+    50→    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+    51→  } catch { /* restricted WebView */ }
+    52→  return `chat_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 12)}`;
+    53→}
+    54→
+    55→function sessionKey(userId: string, chartId: string): string {
+    56→  return `${userId}|${chartId}`;
+    57→}
+    58→
+    59→function getSessionConversationId(userId: string, chartId: string): string {
+    60→  const key = sessionKey(userId, chartId);
+    61→  let id = sessionConversationIds.get(key);
+    62→  if (!id) {
+    63→    id = makeConversationId();
+    64→    sessionConversationIds.set(key, id);
+    65→    freshConversationIds.add(id);
+    66→  }
+    67→  return id;
+    68→}
+    69→
+    70→function setSessionConversationId(userId: string, chartId: string, id: string): void {
+    71→  sessionConversationIds.set(sessionKey(userId, chartId), id);
+    72→}
+    73→
+    74→function conversationGroupId(updatedAt: string): 'today' | 'yesterday' | 'older' {
+    75→  const date = new Date(updatedAt);
+    76→  const now = new Date();
+    77→  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    78→  const day = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+    79→  if (day === today) return 'today';
+    80→  if (day === today - 86_400_000) return 'yesterday';
+    81→  return 'older';
+    82→}
+    83→
+    84→/** Compact, on-brand rendering for Acharya's organised (Markdown) replies. */
+    85→const MD_COMPONENTS: Components = {
+    86→  h1: ({ children }) => <h3 className="mt-3 first:mt-0 mb-1 font-serif text-t14 font-bold text-emerald-deep">{children}</h3>,
+    87→  h2: ({ children }) => <h3 className="mt-3 first:mt-0 mb-1 font-serif text-t14 font-bold text-emerald-deep">{children}</h3>,
+    88→  h3: ({ children }) => <h3 className="mt-3 first:mt-0 mb-1 font-serif text-t14 font-bold text-emerald-deep">{children}</h3>,
+    89→  h4: ({ children }) => <h4 className="mt-2 first:mt-0 mb-1 text-t14 font-semibold text-emerald-deep">{children}</h4>,
+    90→  p: ({ children }) => <p className="my-1.5 first:mt-0 last:mb-0">{children}</p>,
+    91→  strong: ({ children }) => <strong className="font-semibold text-charcoal">{children}</strong>,
+    92→  ul: ({ children }) => <ul className="my-1.5 ml-4 list-disc space-y-1 marker:text-gold">{children}</ul>,
+    93→  ol: ({ children }) => <ol className="my-1.5 ml-4 list-decimal space-y-1 marker:text-gold">{children}</ol>,
+    94→  li: ({ children }) => <li className="pl-0.5">{children}</li>,
+    95→  hr: () => null,
+    96→  a: ({ children }) => <span>{children}</span>,
+    97→  table: ({ children }) => (
+    98→    <div className="my-2 overflow-x-auto">
+    99→      <table className="w-full border-collapse text-t12">{children}</table>
+   100→    </div>
+   101→  ),
+   102→  th: ({ children }) => <th className="border-b border-gold/30 px-2 py-1 text-left font-semibold">{children}</th>,
+   103→  td: ({ children }) => <td className="border-b border-gold/15 px-2 py-1">{children}</td>,
+   104→};
+   105→
+   106→const SUGGESTION_KEYS = ['acharya.suggested1', 'acharya.suggested2', 'acharya.suggested3', 'acharya.suggested4'];
+   107→
+   108→
+   109→interface MessageRowProps {
+   110→  message: Msg;
+   111→  focusMode: boolean;
+   112→  audioMsgId: string | null;
+   113→  audioLoadingId: string | null;
+   114→  locale: string;
+   115→  translate: (key: string) => string;
+   116→  onListen: (message: Msg) => void;
+   117→  onViewJournal: (journalRef: string) => void;
+   118→  saved: boolean;
+   119→  onToggleSave: (message: Msg) => void;
+   120→}
+   121→
+   122→const MessageRow = React.memo(function MessageRow({
+   123→  message: m,
+   124→  focusMode,
+   125→  audioMsgId,
+   126→  audioLoadingId,
+   127→  locale,
+   128→  translate,
+   129→  onListen,
+   130→  onViewJournal,
+   131→  saved,
+   132→  onToggleSave,
+   133→}: MessageRowProps) {
+   134→  return (
+   135→    <mot.div
+   136→      initial={{ opacity: 0, y: 6 }}
+   137→      animate={{ opacity: 1, y: 0 }}
+   138→      transition={{ duration: 0.18, ease: 'easeOut' }}
+   139→      className={cn('flex gap-2.5', m.role === 'user' ? 'justify-end' : 'justify-start')}
+   140→    >
+   141→      {m.role === 'assistant' && <AcharyaAvatar size={30} className="shrink-0 mt-1 hidden sm:block" />}
+   142→      <div className={cn('min-w-0', focusMode ? 'max-w-[96%] sm:max-w-[88%]' : 'max-w-[85%] sm:max-w-[75%]')}>
+   143→        <div
+   144→          className={cn(
+   145→            'rounded-2xl px-4 py-3 leading-relaxed',
+   146→            focusMode ? 'text-[15px] sm:text-base sm:px-5 sm:py-4' : 'text-t14',
+   147→            m.role === 'user'
+   148→              ? m.journalRef
+   149→                ? 'gold-grad text-charcoal rounded-br-md shadow-[0_2px_10px_rgba(201,162,39,0.2)] ring-1 ring-charcoal/10'
+   150→                : 'gold-grad text-charcoal rounded-br-md shadow-[0_2px_10px_rgba(201,162,39,0.2)]'
+   151→              : 'glass glass-tint-emerald text-charcoal rounded-bl-md',
+   152→          )}
+   153→        >
+   154→          {m.role === 'assistant' ? <ReactMarkdown components={MD_COMPONENTS}>{m.content}</ReactMarkdown> : m.content}
+   155→          {m.streaming && <span className="inline-block w-2 h-4 ml-1 align-middle rounded-sm bg-emerald animate-pulse" aria-hidden />}
+   156→        </div>
+   157→        {m.role === 'assistant' && !m.streaming && !m.pending && m.content.length > 40 && (
+   158→          <button
+   159→            type="button"
+   160→            onClick={() => onListen(m)}
+   161→            className={cn(
+   162→              'mt-1 ml-1 mr-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-t12 transition-all duration-200 active:scale-95',
+   163→              audioMsgId === m.id
+   164→                ? 'bg-gold/20 border border-gold/50 text-gold'
+   165→                : 'border border-transparent text-muted-foreground/70 hover:text-gold hover:border-gold/30',
+   166→            )}
+   167→          >
+   168→            <Icon
+   169→              name={audioLoadingId === m.id ? 'sparkle' : audioMsgId === m.id ? 'pause' : 'speaker'}
+   170→              size={13}
+   171→              className={audioLoadingId === m.id ? 'animate-spin-slow' : undefined}
+   172→            />
+   173→            {audioLoadingId === m.id
+   174→              ? translate('acharya.preparingAudio')
+   175→              : audioMsgId === m.id
+   176→                ? translate('acharya.stopAudio')
+   177→                : translate('acharya.listen')}
+   178→          </button>
+   179→        )}
+   180→        {m.role === 'assistant' && !m.streaming && !m.pending && m.content.length > 40 && (
+   181→          <button
+   182→            type="button"
+   183→            onClick={() => onToggleSave(m)}
+   184→            aria-pressed={saved}
+   185→            title={saved ? translate('acharya.unsaveInsight') : translate('acharya.saveInsight')}
+   186→            className={cn(
+   187→              'mt-1 ml-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-t12 transition-all duration-180 active:scale-95',
+   188→              saved ? 'border border-gold/35 bg-gold/10 text-[#8a6d1f]' : 'border border-transparent text-muted-foreground/70 hover:border-emerald/25 hover:bg-emerald-soft/50 hover:text-emerald-deep',
+   189→            )}
+   190→          >
+   191→            <Icon name="bookmark" size={12} />
+   192→            {saved ? translate('acharya.insightSaved') : translate('acharya.saveInsight')}
+   193→          </button>
+   194→        )}
+   195→        {m.role === 'assistant' && !m.streaming && m.journalRef && (
+   196→          <button
+   197→            type="button"
+   198→            onClick={() => onViewJournal(m.journalRef!)}
+   199→            title={translate('acharya.viewJournal')}
+   200→            className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-gold-faint/60 border border-gold/30 px-2.5 py-1 text-t12 text-[#8a6d1f] hover:bg-gold-faint hover:border-gold/50 active:scale-95 transition-all duration-200"
+   201→          >
+   202→            <Icon name="journal" size={12} />
+   203→            {translate('acharya.viewJournal')}
+   204→            <span className="opacity-60">
+   205→              {new Date(`${m.journalRef}T12:00:00Z`).toLocaleDateString(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' })}
+   206→            </span>
+   207→            <Icon name="arrow-right" size={11} className="opacity-60" />
+   208→          </button>
+   209→        )}
+   210→      </div>
+   211→    </mot.div>
+   212→  );
+   213→});
+   214→
+   215→export function AcharyaScreen() {
+   216→  const { t, i18n } = useTranslation();
+   217→  const { chart, activeChartId, user } = useSession();
+   218→  const { requireAuth } = useAuthPrompt();
+   219→  const language = useAppStore((s) => s.language);
+   220→  const [messages, setMessages] = useState<Msg[]>([]);
+   221→  const [savedInsights, setSavedInsights] = useState<SavedInsight[]>([]);
+   222→  const [loadedScopeKey, setLoadedScopeKey] = useState<string | null>(null);
+   223→  const [input, setInput] = useState('');
+   224→  const [loading, setLoading] = useState(false);
+   225→  const [loadError, setLoadError] = useState(false);
+   226→  /** True while the visible conversation came from the device cache. */
+   227→  const [fromCache, setFromCache] = useState(false);
+   228→  const [conversationId, setConversationId] = useState<string | null>(null);
+   229→  const [conversationLoading, setConversationLoading] = useState(false);
+   230→  const [historyOpen, setHistoryOpen] = useState(false);
+   231→  const [focusMode, setFocusMode] = useState(false);
+   232→  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
+   233→  const [historyLoading, setHistoryLoading] = useState(false);
+   234→  const [historyError, setHistoryError] = useState(false);
+   235→  const [historyCursor, setHistoryCursor] = useState<string | null>(null);
+   236→  const [hasOlderMessages, setHasOlderMessages] = useState(false);
+   237→  const [olderMessageCursor, setOlderMessageCursor] = useState<string | null>(null);
+   238→  const [olderMessagesLoading, setOlderMessagesLoading] = useState(false);
+   239→  const [olderMessagesError, setOlderMessagesError] = useState(false);
+   240→  const scrollRef = useRef<HTMLDivElement>(null);
+   241→  const preserveScrollRef = useRef<{ height: number; top: number } | null>(null);
+   242→  const olderMessageLockRef = useRef(false);
+   243→  const atBottomRef = useRef(true);
+   244→  const requestLockRef = useRef(false);
+   245→  const pendingStreamRef = useRef<{ id: string; content: string; journalRef?: string } | null>(null);
+   246→  const streamFrameRef = useRef<number | null>(null);
+   247→  const nativeVoiceActiveRef = useRef(false);
+   248→  // Voice input — MediaRecorder → /api/asr → draft text in the composer
+   249→  const [voiceState, setVoiceState] = useState<'idle' | 'recording' | 'transcribing'>('idle');
+   250→  const [voiceError, setVoiceError] = useState(false);
+   251→  const recorderRef = useRef<MediaRecorder | null>(null);
+   252→  const chunksRef = useRef<Blob[]>([]);
+   253→  const streamRef = useRef<MediaStream | null>(null);
+   254→  // TTS playback — one message at a time
+   255→  const [audioMsgId, setAudioMsgId] = useState<string | null>(null);
+   256→  const [audioLoadingId, setLoadingId] = useState<string | null>(null);
+   257→  const audioRef = useRef<HTMLAudioElement | null>(null);
+   258→  const currentScopeKey = user?.id && activeChartId ? `${user.id}|${activeChartId}` : null;
+   259→  // Never render a prior account/chart transcript for even a single frame when
+   260→  // the session or active chart changes.
+   261→  const visibleMessages = currentScopeKey && loadedScopeKey === currentScopeKey ? messages : [];
+   262→  const chatOpening = Boolean(user?.id && activeChartId && (conversationId === null || loadedScopeKey !== currentScopeKey));
+   263→
+   264→  const stopAudio = useCallback(() => {
+   265→    audioRef.current?.pause();
+   266→    audioRef.current = null;
+   267→    setAudioMsgId(null);
+   268→  }, []);
+   269→
+   270→  // stop audio when leaving the screen
+   271→  useEffect(() => () => stopAudio(), [stopAudio]);
+   272→
+   273→  const listenToMessage = useCallback(
+   274→    async (m: Msg) => {
+   275→      if (audioMsgId === m.id) {
+   276→        stopAudio();
+   277→        return;
+   278→      }
+   279→      if (!requireAuth('ai')) return;
+   280→      stopAudio();
+   281→      if (audioRef.current && audioMsgId === m.id && !audioRef.current.paused) {
+   282→        // resume — unreachable here (handled above) but kept for safety
+   283→        return;
+   284→      }
+   285→      setLoadingId(m.id);
+   286→      try {
+   287→        const res = await api<{ audioDataUri: string }>('/api/acharya-audio', {
+   288→          method: 'POST',
+   289→          body: JSON.stringify({ messageId: m.id }),
+   290→        });
+   291→        const audio = new Audio(res.audioDataUri);
+   292→        audio.onended = () => {
+   293→          setAudioMsgId(null);
+   294→          audioRef.current = null;
+   295→        };
+   296→        audioRef.current = audio;
+   297→        setAudioMsgId(m.id);
+   298→        void audio.play().catch(() => setAudioMsgId(null));
+   299→      } catch {
+   300→        setAudioMsgId(null);
+   301→      } finally {
+   302→        setLoadingId(null);
+   303→      }
+   304→    },
+   305→    [audioMsgId, stopAudio, requireAuth],
+   306→  );
+   307→
+   308→  const handleListen = useCallback((message: Msg) => { void listenToMessage(message); }, [listenToMessage]);
+   309→  const handleViewJournal = useCallback((journalRef: string) => {
+   310→    useAppStore.getState().pushPendingFocus(`journal:${journalRef}`);
+   311→    window.dispatchEvent(new CustomEvent('ss:navigate', { detail: { tab: 'journal' } }));
+   312→  }, []);
+   313→  const translate = useCallback((key: string) => t(key), [t]);
+   314→
+   315→  // Saved insights use the same private account+chart cache owner as chat history.
+   316→  useEffect(() => {
+   317→    let live = true;
+   318→    setSavedInsights([]);
+   319→    if (!user?.id || !activeChartId) return () => { live = false; };
+   320→    void readSavedInsights(user.id, activeChartId).then((items) => {
+   321→      if (live) setSavedInsights(items);
+   322→    });
+   323→    return () => { live = false; };
+   324→  }, [user?.id, activeChartId]);
+   325→
+   326→  const toggleSavedInsight = useCallback(async (message: Msg) => {
+   327→    const userId = user?.id;
+   328→    const chartId = activeChartId;
+   329→    if (!userId || !chartId || message.role !== 'assistant' || !message.content.trim()) return;
+   330→    const existing = savedInsights.find((item) => item.content === message.content);
+   331→    if (existing) {
+   332→      await removeSavedInsight(userId, chartId, existing.id);
+   333→      setSavedInsights((items) => items.filter((item) => item.id !== existing.id));
+   334→      return;
+   335→    }
+   336→    const title = message.content
+   337→      .split('\n')
+   338→      .map((line) => line.replace(/^\s{0,3}#{1,6}\s*/, '').replace(/[\*_`~]/g, '').trim())
+   339→      .find(Boolean)?.slice(0, 100) || t('home.savedInsights.fallbackTitle');
+   340→    const id = (() => {
+   341→      try { return crypto.randomUUID(); } catch { return `insight-${Date.now().toString(36)}`; }
+   342→    })();
+   343→    const saved = await saveInsight({
+   344→      id,
+   345→      userId,
+   346→      chartId,
+   347→      title,
+   348→      content: message.content,
+   349→      source: 'Acharya AI',
+   350→    });
+   351→    if (saved) setSavedInsights((items) => [saved, ...items.filter((item) => item.id !== saved.id && item.content !== saved.content)].slice(0, 80));
+   352→  }, [user?.id, activeChartId, savedInsights, t]);
+   353→
+   354→  // A conversation id lives only for this app session. It remains stable when
+   355→  // the user changes tabs, but a full app restart begins a fresh conversation.
+   356→  useEffect(() => {
+   357→    if (!user?.id || !activeChartId) {
+   358→      if (!user?.id) {
+   359→        // Signing out ends the in-memory session so a later sign-in starts fresh.
+   360→        sessionConversationIds.clear();
+   361→        freshConversationIds.clear();
+   362→      }
+   363→      setConversationId(null);
+   364→      setMessages([]);
+   365→      setLoadedScopeKey(null);
+   366→      setFromCache(false);
+   367→      return;
+   368→    }
+   369→    setLoadedScopeKey(null);
+   370→    setConversationId(getSessionConversationId(user.id, activeChartId));
+   371→  }, [user?.id, activeChartId]);
+   372→
+   373→  /**
+   374→   * Cache-first conversation loading. Cached messages are painted immediately;
+   375→   * the server is then the source of truth. Each conversation has its own cache
+   376→   * key so switching chats cannot briefly show another transcript.
+   377→   */
+   378→  useEffect(() => {
+   379→    const userId = user?.id;
+   380→    const chartId = activeChartId;
+   381→    const selectedConversationId = conversationId;
+   382→    if (!userId || !chartId || !selectedConversationId) return;
+   383→    let cancelled = false;
+   384→    const paintT0 = start();
+   385→    const cacheConversationId = selectedConversationId === LEGACY_CONVERSATION_ID ? undefined : selectedConversationId;
+   386→    setMessages([]);
+   387→    setLoadedScopeKey(null);
+   388→    atBottomRef.current = true;
+   389→    preserveScrollRef.current = null;
+   390→    olderMessageLockRef.current = false;
+   391→    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+   392→    setHasOlderMessages(false);
+   393→    setOlderMessageCursor(null);
+   394→    setOlderMessagesLoading(false);
+   395→    setOlderMessagesError(false);
+   396→    setFromCache(false);
+   397→    setLoadError(false);
+   398→    if (freshConversationIds.has(selectedConversationId)) {
+   399→      setLoadedScopeKey(`${userId}|${chartId}`);
+   400→      setConversationLoading(false);
+   401→      return () => { cancelled = true; };
+   402→    }
+   403→    setConversationLoading(true);
+   404→    const run = async () => {
+   405→      const cached = await readChatHistory(userId, chartId, cacheConversationId);
+   406→      if (cancelled) return;
+   407→      if (cached) {
+   408→        setMessages(cached.messages as Msg[]);
+   409→        setLoadedScopeKey(`${userId}|${chartId}`);
+   410→        setFromCache(true);
+   411→        setConversationLoading(false);
+   412→        count('cache.chat.hit');
+   413→        end('acharya.cachePaint', paintT0);
+   414→      } else {
+   415→        count('cache.chat.miss');
+   416→      }
+   417→      const netT0 = start();
+   418→      try {
+   419→        const res = await api<{ messages: Msg[]; hasMore?: boolean; nextCursor?: string | null }>(`/api/ask-acharya?conversationId=${encodeURIComponent(selectedConversationId)}`);
+   420→        if (cancelled) return;
+   421→        end('acharya.network', netT0);
+   422→        setMessages(res.messages);
+   423→        setLoadedScopeKey(`${userId}|${chartId}`);
+   424→        setHasOlderMessages(Boolean(res.hasMore));
+   425→        setOlderMessageCursor(res.nextCursor ?? null);
+   426→        setFromCache(false);
+   427→        setConversationLoading(false);
+   428→        void writeChatHistory(userId, chartId, res.messages, cacheConversationId);
+   429→      } catch {
+   430→        if (!cancelled) {
+   431→          if (!cached) setLoadedScopeKey(`${userId}|${chartId}`);
+   432→          setConversationLoading(false);
+   433→          if (!cached) setLoadError(true);
+   434→        }
+   435→      }
+   436→    };
+   437→    void run();
+   438→    return () => { cancelled = true; };
+   439→  }, [user?.id, activeChartId, conversationId]);
+   440→
+   441→  // One-shot handoff: a draft pushed by another screen (e.g. "discuss this
+   442→  // journal note" on the Journal tab) lands in the composer and gets focus.
+   443→  // The draft's journal date is kept so the NEXT exchange is threaded — the
+   444→  // Acharya reply then offers a "View journal entry" jump back to Journal.
+   445→  const inputRef = useRef<HTMLTextAreaElement>(null);
+   446→  const journalRefDate = useRef<string | null>(null);
+   447→  const acharyaDraft = useAppStore((s) => s.acharyaDraft);
+   448→  useEffect(() => {
+   449→    const draft = useAppStore.getState().consumeAcharyaDraft();
+   450→    if (draft) {
+   451→      setInput(draft.text.slice(0, 1400));
+   452→      journalRefDate.current = draft.journalDate;
+   453→      requestAnimationFrame(() => inputRef.current?.focus());
+   454→    }
+   455→  }, [acharyaDraft]);
+   456→
+   457→  // Follow the stream only while the reader is already near the bottom.
+   458→  // Never yank the viewport away from older text, and use instant positioning
+   459→  // during streaming so each token does not trigger a smooth-scroll animation.
+   460→  useEffect(() => {
+   461→    const el = scrollRef.current;
+   462→    if (!el) return;
+   463→    const anchor = preserveScrollRef.current;
+   464→    if (anchor) {
+   465→      el.scrollTop = anchor.top + (el.scrollHeight - anchor.height);
+   466→      preserveScrollRef.current = null;
+   467→      return;
+   468→    }
+   469→    if (!atBottomRef.current) return;
+   470→    el.scrollTop = el.scrollHeight;
+   471→  }, [messages, loading, conversationLoading]);
+   472→
+   473→
+   474→  // Replace the temporary streaming id with the server id once persistence is
+   475→  // confirmed. The server response is conversation-scoped, so ids from another
+   476→  // chat can never be reconciled into the visible thread.
+   477→  const reconcileAssistantId = useCallback(async (tempId: string, content: string, selectedConversationId: string) => {
+   478→    const userId = user?.id;
+   479→    const chartId = activeChartId;
+   480→    if (!content || !userId || !chartId) return;
+   481→    const cacheConversationId = selectedConversationId === LEGACY_CONVERSATION_ID ? undefined : selectedConversationId;
+   482→    try {
+   483→      const h = await api<{ messages: Msg[]; hasMore?: boolean; nextCursor?: string | null }>(`/api/ask-acharya?conversationId=${encodeURIComponent(selectedConversationId)}`);
+   484→      void writeChatHistory(userId, chartId, h.messages, cacheConversationId);
+   485→      if (selectedConversationId === conversationId) {
+   486→        setHasOlderMessages(Boolean(h.hasMore));
+   487→        setOlderMessageCursor(h.nextCursor ?? null);
+   488→      }
+   489→      const match = [...h.messages].reverse().find((x) => x.role === 'assistant' && x.content === content);
+   490→      if (match) {
+   491→        setMessages((m) => m.map((x) => (x.id === tempId ? { ...x, id: match.id, pending: false, createdAt: match.createdAt } : x)));
+   492→      }
+   493→    } catch {
+   494→      /* Audio is omitted until the server confirms this streamed reply. */
+   495→    }
+   496→  }, [user?.id, activeChartId, conversationId]);
+   497→
+   498→  const ask = useCallback(
+   499→    async (question: string) => {
+   500→      const q = question.trim();
+   501→      if (!q || requestLockRef.current) return;
+   502→      if (!requireAuth('ai')) return;
+   503→      if (!chart) {
+   504→        setLoadError(true);
+   505→        return;
+   506→      }
+   507→      const selectedConversationId = conversationId;
+   508→      if (!selectedConversationId) return;
+   509→      const priorSameQuestionCount = messages.filter((message) => message.role === 'user' && message.content === q).length;
+   510→      requestLockRef.current = true;
+   511→      freshConversationIds.delete(selectedConversationId);
+   512→      setLoadError(false);
+   513→      const reDate = journalRefDate.current;
+   514→      journalRefDate.current = null;
+   515→      setInput('');
+   516→      if (inputRef.current) inputRef.current.style.height = 'auto';
+   517→      const userMsg: Msg = { id: `u-${Date.now()}`, role: 'user', content: q, journalRef: reDate ?? undefined };
+   518→      const assistantId = `a-${Date.now()}-s`;
+   519→      setMessages((m) => [...m, userMsg]);
+   520→      setLoading(true);
+   521→      atBottomRef.current = true;
+   522→
+   523→      const upsertStreamBubble = (full: string) => {
+   524→        setMessages((m) => {
+   525→          const existing = m.find((x) => x.id === assistantId);
+   526→          if (!existing) return [...m, { id: assistantId, role: 'assistant', content: full, streaming: true, journalRef: reDate ?? undefined }];
+   527→          return m.map((x) => (x.id === assistantId ? { ...x, content: full } : x));
+   528→        });
+   529→      };
+   530→      const flushStreamFrame = () => {
+   531→        const pending = pendingStreamRef.current;
+   532→        pendingStreamRef.current = null;
+   533→        if (pending) upsertStreamBubble(pending.content);
+   534→      };
+   535→      const appendDelta = (full: string) => {
+   536→        pendingStreamRef.current = { id: assistantId, content: full, journalRef: reDate ?? undefined };
+   537→        // Coalesce fast SSE chunks to at most one React update per animation
+   538→        // frame. This reduces WebView work on older Android devices.
+   539→        if (streamFrameRef.current === null) {
+   540→          streamFrameRef.current = window.requestAnimationFrame(() => {
+   541→            streamFrameRef.current = null;
+   542→            flushStreamFrame();
+   543→          });
+   544→        }
+   545→      };
+   546→      const finishBubble = () => {
+   547→        if (streamFrameRef.current !== null) window.cancelAnimationFrame(streamFrameRef.current);
+   548→        streamFrameRef.current = null;
+   549→        flushStreamFrame();
+   550→        setMessages((m) => m.map((x) => x.id === assistantId
+   551→          ? { ...x, streaming: false, pending: true, journalRef: reDate ?? undefined }
+   552→          : x));
+   553→      };
+   554→      const cacheConversationId = selectedConversationId === LEGACY_CONVERSATION_ID ? undefined : selectedConversationId;
+   555→      try {
+   556→        const res = await fetch(apiUrl('/api/ask-acharya'), {
+   557→          method: 'POST',
+   558→          headers: { 'Content-Type': 'application/json' },
+   559→          body: JSON.stringify({
+   560→            question: q,
+   561→            language,
+   562→            stream: true,
+   563→            journalRef: reDate ?? undefined,
+   564→            conversationId: selectedConversationId,
+   565→          }),
+   566→        });
+   567→        if (res.status === 401) {
+   568→          notifySignInRequired('ai');
+   569→          setInput(q);
+   570→          setMessages((m) => m.filter((x) => x.id !== userMsg.id));
+   571→          return;
+   572→        }
+   573→        if (!res.ok || !res.body) {
+   574→          let msg = `HTTP ${res.status}`;
+   575→          try { msg = ((await res.json()) as { error?: string }).error ?? msg; } catch { /* non-JSON error */ }
+   576→          throw new Error(msg);
+   577→        }
+   578→
+   579→        const reader = res.body.getReader();
+   580→        const dec = new TextDecoder();
+   581→        let buf = '';
+   582→        let full = '';
+   583→        const consumeEvent = (evt: string) => {
+   584→          const line = evt.split('\n').find((l) => l.startsWith('data:'));
+   585→          if (!line) return;
+   586→          const payload = line.slice(5).trim();
+   587→          if (!payload || payload === '[DONE]') return;
+   588→          try {
+   589→            const obj = JSON.parse(payload) as { v?: string };
+   590→            if (obj.v) {
+   591→              full += obj.v;
+   592→              appendDelta(full);
+   593→            }
+   594→          } catch {
+   595→            full += payload;
+   596→            appendDelta(full);
+   597→          }
+   598→        };
+   599→        for (;;) {
+   600→          const { done, value } = await reader.read();
+   601→          if (done) break;
+   602→          buf += dec.decode(value, { stream: true });
+   603→          let idx: number;
+   604→          while ((idx = buf.indexOf('\n\n')) >= 0) {
+   605→            const evt = buf.slice(0, idx);
+   606→            buf = buf.slice(idx + 2);
+   607→            consumeEvent(evt);
+   608→          }
+   609→        }
+   610→        if (buf.trim()) consumeEvent(buf);
+   611→        finishBubble();
+   612→        const finalContent = full.trim();
+   613→        if (!finalContent) throw new Error('empty_stream');
+   614→        await reconcileAssistantId(assistantId, finalContent, selectedConversationId);
+   615→      } catch (e) {
+   616→        if (streamFrameRef.current !== null) window.cancelAnimationFrame(streamFrameRef.current);
+   617→        streamFrameRef.current = null;
+   618→        pendingStreamRef.current = null;
+   619→        // Never automatically issue a second AI POST after a streaming failure:
+   620→        // the server may already have saved the user turn or completed the reply.
+   621→        // Reconcile by reading this conversation, which avoids duplicate charges
+   622→        // and duplicated user messages on flaky mobile connections.
+   623→        let recovered = false;
+   624→        try {
+   625→          const latest = await api<{ messages: Msg[]; hasMore?: boolean; nextCursor?: string | null }>(`/api/ask-acharya?conversationId=${encodeURIComponent(selectedConversationId)}`);
+   626→          const currentPromptCount = latest.messages.filter((message) => message.role === 'user' && message.content === q).length;
+   627→          if (currentPromptCount > priorSameQuestionCount) {
+   628→            setMessages(latest.messages);
+   629→            setHasOlderMessages(Boolean(latest.hasMore));
+   630→            setOlderMessageCursor(latest.nextCursor ?? null);
+   631→            void writeChatHistory(user?.id ?? '', activeChartId ?? '', latest.messages, cacheConversationId);
+   632→            let lastPromptIndex = -1;
+   633→            latest.messages.forEach((message, index) => {
+   634→              if (message.role === 'user' && message.content === q) lastPromptIndex = index;
+   635→            });
+   636→            const replySaved = lastPromptIndex >= 0
+   637→              && latest.messages.slice(lastPromptIndex + 1).some((message) => message.role === 'assistant' && message.content.trim().length > 0);
+   638→            setLoadError(!replySaved);
+   639→            recovered = true;
+   640→          }
+   641→        } catch {
+   642→          /* Keep the optimistic user turn visible and show the inline error. */
+   643→        }
+   644→        if (!recovered) {
+   645→          setMessages((current) => current.filter((message) => message.id !== assistantId));
+   646→          setLoadError(true);
+   647→        }
+   648→        console.error('[acharya stream]', e);
+   649→      } finally {
+   650→        requestLockRef.current = false;
+   651→        setLoading(false);
+   652→      }
+   653→    },
+   654→    [chart, language, conversationId, messages, reconcileAssistantId, requireAuth, user?.id, activeChartId],
+   655→  );
+   656→
+   657→  const loadConversations = useCallback(async (older = false) => {
+   658→    if (!user?.id || !activeChartId || historyLoading) return;
+   659→    setHistoryLoading(true);
+   660→    setHistoryError(false);
+   661→    try {
+   662→      const before = older && historyCursor ? `&before=${encodeURIComponent(historyCursor)}` : '';
+   663→      const res = await api<{ conversations: ConversationSummary[]; nextCursor: string | null }>(`/api/ask-acharya?list=1${before}`);
+   664→      if (!older) {
+   665→        // A successful first page is authoritative; remove any cache-only rows
+   666→        // left over from an account restore or a previous server-side deletion.
+   667→        setConversations(res.conversations);
+   668→      } else {
+   669→        setConversations((current) => {
+   670→          const merged = new Map<string, ConversationSummary>(current.map((item): [string, ConversationSummary] => [item.id, item]));
+   671→          for (const item of res.conversations) {
+   672→            const existing = merged.get(item.id);
+   673→            if (!existing) merged.set(item.id, item);
+   674→            else {
+   675→              const incomingIsNewer = item.updatedAt > existing.updatedAt;
+   676→              merged.set(item.id, {
+   677→                ...existing,
+   678→                title: item.title !== 'Astrovia AI chat' ? item.title : existing.title,
+   679→                preview: incomingIsNewer ? item.preview : existing.preview,
+   680→                updatedAt: incomingIsNewer ? item.updatedAt : existing.updatedAt,
+   681→                messageCount: Math.max(existing.messageCount, item.messageCount),
+   682→              });
+   683→            }
+   684→          }
+   685→          return [...merged.values()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+   686→        });
+   687→      }
+   688→      setHistoryCursor(res.nextCursor);
+   689→    } catch {
+   690→      setHistoryError(true);
+   691→    } finally {
+   692→      setHistoryLoading(false);
+   693→    }
+   694→  }, [user?.id, activeChartId, historyLoading, historyCursor]);
+   695→
+   696→  const loadOlderMessages = useCallback(async () => {
+   697→    const userId = user?.id;
+   698→    const chartId = activeChartId;
+   699→    const selectedConversationId = conversationId;
+   700→    const cursor = olderMessageCursor;
+   701→    if (!userId || !chartId || !selectedConversationId || !cursor || !hasOlderMessages || olderMessageLockRef.current) return;
+   702→    olderMessageLockRef.current = true;
+   703→    setOlderMessagesLoading(true);
+   704→    setOlderMessagesError(false);
+   705→    const el = scrollRef.current;
+   706→    if (el) preserveScrollRef.current = { height: el.scrollHeight, top: el.scrollTop };
+   707→    try {
+   708→      const query = `conversationId=${encodeURIComponent(selectedConversationId)}&before=${encodeURIComponent(cursor)}`;
+   709→      const page = await api<{ messages: Msg[]; hasMore?: boolean; nextCursor?: string | null }>(`/api/ask-acharya?${query}`);
+   710→      setMessages((current) => {
+   711→        const knownIds = new Set(current.map((message) => message.id));
+   712→        const older = page.messages.filter((message) => !knownIds.has(message.id));
+   713→        return older.length ? [...older, ...current] : current;
+   714→      });
+   715→      setHasOlderMessages(Boolean(page.hasMore));
+   716→      setOlderMessageCursor(page.nextCursor ?? null);
+   717→    } catch {
+   718→      preserveScrollRef.current = null;
+   719→      setOlderMessagesError(true);
+   720→    } finally {
+   721→      olderMessageLockRef.current = false;
+   722→      setOlderMessagesLoading(false);
+   723→    }
+   724→  }, [user?.id, activeChartId, conversationId, olderMessageCursor, hasOlderMessages]);
+   725→
+   726→  const startNewChat = useCallback(() => {
+   727→    if (!user?.id || !activeChartId || loading || requestLockRef.current) return;
+   728→    if (conversationId) freshConversationIds.delete(conversationId);
+   729→    const nextId = makeConversationId();
+   730→    freshConversationIds.add(nextId);
+   731→    setSessionConversationId(user.id, activeChartId, nextId);
+   732→    setConversationId(nextId);
+   733→    atBottomRef.current = true;
+   734→    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+   735→    setMessages([]);
+   736→    setInput('');
+   737→    if (inputRef.current) inputRef.current.style.height = 'auto';
+   738→    setFromCache(false);
+   739→    setLoadError(false);
+   740→    setConversationLoading(false);
+   741→    setHistoryOpen(false);
+   742→    setFocusMode(false);
+   743→    setTimeout(() => inputRef.current?.focus(), 80);
+   744→  }, [user?.id, activeChartId, loading, conversationId]);
+   745→
+   746→  const openHistory = useCallback(() => {
+   747→    setHistoryOpen(true);
+   748→    // Paint recent locally cached conversations immediately, while the server
+   749→    // refresh runs independently in the background.
+   750→    if (user?.id && activeChartId) {
+   751→      void readCachedChatSummaries(user.id, activeChartId).then((cached) => {
+   752→        if (cached.length) {
+   753→          setConversations((current) => current.length ? current : cached);
+   754→        }
+   755→      }).catch(() => undefined);
+   756→    }
+   757→    void loadConversations(false);
+   758→  }, [loadConversations, user?.id, activeChartId]);
+   759→
+   760→  const selectConversation = useCallback((item: ConversationSummary) => {
+   761→    if (!user?.id || !activeChartId || loading || requestLockRef.current) return;
+   762→    if (conversationId) freshConversationIds.delete(conversationId);
+   763→    freshConversationIds.delete(item.id);
+   764→    setSessionConversationId(user.id, activeChartId, item.id);
+   765→    setConversationId(item.id);
+   766→    atBottomRef.current = true;
+   767→    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+   768→    setConversationLoading(true);
+   769→    setMessages([]);
+   770→    setFromCache(false);
+   771→    setLoadError(false);
+   772→    setHistoryOpen(false);
+   773→    setFocusMode(true);
+   774→    setInput('');
+   775→    if (inputRef.current) inputRef.current.style.height = 'auto';
+   776→  }, [user?.id, activeChartId, loading, conversationId]);
+   777→
+   778→  // When a drawer or focus-reader is open, Android Back closes the topmost
+   779→  // layer first. The native listener is registered only while needed, so normal
+   780→  // Back behaviour remains untouched everywhere else in the app.
+   781→  useEffect(() => {
+   782→    if (!isNative() || (!historyOpen && !focusMode)) return;
+   783→    let cancelled = false;
+   784→    let listener: { remove: () => Promise<void> } | null = null;
+   785→    void import('@capacitor/app')
+   786→      .then(({ App }) => App.addListener('backButton', () => {
+   787→        if (historyOpen) setHistoryOpen(false);
+   788→        else if (focusMode) setFocusMode(false);
+   789→      }))
+   790→      .then((handle) => {
+   791→        if (cancelled) void handle.remove();
+   792→        else listener = handle;
+   793→      })
+   794→      .catch(() => undefined);
+   795→    return () => {
+   796→      cancelled = true;
+   797→      if (listener) void listener.remove();
+   798→    };
+   799→  }, [historyOpen, focusMode]);
+   800→
+   801→  useEffect(() => {
+   802→    if (!historyOpen && !focusMode) return;
+   803→    const onKeyDown = (event: KeyboardEvent) => {
+   804→      if (event.key !== 'Escape') return;
+   805→      if (historyOpen) setHistoryOpen(false);
+   806→      else if (focusMode) setFocusMode(false);
+   807→    };
+   808→    window.addEventListener('keydown', onKeyDown);
+   809→    return () => window.removeEventListener('keydown', onKeyDown);
+   810→  }, [historyOpen, focusMode]);
+   811→
+   812→  // Full-screen history and focus reading take over the viewport: lock the
+   813→  // background scroll and hide the persistent app navigation until they close.
+   814→  const fullScreenChat = historyOpen || focusMode;
+   815→  useEffect(() => {
+   816→    if (!fullScreenChat) return;
+   817→    const previousOverflow = document.body.style.overflow;
+   818→    document.body.classList.add('astrovia-chat-fullscreen');
+   819→    document.body.style.overflow = 'hidden';
+   820→    return () => {
+   821→      document.body.classList.remove('astrovia-chat-fullscreen');
+   822→      document.body.style.overflow = previousOverflow;
+   823→    };
+   824→  }, [fullScreenChat]);
+   825→
+   826→  const micSupported = isNative() || (typeof navigator !== 'undefined' && !!navigator.mediaDevices && typeof MediaRecorder !== 'undefined');
+   827→
+   828→  const recordingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+   829→  const nativeVoiceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+   830→  const stopRecording = useCallback(() => {
+   831→    if (recordingTimerRef.current) clearTimeout(recordingTimerRef.current);
+   832→    recordingTimerRef.current = null;
+   833→    if (recorderRef.current?.state === 'recording') recorderRef.current.stop();
+   834→  }, []);
+   835→
+   836→  // Stop microphone access and cancel any pending stream-frame work on unmount.
+   837→  useEffect(() => () => {
+   838→    streamRef.current?.getTracks().forEach((tr) => tr.stop());
+   839→    if (recordingTimerRef.current) clearTimeout(recordingTimerRef.current);
+   840→    if (nativeVoiceTimerRef.current) clearTimeout(nativeVoiceTimerRef.current);
+   841→    if (nativeVoiceActiveRef.current) void nativeSpeechStop();
+   842→    if (streamFrameRef.current !== null && typeof window !== 'undefined') window.cancelAnimationFrame(streamFrameRef.current);
+   843→  }, []);
+   844→
+   845→  const transcribe = async (blob: Blob) => {
+   846→    setVoiceState('transcribing');
+   847→    try {
+   848→      const buf = await blob.arrayBuffer();
+   849→      let binary = '';
+   850→      const bytes = new Uint8Array(buf);
+   851→      const CHUNK = 0x8000;
+   852→      for (let i = 0; i < bytes.length; i += CHUNK) {
+   853→        binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+   854→      }
+   855→      const res = await api<{ text: string }>('/api/asr', {
+   856→        method: 'POST',
+   857→        body: JSON.stringify({ audioBase64: btoa(binary) }),
+   858→      });
+   859→      setVoiceError(false);
+   860→      setInput((prev) => (prev ? `${prev} ${res.text}`.slice(0, 1400) : res.text.slice(0, 1400)));
+   861→    } catch {
+   862→      setVoiceError(true);
+   863→    } finally {
+   864→      setVoiceState('idle');
+   865→    }
+   866→  };
+   867→
+   868→  const toggleMic = async () => {
+   869→    if (voiceState === 'recording') {
+   870→      if (isNative()) {
+   871→        setVoiceState('transcribing');
+   872→        void nativeSpeechStop().catch(() => undefined);
+   873→      } else {
+   874→        stopRecording();
+   875→      }
+   876→      return;
+   877→    }
+   878→    if (voiceState !== 'idle') return;
+   879→    if (!requireAuth('ai')) return;
+   880→    setVoiceError(false);
+   881→    // Native recognition now stays inline (popup:false in the Capacitor bridge).
+   882→    // The same microphone button ends listening, then inserts the transcript.
+   883→    if (isNative()) {
+   884→      nativeVoiceActiveRef.current = true;
+   885→      setVoiceState('recording');
+   886→      nativeVoiceTimerRef.current = setTimeout(() => {
+   887→        setVoiceState('transcribing');
+   888→        void nativeSpeechStop().catch(() => undefined);
+   889→      }, 60_000);
+   890→      try {
+   891→        const text = await nativeSpeechTranscribe(language);
+   892→        if (text) setInput((prev) => (prev ? `${prev} ${text}`.slice(0, 1400) : text.slice(0, 1400)));
+   893→        else setVoiceError(true);
+   894→      } catch {
+   895→        setVoiceError(true);
+   896→      } finally {
+   897→        nativeVoiceActiveRef.current = false;
+   898→        if (nativeVoiceTimerRef.current) clearTimeout(nativeVoiceTimerRef.current);
+   899→        nativeVoiceTimerRef.current = null;
+   900→        setVoiceState('idle');
+   901→      }
+   902→      return;
+   903→    }
+   904→    if (!micSupported) return;
+   905→    try {
+   906→      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+   907→      streamRef.current = stream;
+   908→      const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+   909→      const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+   910→      chunksRef.current = [];
+   911→      rec.ondataavailable = (e) => {
+   912→        if (e.data.size > 0) chunksRef.current.push(e.data);
+   913→      };
+   914→      rec.onstop = () => {
+   915→        streamRef.current?.getTracks().forEach((tr) => tr.stop());
+   916→        streamRef.current = null;
+   917→        const blob = new Blob(chunksRef.current, { type: rec.mimeType || 'audio/webm' });
+   918→        recorderRef.current = null;
+   919→        if (blob.size > 1024) void transcribe(blob);
+   920→        else setVoiceState('idle');
+   921→      };
+   922→      recorderRef.current = rec;
+   923→      rec.start();
+   924→      setVoiceState('recording');
+   925→      // hard cap at 60s to keep ASR snappy
+   926→      recordingTimerRef.current = setTimeout(() => stopRecording(), 60000);
+   927→    } catch {
+   928→      setVoiceError(true);
+   929→      setVoiceState('idle');
+   930→    }
+   931→  };
+   932→
+   933→  const groupedConversations = {
+   934→    today: conversations.filter((item) => conversationGroupId(item.updatedAt) === 'today'),
+   935→    yesterday: conversations.filter((item) => conversationGroupId(item.updatedAt) === 'yesterday'),
+   936→    older: conversations.filter((item) => conversationGroupId(item.updatedAt) === 'older'),
+   937→  };
+   938→  const activeConversationTitle = conversations.find((item) => item.id === conversationId)?.title;
+   939→
+   940→  return (
+   941→    <>
+   942→    <div className={cn(
+   943→      'flex flex-col text-charcoal',
+   944→      focusMode
+   945→        ? 'fixed inset-0 z-[9997] h-[100dvh] min-h-0 max-h-[100dvh] w-screen max-w-full overflow-hidden bg-cream px-3 pt-[max(0.5rem,env(safe-area-inset-top))]'
+   946→        : 'h-[calc(100dvh-8rem-env(safe-area-inset-bottom))] lg:h-[calc(100dvh-4.5rem)]',
+   947→    )} data-testid="acharya-chat-shell">
+   948→      {/* Premium AI header: subtle layered colour, clear chat controls, no heavy blur. */}
+   949→      <div className={cn(
+   950→        'glass glass-tint-emerald bar-texture rounded-[22px] px-3 sm:px-4 py-2.5 flex items-center gap-2.5 shrink-0 relative overflow-hidden',
+   951→        focusMode && 'rounded-[20px]',
+   952→      )}>
+   953→        <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-emerald/10 via-transparent to-gold/10" aria-hidden="true" />
+   954→        <button
+   955→          type="button"
+   956→          onClick={() => focusMode ? setFocusMode(false) : openHistory()}
+   957→          aria-label={focusMode ? t('acharya.exitFocus') : t('acharya.history')}
+   958→          className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/45 text-emerald-deep transition-colors duration-200 hover:bg-white/75 active:scale-95"
+   959→        >
+   960→          <Icon name={focusMode ? 'arrow-left' : 'list'} size={19} />
+   961→        </button>
+   962→        {focusMode && (
+   963→          <button
+   964→            type="button"
+   965→            onClick={openHistory}
+   966→            aria-label={t('acharya.history')}
+   967→            title={t('acharya.history')}
+   968→            className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/40 text-emerald-deep transition-colors duration-200 hover:bg-white/75 active:scale-95"
+   969→          >
+   970→            <Icon name="list" size={17} />
+   971→          </button>
+   972→        )}
+   973→        <AcharyaAvatar size={focusMode ? 38 : 42} className="relative shrink-0" />
+   974→        <div className="flex-1 min-w-0 relative">
+   975→          <p className="font-serif text-t15 sm:text-t16 font-semibold text-emerald-grad truncate">
+   976→            {focusMode ? (activeConversationTitle || t('acharya.historyTitle')) : t('acharya.title')}
+   977→          </p>
+   978→          <p className="text-t12 text-muted-foreground flex items-center gap-1.5 truncate">
+   979→            <span className="inline-block w-1.5 h-1.5 shrink-0 rounded-full bg-violet" />
+   980→            {t('acharya.subtitle')}
+   981→          </p>
+   982→        </div>
+   983→        <button
+   984→          type="button"
+   985→          onClick={startNewChat}
+   986→          disabled={loading || conversationId === null}
+   987→          aria-label={t('acharya.newChat')}
+   988→          title={t('acharya.newChat')}
+   989→          className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald/15 to-gold/15 text-emerald-deep transition-all duration-200 hover:from-emerald/20 hover:to-gold/25 active:scale-95 disabled:opacity-40"
+   990→        >
+   991→          <Icon name="plus" size={19} />
+   992→        </button>
+   993→      </div>
+   994→
+   995→      {/* Messages — one centered conversation column (readable width on
+   996→          desktop, full-bleed on mobile) */}
+   997→      <div
+   998→        ref={scrollRef}
+   999→        onScroll={(event) => {
+  1000→          const el = event.currentTarget;
+  1001→          atBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+  1002→        }}
+  1003→        className={cn('min-h-0 flex-[1_1_0%] overflow-y-auto overscroll-contain scroll-slim px-1 py-4', focusMode && 'w-full px-1 sm:px-4 sm:py-6')}
+  1004→      >
+  1005→        <div className={cn('mx-auto w-full max-w-3xl space-y-4', focusMode && 'max-w-4xl space-y-6')}>
+  1006→        {hasOlderMessages && (
+  1007→          <div className="flex justify-center pb-1">
+  1008→            <button
+  1009→              type="button"
+  1010→              onClick={() => void loadOlderMessages()}
+  1011→              disabled={olderMessagesLoading}
+  1012→              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-emerald/15 bg-white/65 px-3.5 py-2 text-t12 font-medium text-emerald-deep shadow-[0_2px_10px_rgba(42,36,32,0.03)] transition-colors duration-150 hover:bg-white disabled:opacity-60"
+  1013→            >
+  1014→              {olderMessagesLoading
+  1015→                ? <span className="astro-chat-orbit astro-chat-orbit-sm" aria-hidden="true"><span /></span>
+  1016→                : <Icon name={olderMessagesError ? 'refresh' : 'chevron-up'} size={14} />}
+  1017→              {olderMessagesLoading
+  1018→                ? t('acharya.loadingOlderMessages')
+  1019→                : olderMessagesError ? t('common.retry') : t('acharya.loadOlderMessages')}
+  1020→            </button>
+  1021→          </div>
+  1022→        )}
+  1023→
+  1024→        {fromCache && visibleMessages.length > 0 && (
+  1025→          <p
+  1026→            className="text-center text-t12 text-muted-foreground/80"
+  1027→            role="status"
+  1028→            data-testid="acharya-cached-badge"
+  1029→          >
+  1030→            {t('acharya.savedOnDevice')}
+  1031→          </p>
+  1032→        )}
+  1033→        {visibleMessages.length === 0 && (conversationLoading || chatOpening) && (
+  1034→          <div className="flex min-h-[38vh] flex-col items-center justify-center gap-3 px-4 text-center" role="status" aria-live="polite">
+  1035→            <div className="astro-chat-orbit" aria-hidden="true"><span /></div>
+  1036→            <p className="text-t12 text-muted-foreground">{t('acharya.loadingConversation')}</p>
+  1037→          </div>
+  1038→        )}
+  1039→
+  1040→        {visibleMessages.length === 0 && !conversationLoading && !chatOpening && (
+  1041→          <div className="text-center px-4 pt-6 sm:pt-10">
+  1042→            <AcharyaAvatar size={focusMode ? 84 : 96} className="mx-auto mb-3" />
+  1043→            <p className={cn('text-t14 text-charcoal/80 leading-relaxed max-w-md mx-auto', focusMode && 'text-[15px] sm:text-base')}>{chart ? t('acharya.welcome') : t('acharya.needChart')}</p>
+  1044→            {chart && (
+  1045→              <div className="mt-5 flex flex-wrap justify-center gap-2">
+  1046→                {SUGGESTION_KEYS.map((k) => (
+  1047→                  <button
+  1048→                    key={k}
+  1049→                    type="button"
+  1050→                    onClick={() => ask(t(k))}
+  1051→                    className="tap-sm inline-flex min-h-[44px] items-center rounded-full border border-emerald/30 bg-gradient-to-r from-white/70 to-emerald-soft/70 px-4 py-2 text-t12 font-medium text-emerald-deep shadow-[0_4px_14px_rgba(42,36,32,0.04)] hover:border-emerald/55 hover:from-white/90 hover:to-emerald-soft transition-colors duration-200"
+  1052→                  >
+  1053→                    {t(k)}
+  1054→                  </button>
+  1055→                ))}
+  1056→              </div>
+  1057→            )}
+  1058→          </div>
+  1059→        )}
+  1060→
+  1061→        <AnimatePresence initial={false}>
+  1062→          {visibleMessages.map((m) => (
+  1063→            <MessageRow
+  1064→              key={m.id}
+  1065→              message={m}
+  1066→              focusMode={focusMode}
+  1067→              audioMsgId={audioMsgId}
+  1068→              audioLoadingId={audioLoadingId}
+  1069→              locale={i18n.language === 'hi' ? 'hi-IN' : 'en-IN'}
+  1070→              translate={translate}
+  1071→              onListen={handleListen}
+  1072→              onViewJournal={handleViewJournal}
+  1073→              saved={savedInsights.some((item) => item.content === m.content)}
+  1074→              onToggleSave={toggleSavedInsight}
+  1075→            />
+  1076→          ))}
+  1077→        </AnimatePresence>
+  1078→
+  1079→        {loading && !visibleMessages.some((m) => m.streaming) && (
+  1080→          <mot.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2.5">
+  1081→            <AcharyaAvatar size={30} className="shrink-0 hidden sm:block" />
+  1082→            <div className="glass glass-tint-emerald rounded-2xl rounded-bl-md px-4 py-3 flex items-center gap-2.5">
+  1083→              <div className="astro-chat-orbit astro-chat-orbit-sm" aria-hidden="true"><span /></div>
+  1084→              <p className="text-t12 text-muted-foreground">{t('acharya.thinking')}</p>
+  1085→            </div>
+  1086→          </mot.div>
+  1087→        )}
+  1088→
+  1089→        {loadError && chart && (
+  1090→          <p className="text-center text-t12 text-maroon">{t('acharya.retry')}</p>
+  1091→        )}
+  1092→        </div>
+  1093→      </div>
+  1094→
+  1095→      {/* Composer — ONE unified glass pill anchored above the nav: mic, field
+  1096→          and send live inside a single emerald-tinted bar (focus lights the
+  1097→          whole bar), and the voice status is integrated so nothing floats
+  1098→          detached above the typing line. */}
+  1099→      <form
+  1100→        onSubmit={(e) => {
+  1101→          e.preventDefault();
+  1102→          ask(input);
+  1103→        }}
+  1104→        className={cn('relative z-10 w-full shrink-0 pt-3', focusMode && 'mt-auto')}
+  1105→        style={{ paddingBottom: 'max(0.375rem, env(safe-area-inset-bottom))' }}
+  1106→      >
+  1107→        <div
+  1108→          className={cn(
+  1109→            'glass glass-tint-emerald mx-auto w-full max-w-3xl rounded-[26px] border-0 px-1.5 py-1.5',
+  1110→            'shadow-[0_12px_36px_rgba(42,36,32,0.12)] transition-all duration-250',
+  1111→            'focus-within:border-0 focus-within:shadow-[0_14px_40px_rgba(62,142,110,0.18)]',
+  1112→            (!chart || loading) && 'opacity-60',
+  1113→          )}
+  1114→        >
+  1115→          {/* live voice status — inside the bar, never detached */}
+  1116→          {voiceState !== 'idle' && (
+  1117→            <div className="flex items-center gap-2 px-3 pb-1 pt-1.5" aria-live="polite">
+  1118→              <span className={cn('inline-flex items-center gap-1.5 text-t12', voiceState === 'recording' ? 'text-violet-deep' : 'text-muted-foreground')}>
+  1119→                <Icon name={voiceState === 'recording' ? 'mic' : 'sparkle'} size={13} className={voiceState === 'recording' ? 'mic-pulse' : 'animate-spin-slow'} />
+  1120→                {voiceState === 'recording' ? t('acharya.listening') : t('acharya.transcribing')}
+  1121→              </span>
+  1122→              {voiceState === 'recording' && <span className="h-px flex-1 bg-gradient-to-r from-violet/40 via-emerald/30 to-transparent" />}
+  1123→            </div>
+  1124→          )}
+  1125→          {voiceError && <p className="px-3 pb-0.5 pt-1.5 text-t12 text-maroon">{t('acharya.micError')}</p>}
+  1126→          <div className="flex items-center gap-1">
+  1127→            {micSupported && (
+  1128→              <button
+  1129→                type="button"
+  1130→                onClick={() => void toggleMic()}
+  1131→                disabled={!chart || loading}
+  1132→                aria-label={t('acharya.micLabel')}
+  1133→                aria-pressed={voiceState === 'recording'}
+  1134→                className={cn(
+  1135→                  'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-all duration-250 active:scale-90 disabled:opacity-40',
+  1136→                  voiceState === 'recording'
+  1137→                    ? 'bg-violet text-white mic-ring-violet'
+  1138→                    : 'text-gold hover:bg-gold-faint/70',
+  1139→                )}
+  1140→              >
+  1141→                <Icon name={voiceState === 'recording' ? 'mic-off' : 'mic'} size={19} />
+  1142→              </button>
+  1143→            )}
+  1144→            <textarea
+  1145→              ref={inputRef}
+  1146→              rows={1}
+  1147→              value={input}
+  1148→              onChange={(e) => setInput(e.target.value.slice(0, 1400))}
+  1149→              onInput={(e) => {
+  1150→                const el = e.currentTarget;
+  1151→                el.style.height = 'auto';
+  1152→                el.style.height = `${Math.min(el.scrollHeight, 112)}px`;
+  1153→              }}
+  1154→              onKeyDown={(e) => {
+  1155→                if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+  1156→                  e.preventDefault();
+  1157→                  ask(input);
+  1158→                }
+  1159→              }}
+  1160→              placeholder={chart ? (voiceState === 'transcribing' ? t('acharya.voiceHint') : t('acharya.placeholder')) : t('acharya.needChart')}
+  1161→              disabled={!chart || loading}
+  1162→              className="astro-ai-textarea min-h-11 max-h-28 min-w-0 flex-1 bg-transparent px-1.5 py-2.5 text-t14 text-charcoal placeholder:text-muted-foreground/60 outline-none"
+  1163→              maxLength={1400}
+  1164→              aria-label={t('acharya.placeholder')}
+  1165→            />
+  1166→            <GoldButton type="submit" disabled={!input.trim() || loading || !chart} className="h-11 w-11 shrink-0 !px-0 hover:translate-y-0">
+  1167→              <Icon name="send" size={18} />
+  1168→              <span className="sr-only">{t('acharya.placeholder')}</span>
+  1169→            </GoldButton>
+  1170→          </div>
+  1171→        </div>
+  1172→      </form>
+  1173→    </div>
+  1174→
+  1175→    {typeof document !== 'undefined' && createPortal(
+  1176→      <AnimatePresence>
+  1177→        {historyOpen && (
+  1178→          <>
+  1179→          <mot.div
+  1180→            key="acharya-history-backdrop"
+  1181→            initial={{ opacity: 0 }}
+  1182→            animate={{ opacity: 1 }}
+  1183→            exit={{ opacity: 0 }}
+  1184→            transition={{ duration: 0.18 }}
+  1185→            className="fixed inset-0 z-[9998] bg-[#241f1b]/30"
+  1186→            aria-hidden="true"
+  1187→            onClick={() => setHistoryOpen(false)}
+  1188→          />
+  1189→          <mot.aside
+  1190→            key="acharya-history-drawer"
+  1191→            initial={{ x: '-100%', opacity: 0.98 }}
+  1192→            animate={{ x: 0, opacity: 1 }}
+  1193→            exit={{ x: '-100%', opacity: 0.98 }}
+  1194→            transition={{ duration: 0.27, ease: [0.22, 1, 0.36, 1] }}
+  1195→            className="fixed inset-0 z-[9999] flex h-[100dvh] w-full flex-col overflow-hidden bg-[#fbf8f0] shadow-[0_18px_50px_rgba(36,31,27,0.14)]"
+  1196→            style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))', paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+  1197→            role="dialog"
+  1198→            aria-modal="true"
+  1199→            aria-label={t('acharya.historyTitle')}
+  1200→          >
+  1201→            <div className="relative flex items-center gap-3 px-4 pb-4 pt-3">
+  1202→              <button
+  1203→                type="button"
+  1204→                onClick={() => setHistoryOpen(false)}
+  1205→                aria-label={t('common.back')}
+  1206→                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/65 text-emerald-deep transition-colors duration-150 hover:bg-white active:scale-95"
+  1207→              >
+  1208→                <Icon name="arrow-left" size={19} />
+  1209→              </button>
+  1210→              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald/15 to-gold/20 text-emerald-deep">
+  1211→                <Icon name="chat" size={20} />
+  1212→              </div>
+  1213→              <div className="min-w-0 flex-1">
+  1214→                <p className="font-serif text-t16 font-semibold text-emerald-grad">{t('acharya.historyTitle')}</p>
+  1215→                <p className="text-t12 text-muted-foreground">{t('acharya.history')}</p>
+  1216→              </div>
+  1217→              <button
+  1218→                type="button"
+  1219→                onClick={startNewChat}
+  1220→                disabled={loading}
+  1221→                aria-label={t('acharya.newChat')}
+  1222→                title={t('acharya.newChat')}
+  1223→                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald text-white shadow-[0_5px_15px_rgba(46,112,87,0.2)] transition-transform duration-200 active:scale-95 disabled:opacity-40"
+  1224→              >
+  1225→                <Icon name="plus" size={19} />
+  1226→              </button>
+  1227→            </div>
+  1228→
+  1229→            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain scroll-slim px-3 py-3">
+  1230→              {historyLoading && conversations.length === 0 && (
+  1231→                <div className="flex flex-col items-center gap-3 px-5 py-10 text-center" role="status" aria-live="polite">
+  1232→                  <div className="astro-chat-orbit" aria-hidden="true"><span /></div>
+  1233→                  <p className="text-t12 text-muted-foreground">{t('acharya.historyLoading')}</p>
+  1234→                </div>
+  1235→              )}
+  1236→
+  1237→              {historyError && (
+  1238→                <div className="mx-1 mb-3 rounded-2xl border border-rose/20 bg-rose/5 px-3 py-3 text-t12 text-maroon">
+  1239→                  <p>{t('acharya.historyError')}</p>
+  1240→                  <button type="button" onClick={() => void loadConversations(false)} disabled={historyLoading} className="mt-2 font-semibold underline underline-offset-2 disabled:opacity-50">
+  1241→                    {t('common.retry')}
+  1242→                  </button>
+  1243→                </div>
+  1244→              )}
+  1245→
+  1246→              {!historyLoading && conversations.length === 0 && !historyError && (
+  1247→                <div className="px-4 py-10 text-center">
+  1248→                  <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-[20px] bg-gradient-to-br from-white to-gold/10 text-gold">
+  1249→                    <Icon name="lotus" size={25} />
+  1250→                  </div>
+  1251→                  <p className="text-t14 font-semibold text-charcoal">{t('acharya.noHistory')}</p>
+  1252→                  <p className="mt-1.5 text-t12 leading-relaxed text-muted-foreground">{t('acharya.noHistoryHint')}</p>
+  1253→                </div>
+  1254→              )}
+  1255→
+  1256→              {(['today', 'yesterday', 'older'] as const).map((group) => groupedConversations[group].length > 0 && (
+  1257→                <section key={group} className="mb-4">
+  1258→                  <h3 className="px-2 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/80">{t(`acharya.${group}`)}</h3>
+  1259→                  <div className="space-y-1">
+  1260→                    {groupedConversations[group].map((item) => (
+  1261→                      <button
+  1262→                        key={item.id}
+  1263→                        type="button"
+  1264→                        onClick={() => selectConversation(item)}
+  1265→                        disabled={loading || requestLockRef.current}
+  1266→                        className={cn(
+  1267→                          'group flex w-full items-start gap-2.5 rounded-2xl px-3 py-3 text-left transition-colors duration-150 active:scale-[0.99] disabled:opacity-50',
+  1268→                          conversationId === item.id
+  1269→                            ? 'bg-emerald-soft/75'
+  1270→                            : 'hover:bg-white/75',
+  1271→                        )}
+  1272→                      >
+  1273→                        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/80 text-emerald-deep shadow-[inset_0_0_0_1px_rgba(46,112,87,0.08)]">
+  1274→                          <Icon name="chat" size={15} />
+  1275→                        </span>
+  1276→                        <span className="min-w-0 flex-1">
+  1277→                          <span className="block truncate text-t13 font-semibold text-charcoal">{item.title || t('acharya.history')}</span>
+  1278→                          <span className="mt-1 block truncate text-t12 leading-relaxed text-muted-foreground">{item.preview}</span>
+  1279→                        </span>
+  1280→                        <Icon name="chevron-right" size={14} className="mt-1 shrink-0 text-muted-foreground/50 transition-transform duration-150 group-hover:translate-x-0.5" />
+  1281→                      </button>
+  1282→                    ))}
+  1283→                  </div>
+  1284→                </section>
+  1285→              ))}
+  1286→
+  1287→              {historyCursor && (
+  1288→                <button
+  1289→                  type="button"
+  1290→                  onClick={() => void loadConversations(true)}
+  1291→                  disabled={historyLoading}
+  1292→                  className="mx-1 mt-1 flex min-h-11 w-[calc(100%-0.5rem)] items-center justify-center gap-2 rounded-xl bg-white/65 px-3 text-t12 font-semibold text-emerald-deep transition-colors duration-150 hover:bg-white disabled:opacity-50"
+  1293→                >
+  1294→                  {historyLoading ? <span className="astro-chat-orbit astro-chat-orbit-sm" aria-hidden="true"><span /></span> : <Icon name="chevron-down" size={14} />}
+  1295→                  {t('acharya.loadOlder')}
+  1296→                </button>
+  1297→              )}
+  1298→            </div>
+  1299→          </mot.aside>
+  1300→          </>
+  1301→        )}
+  1302→      </AnimatePresence>,
+  1303→      document.body,
+  1304→    )}
+  1305→    </>
+  1306→  );
+  1307→}
+  1308→

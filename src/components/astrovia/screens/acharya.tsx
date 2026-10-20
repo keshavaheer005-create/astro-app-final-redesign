@@ -109,7 +109,6 @@ const SUGGESTION_KEYS = ['acharya.suggested1', 'acharya.suggested2', 'acharya.su
 
 interface MessageRowProps {
   message: Msg;
-  focusMode: boolean;
   audioMsgId: string | null;
   audioLoadingId: string | null;
   locale: string;
@@ -122,7 +121,6 @@ interface MessageRowProps {
 
 const MessageRow = React.memo(function MessageRow({
   message: m,
-  focusMode,
   audioMsgId,
   audioLoadingId,
   locale,
@@ -140,11 +138,10 @@ const MessageRow = React.memo(function MessageRow({
       className={cn('flex gap-2.5', m.role === 'user' ? 'justify-end' : 'justify-start')}
     >
       {m.role === 'assistant' && <AcharyaAvatar size={30} className="shrink-0 mt-1 hidden sm:block" />}
-      <div className={cn('min-w-0', focusMode ? 'max-w-[96%] sm:max-w-[88%]' : 'max-w-[85%] sm:max-w-[75%]')}>
+      <div className="min-w-0 max-w-[85%] sm:max-w-[75%]">
         <div
           className={cn(
-            'rounded-2xl px-4 py-3 leading-relaxed',
-            focusMode ? 'text-[15px] sm:text-base sm:px-5 sm:py-4' : 'text-t14',
+            'rounded-2xl px-4 py-3 leading-relaxed text-t14',
             m.role === 'user'
               ? m.journalRef
                 ? 'gold-grad text-charcoal rounded-br-md shadow-[0_2px_10px_rgba(201,162,39,0.2)] ring-1 ring-charcoal/10'
@@ -229,7 +226,6 @@ export function AcharyaScreen() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [conversationLoading, setConversationLoading] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [focusMode, setFocusMode] = useState(false);
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState(false);
@@ -766,7 +762,6 @@ export function AcharyaScreen() {
     setLoadError(false);
     setConversationLoading(false);
     setHistoryOpen(false);
-    setFocusMode(false);
     setTimeout(() => inputRef.current?.focus(), 80);
   }, [user?.id, activeChartId, loading, conversationId]);
 
@@ -797,22 +792,20 @@ export function AcharyaScreen() {
     setFromCache(false);
     setLoadError(false);
     setHistoryOpen(false);
-    setFocusMode(true);
     setInput('');
     if (inputRef.current) inputRef.current.style.height = 'auto';
   }, [user?.id, activeChartId, loading, conversationId]);
 
-  // When a drawer or focus-reader is open, Android Back closes the topmost
-  // layer first. The native listener is registered only while needed, so normal
-  // Back behaviour remains untouched everywhere else in the app.
+  // When the history drawer is open, Android Back closes it first. The native
+  // listener is registered only while needed, so normal Back behaviour remains
+  // untouched everywhere else in the app.
   useEffect(() => {
-    if (!isNative() || (!historyOpen && !focusMode)) return;
+    if (!isNative() || !historyOpen) return;
     let cancelled = false;
     let listener: { remove: () => Promise<void> } | null = null;
     void import('@capacitor/app')
       .then(({ App }) => App.addListener('backButton', () => {
-        if (historyOpen) setHistoryOpen(false);
-        else if (focusMode) setFocusMode(false);
+        setHistoryOpen(false);
       }))
       .then((handle) => {
         if (cancelled) void handle.remove();
@@ -823,24 +816,22 @@ export function AcharyaScreen() {
       cancelled = true;
       if (listener) void listener.remove();
     };
-  }, [historyOpen, focusMode]);
+  }, [historyOpen]);
 
   useEffect(() => {
-    if (!historyOpen && !focusMode) return;
+    if (!historyOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
-      if (historyOpen) setHistoryOpen(false);
-      else if (focusMode) setFocusMode(false);
+      setHistoryOpen(false);
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [historyOpen, focusMode]);
+  }, [historyOpen]);
 
-  // Full-screen history and focus reading take over the viewport: lock the
-  // background scroll and hide the persistent app navigation until they close.
-  const fullScreenChat = historyOpen || focusMode;
+  // The full-screen history drawer takes over the viewport: lock the background
+  // scroll while it is open.
   useEffect(() => {
-    if (!fullScreenChat) return;
+    if (!historyOpen) return;
     const previousOverflow = document.body.style.overflow;
     document.body.classList.add('astrovia-chat-fullscreen');
     document.body.style.overflow = 'hidden';
@@ -848,7 +839,7 @@ export function AcharyaScreen() {
       document.body.classList.remove('astrovia-chat-fullscreen');
       document.body.style.overflow = previousOverflow;
     };
-  }, [fullScreenChat]);
+  }, [historyOpen]);
 
   const micSupported = isNative() || (typeof navigator !== 'undefined' && !!navigator.mediaDevices && typeof MediaRecorder !== 'undefined');
 
@@ -966,52 +957,28 @@ export function AcharyaScreen() {
 
   return (
     <>
-    <div className={cn(
-      'flex flex-col text-charcoal',
-      focusMode
-        ? 'fixed inset-0 z-[9997] h-[100dvh] min-h-0 max-h-[100dvh] w-screen max-w-full overflow-hidden bg-cream px-3 pt-[max(0.5rem,env(safe-area-inset-top))]'
-        : 'h-[calc(100dvh-8rem-env(safe-area-inset-bottom))] lg:h-[calc(100dvh-4.5rem)]',
-    )} data-testid="acharya-chat-shell">
-      {/* Reading-mode atmosphere: an old conversation must keep the app's own
-          premium background (mandala line-art + emerald gradient fields), not a
-          flat cream sheet. Rendered as a negative-z group inside this overlay's
-          stacking context, so it sits above the overlay base but below every
-          message/header/composer layer without touching their z-indexes. */}
-      {focusMode && (
-        <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden="true">
-          <ChakraBackdrop />
-          <ScreenGradient tone="emerald" />
-        </div>
-      )}
-      {/* Premium AI header: subtle layered colour, clear chat controls, no heavy blur. */}
-      <div className={cn(
-        'glass glass-tint-emerald bar-texture rounded-[22px] px-3 sm:px-4 py-2.5 flex items-center gap-2.5 shrink-0 relative overflow-hidden',
-        focusMode && 'rounded-[20px]',
-      )}>
+    <div
+      className="flex h-[calc(100dvh-8rem-env(safe-area-inset-bottom))] flex-col text-charcoal lg:h-[calc(100dvh-4.5rem)]"
+      data-testid="acharya-chat-shell"
+    >
+      {/* Premium AI header: subtle layered colour, clear chat controls, no heavy blur.
+          Old conversations open in THIS same window — identical background, header
+          and composer placement as the current chat (no separate reading overlay). */}
+      <div className="glass glass-tint-emerald bar-texture rounded-[22px] px-3 sm:px-4 py-2.5 flex items-center gap-2.5 shrink-0 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-emerald/10 via-transparent to-gold/10" aria-hidden="true" />
         <button
           type="button"
-          onClick={() => focusMode ? setFocusMode(false) : openHistory()}
-          aria-label={focusMode ? t('acharya.exitFocus') : t('acharya.history')}
+          onClick={openHistory}
+          aria-label={t('acharya.history')}
+          title={t('acharya.history')}
           className="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/45 text-emerald-deep transition-colors duration-200 hover:bg-white/75 active:scale-95"
         >
-          <Icon name={focusMode ? 'arrow-left' : 'list'} size={19} />
+          <Icon name="list" size={19} />
         </button>
-        {focusMode && (
-          <button
-            type="button"
-            onClick={openHistory}
-            aria-label={t('acharya.history')}
-            title={t('acharya.history')}
-            className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/40 text-emerald-deep transition-colors duration-200 hover:bg-white/75 active:scale-95"
-          >
-            <Icon name="list" size={17} />
-          </button>
-        )}
-        <AcharyaAvatar size={focusMode ? 38 : 42} className="relative shrink-0" />
+        <AcharyaAvatar size={42} className="relative shrink-0" />
         <div className="flex-1 min-w-0 relative">
           <p className="font-serif text-t15 sm:text-t16 font-semibold text-emerald-grad truncate">
-            {focusMode ? (activeConversationTitle || t('acharya.historyTitle')) : t('acharya.title')}
+            {activeConversationTitle || t('acharya.title')}
           </p>
           <p className="text-t12 text-muted-foreground flex items-center gap-1.5 truncate">
             <span className="inline-block w-1.5 h-1.5 shrink-0 rounded-full bg-violet" />
@@ -1038,9 +1005,9 @@ export function AcharyaScreen() {
           const el = event.currentTarget;
           atBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
         }}
-        className={cn('min-h-0 flex-[1_1_0%] overflow-y-auto overscroll-contain scroll-slim px-1 py-4', focusMode && 'w-full px-1 sm:px-4 sm:py-6')}
+        className="min-h-0 flex-[1_1_0%] overflow-y-auto overscroll-contain scroll-slim px-1 py-4"
       >
-        <div className={cn('mx-auto w-full max-w-3xl space-y-4', focusMode && 'max-w-4xl space-y-6')}>
+        <div className="mx-auto w-full max-w-3xl space-y-4">
         {hasOlderMessages && (
           <div className="flex justify-center pb-1">
             <button
@@ -1077,8 +1044,8 @@ export function AcharyaScreen() {
 
         {visibleMessages.length === 0 && !conversationLoading && !chatOpening && (
           <div className="text-center px-4 pt-6 sm:pt-10">
-            <AcharyaAvatar size={focusMode ? 84 : 96} className="mx-auto mb-3" />
-            <p className={cn('text-t14 text-charcoal/80 leading-relaxed max-w-md mx-auto', focusMode && 'text-[15px] sm:text-base')}>{chart ? t('acharya.welcome') : t('acharya.needChart')}</p>
+            <AcharyaAvatar size={96} className="mx-auto mb-3" />
+            <p className="text-t14 text-charcoal/80 leading-relaxed max-w-md mx-auto">{chart ? t('acharya.welcome') : t('acharya.needChart')}</p>
             {chart && (
               <div className="mt-5 flex flex-wrap justify-center gap-2">
                 {SUGGESTION_KEYS.map((k) => (
@@ -1101,7 +1068,6 @@ export function AcharyaScreen() {
             <MessageRow
               key={m.id}
               message={m}
-              focusMode={focusMode}
               audioMsgId={audioMsgId}
               audioLoadingId={audioLoadingId}
               locale={i18n.language === 'hi' ? 'hi-IN' : 'en-IN'}
@@ -1139,7 +1105,7 @@ export function AcharyaScreen() {
           e.preventDefault();
           ask(input);
         }}
-        className={cn('relative z-10 w-full shrink-0 pt-3', focusMode && 'mt-auto')}
+        className="relative z-10 w-full shrink-0 pt-3"
         style={{ paddingBottom: 'max(0.375rem, env(safe-area-inset-bottom))' }}
       >
         <div

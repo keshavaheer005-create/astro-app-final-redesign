@@ -1,0 +1,648 @@
+    55→    84→    84→
+    56→    85→    85→Before making changes, summarize:
+    57→    86→    86→
+    58→    87→    87→1. What is already working well.
+    59→    88→    88→2. What visual inconsistencies exist.
+    60→    89→    89→3. What functional bugs or interaction glitches exist.
+    61→    90→    90→4. What parts of the design system are inconsistent.
+    62→    91→    91→5. Which screens have the largest quality gaps.
+    63→    92→    92→6. What might be affecting performance.
+    64→    93→    93→7. Which fixes are low risk and which require extra caution.
+    65→    94→    94→8. Which files and components are likely responsible for each issue.
+    66→    95→    95→
+    67→    96→    96→Prioritize actual, observed problems over speculative redesign ideas.
+    68→    97→    97→
+    69→    98→    98→Then create an ordered implementation plan and begin executing it in controlled stages. Do not stop after producing a report if the code can be modified and tested in the available environment.
+    70→    99→    99→
+    71→   100→   100→---
+    72→   101→   101→
+    73→   102→   102→## 3. Preserve the Existing Brand and Design Identity
+    74→   103→   103→
+    75→   104→   104→My app's core design direction is already premium. Your job is to strengthen its consistency, not make it look like a different application.
+    76→   105→   105→
+    77→   106→   106→The visual reference should be the existing implementation, including its established colors, typography, layouts, Liquid Glass effects, and overall atmosphere.
+    78→   107→   107→
+    79→   108→   108→Do not impose an unrelated design system on top of it.
+    80→   109→   109→
+    81→   110→   110→### 3.1 Discover the actual theme
+    82→   111→   111→
+    83→   112→   112→The known brand palette includes:
+    84→   113→   113→
+    85→   114→   114→- **Gold:** the principal brand color.
+    86→   115→   115→- **White:** a foundational surface and contrast color.
+    87→   116→   116→- **Rose or red:** an existing supporting accent.
+    88→   117→   117→- **Burgundy:** an existing deeper accent.
+    89→   118→   118→- **Emerald or green:** an existing supporting accent.
+    90→   119→   119→
+    91→   120→   120→There may be another established color that I have not recalled. Find it by inspecting the actual design tokens, source styles, gradients, icons, screens, and existing components.
+    92→   121→   121→
+    93→   122→   122→Do not invent an additional brand color just to complete the palette.
+    94→   123→   123→
+    95→   124→   124→Determine which colors are already being used, what role each color serves, and which screens or tabs they belong to.
+    96→   125→   125→
+    97→   126→   126→Create a color-usage map based on the existing implementation.
+    98→   127→   127→
+    99→   128→   128→For example, a rose-oriented tab may use a rose-toned accent, a burgundy-oriented feature may use a restrained burgundy treatment, and an emerald-oriented feature may use an emerald treatment. However, make these associations only when they match the existing application.
+   100→   129→   129→
+   101→   130→   130→Gold should remain an important part of the overall brand identity without being indiscriminately applied to every element.
+   102→   131→   131→
+   103→   132→   132→### 3.2 Establish a consistent token system
+   104→   133→   133→
+   105→   134→   134→If the existing application already has good design tokens, preserve and improve them rather than replacing them unnecessarily.
+   106→   135→   135→
+   107→   136→   136→Centralize or rationalize values where appropriate for:
+   108→   137→   137→
+   109→   138→   138→- Primary and secondary colors.
+   110→   139→   139→- Brand accent colors.
+   111→   140→   140→- Surface colors and backgrounds.
+   112→   141→   141→- Gradient definitions.
+   113→   142→   142→- Typography and text hierarchy.
+   114→   143→   143→- Spacing.
+   115→   144→   144→- Corner radii.
+   116→   145→   145→- Shadows and elevation.
+   117→   146→   146→- Transparency and blur.
+   118→   147→   147→- Transitions and animation durations.
+   119→   148→   148→- Interactive states.
+   120→   149→   149→- Focus and accessibility treatments.
+   121→   150→   150→
+   122→   151→   151→Remove conflicting or redundant values when doing so is safe.
+   123→   152→   152→
+   124→   153→   153→Use semantic tokens for reusable patterns, such as primary surfaces, glass surfaces, muted text, subtle highlights, interactive controls, and feature-specific accents.
+   125→   154→   154→
+   126→   155→   155→The goal is consistency and easier maintenance, not adding an unnecessary abstraction layer.
+   127→   156→   156→
+   128→   157→   157→---
+   129→   158→   158→
+   130→   159→   159→## 4. Premium Surface Design: Borderless, Seamless, and Refined
+   131→   160→   160→
+   132→   161→   161→One of the most important requirements is improving how cards, boxes, panels, and content groups look throughout the application.
+   133→   162→   162→
+   134→   163→   163→Some cards or boxes may currently appear too ordinary, outlined, harsh, separated, or visually disconnected from the rest of the interface.
+   135→   164→   164→
+   136→   165→   165→Inspect them individually and improve them where necessary.
+   137→   166→   166→
+   138→   167→   167→### 4.1 Eliminate unnecessary visible card borders
+   139→   168→   168→
+   140→   169→   169→For ordinary content cards and panels, the default design direction should be **seamless and visually borderless**, inspired by high-quality Apple interface design.
+   141→   170→   170→
+   142→   171→   171→Where the existing design uses or would benefit from a borderless treatment:
+   143→   172→   172→
+   144→   173→   173→- Remove unnecessary visible one-pixel outlines.
+   145→   174→   174→- Avoid default gray borders around every card.
+   146→   175→   175→- Avoid harsh separators that fragment the interface.
+   147→   176→   176→- Create depth with carefully controlled surfaces, soft gradients, subtle shadows, and lighting.
+   148→   177→   177→- Use spacing and visual grouping to communicate structure.
+   149→   178→   178→- Maintain sufficient contrast between content and its surrounding background.
+   150→   179→   179→- Ensure neighboring surfaces blend naturally into the overall interface.
+   151→   180→   180→
+   152→   181→   181→Do not simply remove all borders mechanically. Preserve separators, focus rings, selected states, and other outlines when they are necessary for usability, accessibility, or clear interaction feedback.
+   153→   182→   182→
+   154→   183→   183→The objective is to remove visual clutter, not remove useful interface information.
+   155→   184→   184→
+   156→   185→   185→### 4.2 Improve surface quality
+   157→   186→   186→
+   158→   187→   187→Examine the existing cards and determine the most appropriate treatment for each.
+   159→   188→   188→
+   160→   189→   189→Potential treatments include:
+   161→   190→   190→
+   162→   191→   191→- Soft, low-contrast surface gradients.
+   163→   192→   192→- Subtle gold-tinted highlights.
+   164→   193→   193→- Carefully controlled translucent surfaces.
+   165→   194→   194→- Gentle ambient shadows.
+   166→   195→   195→- Refined edge lighting where appropriate.
+   167→   196→   196→- Subtle differences in surface brightness.
+   168→   197→   197→- Better corner radii and proportional padding.
+   169→   198→   198→- Cleaner relationships between cards and backgrounds.
+   170→   199→   199→- More deliberate spacing between grouped elements.
+   171→   200→   200→
+   172→   201→   201→Choose treatments based on the existing component, its purpose, and the active feature's theme.
+   173→   202→   202→
+   174→   203→   203→Do not apply every visual effect to every component.
+   175→   204→   204→
+   176→   205→   205→Some components should remain visually quiet. Others may deserve a more expressive appearance.
+   177→   206→   206→
+   178→   207→   207→The overall interface should feel like a coherent premium product rather than a collection of independently decorated cards.
+   179→   208→   208→
+   180→   209→   209→### 4.3 Apply gradients with restraint
+   181→   210→   210→
+   182→   211→   211→Use gradients derived from the established brand palette.
+   183→   212→   212→
+   184→   213→   213→For example, gold-to-warm-white, subtle gold-to-transparent, or appropriate feature-specific accent gradients may work well for certain components if they fit the existing visual identity.
+   185→   214→   214→
+   186→   215→   215→Use rose, burgundy, or emerald accents where the feature or tab already uses those colors.
+   187→   216→   216→
+   188→   217→   217→Gradients should be smooth, sophisticated, and controlled. Avoid overly saturated fills, rainbow effects, excessive multicolor gradients, or combinations that make the interface look cheap.
+   189→   218→   218→
+   190→   219→   219→Do not give every box the same strong gold gradient.
+   191→   220→   220→
+   192→   221→   221→Vary the treatment according to component hierarchy, existing theme, content importance, and the page background.
+   193→   222→   222→
+   194→   223→   223→Gradients should enhance the app's design, not compete with its content.
+   195→   224→   224→
+   196→   225→   225→### 4.4 Preserve visual hierarchy
+   197→   226→   226→
+   198→   227→   227→Keep the distinction between primary actions, secondary actions, supporting information, and background content clear.
+   199→   228→   228→
+   200→   229→   229→Do not make every button, card, or heading equally prominent.
+   201→   230→   230→
+   202→   231→   231→Use stronger treatments for important actions and quieter treatments for supporting elements.
+   203→   232→   232→
+   204→   233→   233→The final result should feel premium because of its restraint, precision, consistency, and attention to detail—not because every component has multiple effects.
+   205→   234→   234→
+   206→   235→   235→---
+   207→   236→   236→
+   208→   237→   237→## 5. Liquid Glass and Existing Premium Effects
+   209→   238→   238→
+   210→   239→   239→My application already uses Liquid Glass-style styling and smooth transitions in certain areas.
+   211→   240→   240→
+   212→   241→   241→Preserve and refine these existing effects.
+   213→   242→   242→
+   214→   243→   243→Do not remove them merely to make implementation easier. Do not duplicate the effect unnecessarily if the application already implements it correctly.
+   215→   244→   244→
+   216→   245→   245→First understand the existing Liquid Glass technique and identify which components use it.
+   217→   246→   246→
+   218→   247→   247→Examine:
+   219→   248→   248→
+   220→   249→   249→- Transparency.
+   221→   250→   250→- Background blur.
+   222→   251→   251→- Gradient layers.
+   223→   252→   252→- Highlights and reflections.
+   224→   253→   253→- Surface depth.
+   225→   254→   254→- Shadows.
+   226→   255→   255→- Corner clipping.
+   227→   256→   256→- Borders and edge lighting.
+   228→   257→   257→- Layering order.
+   229→   258→   258→- Interaction states.
+   230→   259→   259→- Animation and transition behavior.
+   231→   260→   260→
+   232→   261→   261→Where the current implementation is inconsistent, bring it into alignment with the established design.
+   233→   262→   262→
+   234→   263→   263→Make sure the effect looks appropriate over different backgrounds and content, including chat screens, overlays, menus, and scrolling interfaces.
+   235→   264→   264→
+   236→   265→   265→### Performance requirements
+   237→   266→   266→
+   238→   267→   267→Liquid Glass must not become an excuse for expensive rendering.
+   239→   268→   268→
+   240→   269→   269→Avoid:
+   241→   270→   270→
+   242→   271→   271→- Excessive nested backdrop filters.
+   243→   272→   272→- Large areas of continuously animated blur.
+   244→   273→   273→- Unnecessary overlapping translucent layers.
+   245→   274→   274→- Repeated expensive CSS filters.
+   246→   275→   275→- Animations that trigger layout recalculation on every frame.
+   247→   276→   276→- Re-rendering large components because of minor interaction changes.
+   248→   277→   277→- Effects that make text difficult to read.
+   249→   278→   278→
+   250→   279→   279→Prefer efficient CSS transitions, transforms, opacity changes, and appropriately scoped effects.
+   251→   280→   280→
+   252→   281→   281→Where blur is necessary, keep its area and intensity appropriate. Do not replace an important existing effect with an opaque surface without a compelling reason.
+   253→   282→   282→
+   254→   283→   283→If a particular effect causes measurable performance problems, investigate a more efficient implementation that preserves its essential appearance.
+   255→   284→   284→
+   256→   285→   285→---
+   257→   286→   286→
+   258→   287→   287→## 6. Audit and Fix Every Interaction and Transition
+   259→   288→   288→
+   260→   289→   289→Inspect the entire application for missing transitions, abrupt state changes, broken animations, laggy gestures, inconsistent button behavior, and other interaction glitches.
+   261→   290→   290→
+   262→   291→   291→The app should feel responsive, deliberate, and fluid.
+   263→   292→   292→
+   264→   293→   293→### 6.1 Buttons
+   265→   294→   294→
+   266→   295→   295→Inspect every interactive button, including:
+   267→   296→   296→
+   268→   297→   297→- Primary buttons.
+   269→   298→   298→- Secondary buttons.
+   270→   299→   299→- Icon-only buttons.
+   271→   300→   300→- Header controls.
+   272→   301→   301→- Tab controls.
+   273→   302→   302→- Chat send buttons.
+   274→   303→   303→- Menu triggers.
+   275→   304→   304→- Modal actions.
+   276→   305→   305→- Back and close buttons.
+   277→   306→   306→- Expand and collapse controls.
+   278→   307→   307→- Retry actions.
+   279→   308→   308→- Any custom Liquid Glass buttons.
+   280→   309→   309→
+   281→   310→   310→Ensure that each button has appropriate feedback.
+   282→   311→   311→
+   283→   312→   312→Where it fits the existing visual system, introduce or refine:
+   284→   313→   313→
+   285→   314→   314→- Smooth color or gradient changes.
+   286→   315→   315→- Small opacity or highlight changes.
+   287→   316→   316→- Subtle scale or surface-depth feedback.
+   288→   317→   317→- Consistent transition durations.
+   289→   318→   318→- Clear disabled states.
+   290→   319→   319→- Consistent loading states.
+   291→   320→   320→- Visible focus feedback where appropriate.
+   292→   321→   321→
+   293→   322→   322→Do not make interactions exaggerated or slow. The interface should feel immediate and refined.
+   294→   323→   323→
+   295→   324→   324→Ensure that transitions never prevent the action from running. Avoid unnecessary delays before navigation or API calls.
+   296→   325→   325→
+   297→   326→   326→Check that buttons cannot accidentally submit twice or trigger duplicate network requests when clicked repeatedly.
+   298→   327→   327→
+   299→   328→   328→### 6.2 Tabs and segmented controls
+   300→   329→   329→
+   301→   330→   330→Inspect every tab interface.
+   302→   331→   331→
+   303→   332→   332→Check for:
+   304→   333→   333→
+   305→   334→   334→- Incorrect active-tab styling.
+   306→   335→   335→- Abrupt transitions.
+   307→   336→   336→- Incorrect theme colors.
+   308→   337→   337→- Content appearing before the active state updates.
+   309→   338→   338→- Broken indicators.
+   310→   339→   339→- Horizontal overflow.
+   311→   340→   340→- Misaligned text or icons.
+   312→   341→   341→- Incorrect swipe behavior.
+   313→   342→   342→- State mismatch between tabs and displayed content.
+   314→   343→   343→
+   315→   344→   344→Use consistent animation behavior for active indicators, background changes, and content transitions.
+   316→   345→   345→
+   317→   346→   346→Keep the active state visually clear while maintaining the existing design.
+   318→   347→   347→
+   319→   348→   348→Do not add swipe navigation where it conflicts with horizontal scrolling or another intentional gesture.
+   320→   349→   349→
+   321→   350→   350→### 6.3 Page and panel transitions
+   322→   351→   351→
+   323→   352→   352→Inspect navigation between pages, cards, dialogs, bottom sheets, drawers, and expanded views.
+   324→   353→   353→
+   325→   354→   354→Use transitions appropriate to the original app.
+   326→   355→   355→
+   327→   356→   356→Improve abrupt or missing transitions when they make the app feel inconsistent, but preserve established motion patterns when they already work well.
+   328→   357→   357→
+   329→   358→   358→Avoid adding animation to every change simply because animation is possible.
+   330→   359→   359→
+   331→   360→   360→Check the behavior of rapid navigation, repeated taps, browser history where applicable, and back-button handling on mobile.
+   332→   361→   361→
+   333→   362→   362→### 6.4 Swiping and touch gestures
+   334→   363→   363→
+   335→   364→   364→Explicitly test the areas where users can swipe or scroll.
+   336→   365→   365→
+   337→   366→   366→Investigate:
+   338→   367→   367→
+   339→   368→   368→- Swipes that do nothing.
+   340→   369→   369→- Accidental horizontal navigation.
+   341→   370→   370→- Scroll gestures captured by the wrong container.
+   342→   371→   371→- Touch targets that overlap.
+   343→   372→   372→- Elements that become stuck after a gesture.
+   344→   373→   373→- Menus that close unexpectedly.
+   345→   374→   374→- Gestures that conflict with input fields.
+   346→   375→   375→- Scroll locking after dialogs close.
+   347→   376→   376→- Unwanted page movement behind an overlay.
+   348→   377→   377→- Swipe actions that trigger more than once.
+   349→   378→   378→
+   350→   379→   379→Only preserve or improve intended gestures. Do not introduce new swipe behavior that changes the app's established navigation unexpectedly.
+   351→   380→   380→
+   352→   381→   381→### 6.5 Loading and feedback
+   353→   382→   382→
+   354→   383→   383→Loading states should feel integrated with the premium theme.
+   355→   384→   384→
+   356→   385→   385→Inspect spinners, skeletons, progress indicators, disabled actions, and asynchronous transitions.
+   357→   386→   386→
+   358→   387→   387→Avoid sudden layout shifts when content loads.
+   359→   388→   388→
+   360→   389→   389→When appropriate, retain the structure of the page while showing loading feedback. Do not show fake results before the actual response arrives.
+   361→   390→   390→
+   362→   391→   391→Use the established theme for these states rather than introducing generic, visually disconnected components.
+   363→   392→   392→
+   364→   393→   393→---
+   365→   394→   394→
+   366→   395→   395→## 7. High-Priority Investigation: Chat Interface and AI Input Components
+   367→   396→   396→
+   368→   397→   397→The chat interface needs special attention because I have noticed inconsistencies in this area.
+   369→   398→   398→
+   370→   399→   399→Inspect all chat-related components, including:
+   371→   400→   400→
+   372→   401→   401→- The main chat screen.
+   373→   402→   402→- The AI message composer or text input box.
+   374→   403→   403→- Send buttons.
+   375→   404→   404→- Input attachments or secondary controls, if present.
+   376→   405→   405→- Chat tabs and conversation navigation.
+   377→   406→   406→- The menu listing previous conversations.
+   378→   407→   407→- Individual conversation views.
+   379→   408→   408→- The transition between different conversations.
+   380→   409→   409→- Assistant and user message surfaces.
+   381→   410→   410→- Loading and response-generation states.
+   382→   411→   411→- Long messages and scrolling behavior.
+   383→   412→   412→- Empty conversations and first-message states.
+   384→   413→   413→- Any AI-related toolbar, menu, or overlay.
+   385→   414→   414→
+   386→   415→   415→### 7.1 Fix the old-chat background inconsistency
+   387→   416→   416→
+   388→   417→   417→There is a specific existing issue that must be investigated.
+   389→   418→   418→
+   390→   419→   419→When I open the menu containing other or previous chats and select an old conversation, that conversation sometimes displays a white background instead of the application's original background and premium styling.
+   391→   420→   420→
+   392→   421→   421→This is not merely a styling suggestion. Treat it as a potential bug that requires root-cause analysis.
+   393→   422→   422→
+   394→   423→   423→Investigate possible causes, including:
+   395→   424→   424→
+   396→   425→   425→- A separate chat route using the wrong layout.
+   397→   426→   426→- An incorrect background color or fallback style.
+   398→   427→   427→- A chat component that does not inherit the global theme.
+   399→   428→   428→- A missing or inconsistent CSS class.
+   400→   429→   429→- A higher-specificity style overriding the intended background.
+   401→   430→   430→- Inline styles overriding theme variables.
+   402→   431→   431→- Theme initialization occurring too late.
+   403→   432→   432→- Missing background styles during asynchronous rendering.
+   404→   433→   433→- A reused chat component retaining stale state.
+   405→   434→   434→- A route transition that renders the conversation outside the expected application shell.
+   406→   435→   435→- A light/dark theme mismatch.
+   407→   436→   436→- Conversation-loading logic that causes a visual flash.
+   408→   437→   437→- A component that receives different styling when loaded from chat history.
+   409→   438→   438→- Missing CSS or assets in a particular navigation path.
+   410→   439→   439→
+   411→   440→   440→These are hypotheses to investigate, not assumptions about the confirmed cause.
+   412→   441→   441→
+   413→   442→   442→Compare how a new conversation and an old conversation are rendered. Find the precise reason for the difference.
+   414→   443→   443→
+   415→   444→   444→**Fix the underlying cause instead of adding a temporary white-background override or applying a superficial patch to one chat screen.**
+   416→   445→   445→
+   417→   446→   446→Verify that:
+   418→   447→   447→
+   419→   448→   448→1. A new conversation displays the correct background.
+   420→   449→   449→2. An existing conversation displays the same appropriate application background.
+   421→   450→   450→3. Opening a conversation from chat history does not cause a white flash or unrelated theme.
+   422→   451→   451→4. Switching between several old conversations preserves consistent styling.
+   423→   452→   452→5. Going back to the chat list and reopening a conversation does not introduce visual regressions.
+   424→   453→   453→6. Loading, error, and empty states preserve the same visual theme.
+   425→   454→   454→7. The chat interface still works with real API data.
+   426→   455→   455→
+   427→   456→   456→If different conversation types are supposed to have different backgrounds, verify the original design rules before changing them. Do not erase a deliberate distinction by mistake.
+   428→   457→   457→
+   429→   458→   458→### 7.2 Refine the AI text composer
+   430→   459→   459→
+   431→   460→   460→Inspect the AI text box and its surrounding controls.
+   432→   461→   461→
+   433→   462→   462→Make it feel like a deliberate part of the premium product.
+   434→   463→   463→
+   435→   464→   464→Check:
+   436→   465→   465→
+   437→   466→   466→- Container shape and radius.
+   438→   467→   467→- Surface and gradient quality.
+   439→   468→   468→- Input text color.
+   440→   469→   469→- Placeholder color and contrast.
+   441→   470→   470→- Internal padding.
+   442→   471→   471→- Vertical alignment.
+   443→   472→   472→- Send-button placement.
+   444→   473→   473→- Icon sizing.
+   445→   474→   474→- Keyboard behavior.
+   446→   475→   475→- Multiline behavior.
+   447→   476→   476→- Focus and blur transitions.
+   448→   477→   477→- Disabled state.
+   449→   478→   478→- Sending state.
+   450→   479→   479→- Long-message scrolling.
+   451→   480→   480→- Small-screen responsiveness.
+   452→   481→   481→- Relationship with the background and nearby content.
+   453→   482→   482→- Behavior when the keyboard opens or closes.
+   454→   483→   483→
+   455→   484→   484→If the text box uses a glass surface, ensure the effect matches other glass components. It should not suddenly become opaque, outlined, or visually unrelated.
+   456→   485→   485→
+   457→   486→   486→Do not create a new composer design if the existing one only needs refinement.
+   458→   487→   487→
+   459→   488→   488→### 7.3 Refine chat history and menus
+   460→   489→   489→
+   461→   490→   490→Chat history menus and navigation panels must feel like part of the same application.
+   462→   491→   491→
+   463→   492→   492→Ensure that:
+   464→   493→   493→
+   465→   494→   494→- Backgrounds match the existing theme.
+   466→   495→   495→- Active and selected conversations have consistent styling.
+   467→   496→   496→- Text and icons use correct contrast.
+   468→   497→   497→- Hover, focus, pressed, and selected states are intentional.
+   469→   498→   498→- Dialogs and menus open and close smoothly.
+   470→   499→   499→- Scroll behavior works naturally.
+   471→   500→   500→- Long conversation names do not break the layout.
+   472→   501→   501→- Loading older conversations does not flash unrelated styles.
+   473→   502→   502→- Returning to the main chat view preserves the correct state and background.
+   474→   503→   503→
+   475→   504→   504→Correct any component that looks as if it belongs to a different website or a different theme.
+   476→   505→   505→
+   477→   506→   506→---
+   478→   507→   507→
+   479→   508→   508→## 8. Audit Every Screen for Visual Inconsistency
+   480→   509→   509→
+   481→   510→   510→Inspect the whole app—not only the chat area.
+   482→   511→   511→
+   483→   512→   512→For every screen, evaluate:
+   484→   513→   513→
+   485→   514→   514→### Layout
+   486→   515→   515→- Uneven or inconsistent padding.
+   487→   516→   516→- Misaligned components.
+   488→   517→   517→- Unnecessary vertical or horizontal gaps.
+   489→   518→   518→- Crowded content.
+   490→   519→   519→- Inconsistent component heights.
+   491→   520→   520→- Poorly balanced empty space.
+   492→   521→   521→- Unintended overflow.
+   493→   522→   522→- Misaligned headings and section content.
+   494→   523→   523→- Different layout patterns for components that should share a common structure.
+   495→   524→   524→
+   496→   525→   525→### Typography
+   497→   526→   526→- Different font weights for equivalent elements.
+   498→   527→   527→- Inconsistent heading scales.
+   499→   528→   528→- Poor line spacing.
+   500→   529→   529→- Text that wraps unexpectedly.
+   501→   530→   530→- Low-contrast secondary labels.
+   502→   531→   531→- Placeholder styles that differ from the rest of the app.
+   503→   532→   532→- Overly large or small text.
+   504→   533→   533→- Missing font loading or font fallback behavior.
+   505→   534→   534→
+   506→   535→   535→### Surfaces
+   507→   536→   536→- Cards that look too flat.
+   508→   537→   537→- Cards with unnecessarily visible outlines.
+   509→   538→   538→- Inconsistent corner radii.
+   510→   539→   539→- Shadows that are too strong.
+   511→   540→   540→- Abrupt background-color changes.
+   512→   541→   541→- Incorrect gradients.
+   513→   542→   542→- Components using incompatible glass effects.
+   514→   543→   543→- Content that appears detached from its background.
+   515→   544→   544→
+   516→   545→   545→### Colors
+   517→   546→   546→- Incorrect accent colors for a feature.
+   518→   547→   547→- Gold used too aggressively or inconsistently.
+   519→   548→   548→- Conflicting backgrounds.
+   520→   549→   549→- Unintended pure-white areas.
+   521→   550→   550→- Inconsistent text colors.
+   522→   551→   551→- Color differences between selected and unselected states.
+   523→   552→   552→- Accent colors that no longer match the existing theme.
+   524→   553→   553→
+   525→   554→   554→### Icons and controls
+   526→   555→   555→- Inconsistent icon size.
+   527→   556→   556→- Incorrect alignment.
+   528→   557→   557→- Uneven spacing between icons and text.
+   529→   558→   558→- Unusual button proportions.
+   530→   559→   559→- Missing feedback.
+   531→   560→   560→- Unclear disabled states.
+   532→   561→   561→- Inconsistent interaction styling.
+   533→   562→   562→
+   534→   563→   563→Fix verified inconsistencies systematically using shared components and tokens wherever possible.
+   535→   564→   564→
+   536→   565→   565→Avoid patching every screen separately if the problem comes from a shared component. However, do not force unrelated components to share styling merely to reduce the amount of code.
+   537→   566→   566→
+   538→   567→   567→---
+   539→   568→   568→
+   540→   569→   569→## 9. Responsive UI and Mobile WebView Compatibility
+   541→   570→   570→
+   542→   571→   571→The web app must remain reliable in the mobile WebView where users actually use it.
+   543→   572→   572→
+   544→   573→   573→Test and improve the following, as relevant to the current project:
+   545→   574→   574→
+   546→   575→   575→- Viewport dimensions and scaling.
+   547→   576→   576→- Safe areas and device insets.
+   548→   577→   577→- Fixed and sticky positioning.
+   549→   578→   578→- Header and bottom navigation placement.
+   550→   579→   579→- Virtual keyboard appearance and dismissal.
+   551→   580→   580→- Input focus and scrolling.
+   552→   581→   581→- Touch target dimensions.
+   553→   582→   582→- Nested scrolling.
+   554→   583→   583→- Horizontal overflow.
+   555→   584→   584→- Page scrolling behind dialogs.
+   556→   585→   585→- Overscroll behavior.
+   557→   586→   586→- Dynamic viewport height changes.
+   558→   587→   587→- Long pages and large responses.
+   559→   588→   588→- Modals near screen edges.
+   560→   589→   589→- Chat composer positioning.
+   561→   590→   590→- Rounded screen corners.
+   562→   591→   591→- Device rotation if supported by the current app.
+   563→   592→   592→
+   564→   593→   593→Be particularly careful with `100vh`, `position: fixed`, nested scroll containers, keyboard resizing, and mobile Safari or Android WebView differences if these patterns occur in the source.
+   565→   594→   594→
+   566→   595→   595→Do not apply global overflow restrictions or viewport changes without checking their effects on the entire application.
+   567→   596→   596→
+   568→   597→   597→The app must remain usable on narrower screens. Fix actual layout issues while retaining the original proportions and hierarchy.
+   569→   598→   598→
+   570→   599→   599→Do not treat desktop browser success as proof that the mobile WebView behaves correctly.
+   571→   600→   600→
+   572→   601→   601→---
+   573→   602→   602→
+   574→   603→   603→## 10. Performance Is a Core Requirement
+   575→   604→   604→
+   576→   605→   605→The visual refinement must not make the application slower.
+   577→   606→   606→
+   578→   607→   607→The app runs through an existing web frontend and mobile WebView, and its service is hosted on Render. Avoid adding unnecessary client rendering work, network traffic, heavy assets, libraries, or backend requests.
+   579→   608→   608→
+   580→   609→   609→Understand which work happens on the user's device and which happens on the server.
+   581→   610→   610→
+   582→   611→   611→Purely visual CSS effects generally affect client-side rendering; they should not be moved onto the backend merely because the service is hosted on Render. Nevertheless, unnecessary requests, oversized payloads, repeated API calls, server-side rendering regressions, or inefficient backend operations can affect overall responsiveness.
+   583→   612→   612→
+   584→   613→   613→### 10.1 Performance audit
+   585→   614→   614→
+   586→   615→   615→Investigate:
+   587→   616→   616→
+   588→   617→   617→- Slow screen transitions.
+   589→   618→   618→- Excessive component re-rendering.
+   590→   619→   619→- Long JavaScript tasks.
+   591→   620→   620→- Unnecessary event listeners.
+   592→   621→   621→- Repeated API requests.
+   593→   622→   622→- Duplicate network calls on navigation.
+   594→   623→   623→- Layout shifts.
+   595→   624→   624→- Excessive DOM complexity.
+   596→   625→   625→- Expensive filters and backdrop blur.
+   597→   626→   626→- Repeated animations.
+   598→   627→   627→- Memory leaks.
+   599→   628→   628→- Event handlers not cleaned up when components unmount.
+   600→   629→   629→- Large image or font assets.
+   601→   630→   630→- Unnecessary dependencies.
+   602→   631→   631→- Excessive timers, polling, or retry loops.
+   603→   632→   632→- Slow list rendering.
+   604→   633→   633→- Lag during scrolling or swiping.
+   605→   634→   634→- Slow keyboard and input interactions.
+   606→   635→   635→- Resource loading problems.
+   607→   636→   636→
+   608→   637→   637→Only claim a performance issue is confirmed when it is supported by profiling, measurements, or reproducible behavior.
+   609→   638→   638→
+   610→   639→   639→### 10.2 Optimize visual effects carefully
+   611→   640→   640→
+   612→   641→   641→When introducing or refining transitions and gradients:
+   613→   642→   642→
+   614→   643→   643→- Prefer transform and opacity animations when they reproduce the desired effect.
+   615→   644→   644→- Avoid animating properties that repeatedly trigger expensive layout calculations where possible.
+   616→   645→   645→- Avoid perpetual animations that offer no meaningful user benefit.
+   617→   646→   646→- Avoid adding multiple expensive blur layers to every card.
+   618→   647→   647→- Limit unnecessary repaint areas.
+   619→   648→   648→- Load fonts and assets efficiently.
+   620→   649→   649→- Avoid adding large animation libraries for minor effects.
+   621→   650→   650→- Respect reduced-motion preferences where supported.
+   622→   651→   651→- Keep touch interactions responsive during animations.
+   623→   652→   652→
+   624→   653→   653→Do not sacrifice a signature premium effect without first exploring an efficient implementation.
+   625→   654→   654→
+   626→   655→   655→### 10.3 Verify performance
+   627→   656→   656→
+   628→   657→   657→Use the available browser, device, and profiling tools to compare behavior before and after the changes.
+   629→   658→   658→
+   630→   659→   659→Check for regressions in:
+   631→   660→   660→
+   632→   661→   661→- Initial loading.
+   633→   662→   662→- Navigation.
+   634→   663→   663→- Scroll smoothness.
+   635→   664→   664→- Button response.
+   636→   665→   665→- Chat switching.
+   637→   666→   666→- Text input.
+   638→   667→   667→- Rendering large responses.
+   639→   668→   668→- API-related loading states.
+   640→   669→   669→
+   641→   670→   670→When supported, capture measurable before-and-after results. If the required profiling tools are unavailable, state that performance has not been conclusively measured.
+   642→   671→   671→
+   643→   672→   672→Do not assume that fewer lines of code necessarily means better performance.
+   644→   673→   673→
+   645→   674→   674→---
+   646→   675→   675→
+   647→   676→   676→## 11. Find and Fix Functional Bugs Without Rewriting the App
+   648→   677→   677→
+   649→   678→   678→Perform a complete debugging pass alongside the visual review.
+   650→   679→   679→
+   651→   680→   680→Inspect for:
+   652→   681→   681→
+   653→   682→   682→- JavaScript or framework exceptions.
+   654→   683→   683→- Console warnings with meaningful impact.
+   655→   684→   684→- CSS errors and unexpected overrides.
+   656→   685→   685→- Invalid component state transitions.
+   657→   686→   686→- Broken navigation.
+   658→   687→   687→- Buttons that do not work.
+   659→   688→   688→- Duplicate event handlers.
+   660→   689→   689→- Unhandled promises.
+   661→   690→   690→- Requests that fail silently.
+   662→   691→   691→- Invalid or incomplete API responses.
+   663→   692→   692→- Stale data after navigation.
+   664→   693→   693→- Incorrect loading-state transitions.
+   665→   694→   694→- Forms that submit multiple times.
+   666→   695→   695→- Unintended full-page refreshes.
+   667→   696→   696→- Menus that remain open.
+   668→   697→   697→- Overlays that block further interactions.
+   669→   698→   698→- Lost scroll position when it should be preserved.
+   670→   699→   699→- Race conditions between network requests.
+   671→   700→   700→- Components rendering stale state.
+   672→   701→   701→- Chat data appearing in the wrong conversation.
+   673→   702→   702→- Backgrounds or theme state changing after navigation.
+   674→   703→   703→- Inconsistent styling after returning from another screen.
+   675→   704→   704→
+   676→   705→   705→For each reproducible issue:
+   677→   706→   706→
+   678→   707→   707→1. Identify the affected screen or component.
+   679→   708→   708→2. Record how to reproduce the issue.
+   680→   709→   709→3. Find the probable root cause.
+   681→   710→   710→4. Confirm it with the available evidence.
+   682→   711→   711→5. Implement the smallest safe fix.
+   683→   712→   712→6. Retest the affected flow.
+   684→   713→   713→7. Test nearby screens and shared components for regressions.
+   685→   714→   714→
+   686→   715→   715→Do not indiscriminately refactor working systems just because you noticed an opportunity to change them.
+   687→   716→   716→
+   688→   717→   717→Prefer minimal, targeted, well-validated changes unless a deeper architectural problem makes a broader fix necessary.
+   689→   718→   718→
+   690→   719→   719→---
+   691→   720→   720→
+   692→   721→   721→## 12. Preserve the Existing Backend and Business Logic
+   693→   722→   722→
+   694→   723→   723→This task is primarily about frontend quality, UI consistency, interaction behavior, and WebView reliability.
+   695→   724→   724→
+   696→   725→   725→Do not change the backend architecture simply to implement styling improvements.
+   697→   726→   726→
+   698→   727→   727→Preserve the current API contract and all existing calculation logic. Do not move calculations into the frontend or replace server responses with demo data.
+   699→   728→   728→
+   700→   729→   729→Do not introduce additional API requests solely for decorative UI behavior.
+   701→
+   702→[showing lines 30-729 of 933; use offset=730 with limit to continue reading]
