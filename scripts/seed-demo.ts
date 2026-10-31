@@ -94,7 +94,13 @@ async function main() {
     });
   }
 
-  const dashaSnapshot = JSON.stringify({ mahaLord: 'Moon', antarLord: 'Mars', mahaStart: '2025-11-02', mahaEnd: '2027-11-02', moonSign: 'Cancer' });
+  const dashaSnapshot = JSON.stringify({
+    mahaLord: 'Moon',
+    antarLord: 'Saturn',
+    mahaStart: '2026-01-14',
+    mahaEnd: '2033-01-14',
+    moonSign: 'Cancer',
+  });
   const checkins = [
     { date: daysAgo(3).toISOString().slice(0, 10), moodScore: 3, energyScore: 3, note: 'Work talk pending, felt restless in the morning.' },
     { date: daysAgo(2).toISOString().slice(0, 10), moodScore: 4, energyScore: 4, note: 'Went for a walk after sunset, mind was calmer.' },

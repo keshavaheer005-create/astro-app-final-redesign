@@ -22,8 +22,10 @@ export function AskAIAction({
       onClick={() => openAcharyaWithPrompt(question)}
       aria-label={label}
       className={cn(
-        'tap-sm inline-flex min-h-9 items-center justify-center gap-1.5 rounded-full border border-emerald/30 bg-gradient-to-r from-white/90 to-emerald-soft/85 font-semibold text-emerald-deep shadow-[inset_0_1px_0_rgba(255,255,255,.85),0_2px_8px_-4px_rgba(46,112,87,0.25)] transition-[background,border-color,transform] duration-180 hover:border-emerald/50 hover:from-white hover:to-emerald-soft active:scale-[.97]',
-        compact ? 'px-2.5 text-[11px]' : 'px-3.5 text-t12',
+        'tap-sm inline-flex min-h-9 items-center justify-center gap-1.5 rounded-full bg-emerald-soft/80 font-semibold text-emerald-deep',
+        'shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_2px_10px_-4px_rgba(37,106,88,0.3)] backdrop-blur-sm',
+        'transition-[background,box-shadow,transform] duration-200 hover:bg-emerald-soft hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_3px_14px_-4px_rgba(37,106,88,0.4)] active:scale-[.97]',
+        compact ? 'px-2.5 text-t12' : 'px-3.5 text-t12',
         className,
       )}
     >

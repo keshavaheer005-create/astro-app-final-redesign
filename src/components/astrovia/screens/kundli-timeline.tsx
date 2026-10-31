@@ -187,9 +187,9 @@ export function TimelineScreen() {
     const pct = startIso && endIso ? pctBetween(startIso, endIso) : 0;
     const remaining = endIso ? daysUntil(endIso) : null;
     return (
-      <div className="rounded-xl bg-gradient-to-b from-white/80 to-white/55 shadow-[0_2px_10px_-6px_rgba(42,36,32,0.16),inset_0_1px_0_rgba(255,255,255,0.85)] px-3.5 py-3">
+      <div className="edge-soft rounded-xl px-3.5 py-3">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-t12 uppercase tracking-wide text-violet-deep font-semibold">{t(labelKey)}</span>
+          <span className="text-t14 tracking-wide text-violet-deep font-semibold">{t(labelKey)}</span>
           {remaining !== null && (
             <span className="text-t12 text-muted-foreground tabular-nums">
               {remaining <= 0 ? t('dasha.endsToday') : t('timeline.endsIn', { n: remaining })}
@@ -227,14 +227,14 @@ export function TimelineScreen() {
   return (
     <div className="space-y-5">
       <header>
-        <h1 className="font-serif text-t28 font-bold text-violet-grad">{t('timeline.title')}</h1>
+        <h1 className="font-serif text-t28 font-semibold text-charcoal">{t('timeline.title')}</h1>
         <p className="text-t14 text-muted-foreground">
           {chart.input.name} · {t('timeline.today', { date: today })}
         </p>
       </header>
 
       {/* ── Where you are now ── */}
-      <GlassCard className="p-4 sm:p-5">
+      <GlassCard tone="violet" className="p-4 sm:p-5">
         <SectionHeader title={t('timeline.current')} icon="clock" />
         <div className="grid gap-2.5 sm:grid-cols-3">
           {ladderRow('timeline.level.maha', curMaha?.lord, curMaha?.start, curMaha?.end)}
@@ -253,7 +253,7 @@ export function TimelineScreen() {
       </GlassCard>
 
       {/* ── Timeline ── */}
-      <GlassCard className="p-4 sm:p-5">
+      <GlassCard tone="violet" className="p-4 sm:p-5">
         <SectionHeader title={t('timeline.periods')} icon="timeline" />
         <div className="flex gap-1.5 flex-wrap mb-3">
           {levelTabs.map((tab) => (
@@ -309,10 +309,10 @@ export function TimelineScreen() {
                 className={cn(
                   'shrink-0 rounded-xl border px-3 py-2.5 min-w-[124px] text-left transition-all duration-200 active:scale-[0.98]',
                   isCurrent
-                    ? 'glass border-violet/40 shadow-sm'
+                    ? 'edge-soft'
                     : isPast
-                      ? 'bg-white/35 border-gold/10 opacity-60'
-                      : 'bg-white/60 border-gold/20 hover:border-violet/30',
+                      ? 'bg-white/30 border-white/40 opacity-60'
+                      : 'edge-soft-gold hover:brightness-[1.02]',
                 )}
               >
                 <span className={cn('flex items-center gap-1.5 text-t14 font-semibold', isCurrent ? 'text-violet-deep' : 'text-charcoal')}>
@@ -332,14 +332,14 @@ export function TimelineScreen() {
       </GlassCard>
 
       {/* ── Upcoming ── */}
-      <GlassCard className="p-4 sm:p-5">
+      <GlassCard tone="violet" className="p-4 sm:p-5">
         <SectionHeader title={t('timeline.upcoming')} icon="trending" />
         {upcoming.length === 0 ? (
           <p className="text-t12 text-muted-foreground">{t('timeline.upcomingEmpty')}</p>
         ) : (
           <ul className="space-y-2">
             {upcoming.map((e) => (
-              <li key={e.id} className="flex items-start gap-2.5 rounded-xl bg-gradient-to-b from-white/80 to-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] px-3 py-2">
+              <li key={e.id} className="edge-soft-gold flex items-start gap-2.5 rounded-xl px-3 py-2">
                 <Icon
                   name={e.kind === 'ingress' ? 'planet' : 'clock'}
                   size={15}
@@ -367,7 +367,7 @@ export function TimelineScreen() {
       </GlassCard>
 
       {/* ── Transits today ── */}
-      <GlassCard className="p-4 sm:p-5">
+      <GlassCard tone="violet" className="p-4 sm:p-5">
         <SectionHeader title={t('timeline.transits')} icon="planet" />
         <p className="text-t12 text-muted-foreground mb-3">{t('timeline.transitsHint')}</p>
 
@@ -399,12 +399,12 @@ export function TimelineScreen() {
               <li
                 key={p.key}
                 className={cn(
-                  'flex items-center gap-3 rounded-xl px-3 py-2',
+                  'flex items-center gap-3 rounded-xl border px-3 py-2',
                   p.note === 'support'
-                    ? 'bg-emerald-faint/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]'
+                    ? 'bg-emerald-faint/70 border-emerald/15'
                     : p.note === 'pressure'
-                      ? 'bg-burgundy-soft/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]'
-                      : 'bg-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)]',
+                      ? 'bg-burgundy-soft/70 border-burgundy/15'
+                      : 'bg-white/55 border-white/60',
                 )}
               >
                 <span className="w-16 shrink-0 text-t14 font-semibold text-charcoal">{planetName(p.key)}</span>

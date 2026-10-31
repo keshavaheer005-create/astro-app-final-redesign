@@ -1,0 +1,82 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Astrovia — Render.com Web Service (Blueprint)
+#
+# The app is a PERSISTENT server (Next.js `output: "standalone"`), built and run
+# with Bun, which is what Prisma (Postgres connection pool) and the native Swiss
+# Ephemeris (sweph) bindings require — this must NOT run on serverless.
+#
+# One-click path:
+#   1. Create a Supabase project → copy the connection string (URI)
+#      (use the "Session pooler" URI on port 5432; add ?pgbouncer=true when
+#      using the transaction pooler on 6543) → set DATABASE_URL below/in UI.
+#   2. Push this file to the repo root → Render → New → Blueprint → select
+#      the repo → set the sync:false env vars when prompted.
+#   3. Run migrations once from your machine against the Supabase URL:
+#        DATABASE_URL="<supabase-uri>" bunx prisma migrate deploy
+#   4. (Optional auth) set NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY
+#      and run supabase/schema.sql in the Supabase SQL editor.
+#
+# Notes
+#   • NEXT_PUBLIC_* vars are inlined at BUILD time — set them before the
+#     first build and trigger a rebuild after changing them.
+#   • No persistent disk is required: ephemeris files auto-populate in /tmp
+#     on boot (SWEPH_PATH default) and all state lives in Supabase Postgres.
+#   • embedded-postgres is a dev-only convenience; it is installed but never
+#     started in production (DATABASE_URL points at Supabase).
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  - type: web
+    name: astrovia
+    # This project is built and started with Bun (see package.json + bun.lock).
+    # On a Node runtime instead: keep `runtime: node` and use the npm build
+    # command documented in DEPLOY.md.
+    runtime: bun
+    plan: starter
+    region: singapore # closest Render region to India
+    autoDeploy: true
+    # Bun toolchain (this repo ships bun.lock and `bun run build`).
+    # NOTE: do not add `--production` — `next build` runs a TypeScript check and
+    # needs the devDependency `typescript`. Bun installs devDependencies by
+    # default, which is what this build expects.
+    buildCommand: bun install && bunx prisma generate && bun run build
+    # Runs the standalone server with whichever runtime this service has.
+    # Bun services keep using Bun (matching package.json's `start` script); a
+    # Node runtime still works. Both `exec`, so Render can stop the process.
+    startCommand: >-
+      sh -c 'if command -v bun >/dev/null 2>&1; then exec bun .next/standalone/server.js;
+      else exec node .next/standalone/server.js; fi'
+    healthCheckPath: /api
+    # ── Schema migrations ────────────────────────────────────────────────────
+    # This release needs NO migration (no schema change), so a GitHub push is a
+    # complete deploy. If you later add one, either keep running it by hand
+    # (`bunx prisma migrate deploy` against the Supabase URL) or uncomment the
+    # pre-deploy hook below — but only AFTER `bunx prisma migrate status` reports
+    # a clean history on your database, otherwise it blocks every deploy.
+    #   preDeployCommand: bunx prisma migrate deploy
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      # ── Database (required) ───────────────────────────────────────────────
+      # Supabase → Project Settings → Database → Connection string (URI).
+      - key: DATABASE_URL
+        sync: false
+      # ── Session signing (required) ────────────────────────────────────────
+      # Render generates a secure random value on first deploy.
+      - key: SESSION_SECRET
+        generateValue: true
+      # ── Supabase Auth (optional — app activates it when both are present) ─
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      # ── Canonical public URL (used for OAuth redirects) ───────────────────
+      # Set to the final onrender.com (or custom) URL once known.
+      - key: NEXT_PUBLIC_SITE_URL
+        sync: false
+      # ── Split/Capacitor deployments (optional) ────────────────────────────
+      # If the Android WebView does NOT load this URL directly, point the
+      # client at it: set NEXT_PUBLIC_API_BASE_URL to this service's URL and
+      # CAPACITOR_SERVER_URL at `npx cap sync` time on your machine.
+      - key: NEXT_PUBLIC_API_BASE_URL
+        sync: false

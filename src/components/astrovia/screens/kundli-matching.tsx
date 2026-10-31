@@ -8,7 +8,7 @@ import { GlassCard, GoldButton, GhostButton, SectionHeader, PageLoader, ErrorSta
 import { api, useSession } from '../session-context';
 import { useAuthPrompt } from '../auth-prompt';
 import { LocationCombobox } from '../location-combobox';
-import { GlassDatePicker } from '../pickers';
+import { GlassDatePicker, GlassTimePicker } from '../pickers';
 import { cn } from '@/lib/utils';
 import { AskAIAction } from '../ask-ai-action';
 
@@ -202,11 +202,11 @@ export function MatchingScreen() {
   return (
     <div className="space-y-5">
       <header>
-        <h1 className="font-serif text-t28 font-bold text-rose-grad">{t('match.title')}</h1>
+        <h1 className="font-serif text-t28 font-semibold text-charcoal">{t('match.title')}</h1>
         <p className="text-t14 text-muted-foreground">{t('match.subtitle')}</p>
       </header>
       {/* rose = the matching/harmony domain colour: a soft tinted hairline under the title */}
-      <div className="-mt-3 h-px bg-gradient-to-r from-rose/40 via-rose/15 to-transparent" aria-hidden="true" />
+      
 
       <div className="grid md:grid-cols-2 gap-4">
         <PersonForm
@@ -243,9 +243,9 @@ export function MatchingScreen() {
       </GoldButton>
 
       {history.length > 0 && (
-        <GlassCard className="p-4">
+        <GlassCard tone="rose" className="p-4">
           <div className="flex items-center justify-between mb-2.5">
-            <p className="text-t12 uppercase tracking-wider text-rose-deep font-semibold">{t('match.history')}</p>
+            <p className="text-t12 tracking-wide text-rose-deep font-semibold">{t('match.history')}</p>
             <button
               type="button"
               onClick={clearHistory}
@@ -264,7 +264,7 @@ export function MatchingScreen() {
                   setGirl(h.girl);
                   setResult(h.result);
                 }}
-                className="w-full flex items-center justify-between gap-3 rounded-xl border border-gold/15 bg-white/50 px-3.5 py-2.5 text-left transition-all duration-200 hover:border-gold/45 hover:bg-white/70 active:scale-[0.99]"
+                className="w-full flex items-center justify-between gap-3 rounded-xl bg-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] px-3.5 py-2.5 text-left transition-all duration-200 hover:bg-white/75 active:scale-[0.99]"
               >
                 <span className="min-w-0">
                   <span className="block text-t14 text-charcoal truncate">
@@ -272,7 +272,7 @@ export function MatchingScreen() {
                   </span>
                   <span className="block text-t12 text-muted-foreground">{new Date(h.at).toLocaleDateString()}</span>
                 </span>
-                <span className="shrink-0 inline-flex items-center rounded-full rose-grad px-2.5 py-1 text-t12 font-bold text-white shadow-[0_2px_8px_rgba(194,69,90,0.3)]">
+                <span className="shrink-0 inline-flex items-center rounded-full rose-grad px-2.5 py-1 text-t12 font-semibold text-white">
                   {h.total}/36
                 </span>
               </button>
@@ -287,7 +287,6 @@ export function MatchingScreen() {
         <>
           <GlassCard className="p-5 sm:p-6 relative" ink>
             {/* rose harmony aura — this card celebrates the union */}
-            <div className="pointer-events-none absolute -top-14 -right-14 w-44 h-44 rounded-full bg-rose/25 blur-2xl" aria-hidden="true" />
             <div className="flex flex-col sm:flex-row items-center gap-5 relative">
               <div className="relative shrink-0">
                 <svg width="120" height="120" viewBox="0 0 120 120">
@@ -306,12 +305,12 @@ export function MatchingScreen() {
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="font-serif text-t28 font-bold text-rose-grad">{result.match.total}</span>
+                  <span className="font-serif text-t28 font-semibold text-charcoal">{result.match.total}</span>
                   <span className="text-t12 text-[#a5947a]">/ 36</span>
                 </div>
               </div>
               <div className="text-center sm:text-left">
-                <h2 className="font-serif text-t20 font-bold text-[#f0e4c3]">{t('match.verdict.' + result.match.verdict)}</h2>
+                <h2 className="font-serif text-t20 font-semibold text-[#f0e4c3]">{t('match.verdict.' + result.match.verdict)}</h2>
                 <p className="text-t12 text-[#cdb98e] mt-1 leading-relaxed max-w-md">{t('match.verdictNote')}</p>
                 <div className="mt-2 flex flex-wrap justify-center sm:justify-start gap-1.5">
                   {result.match.nadiDosha && <DoshaTag label="Nadi Dosha" />}
@@ -321,7 +320,7 @@ export function MatchingScreen() {
                 <button
                   type="button"
                   onClick={() => void shareResult()}
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gold/15 border border-gold/40 px-3.5 py-1.5 text-t12 font-medium text-gold-light hover:bg-gold/25 active:scale-95 transition-all duration-250"
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gold/15 px-3.5 py-1.5 text-t12 font-medium text-gold-light shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] hover:bg-gold/25 active:scale-95 transition-all duration-250"
                 >
                   <Icon name="share" size={13} />
                   {shareState === 'done' ? t('match.shareCopied') : t('match.share')}
@@ -337,7 +336,7 @@ export function MatchingScreen() {
             </div>
           </GlassCard>
 
-          <GlassCard className="p-4 sm:p-5">
+          <GlassCard tone="rose" className="p-4 sm:p-5">
             <SectionHeader title={t('match.subtitle')} icon="scale" tone="rose" />
             <div className="space-y-3.5">
               {result.match.kootas.map((k) => (
@@ -381,7 +380,7 @@ function MatchExtras({ extras, total, boyName, girlName }: { extras: NonNullable
   return (
     <>
       {/* AstroSage-style headline */}
-      <GlassCard className="p-4 sm:p-5">
+      <GlassCard tone="rose" className="p-4 sm:p-5">
         <SectionHeader title={t('match.resultsTitle', { defaultValue: 'Horoscope Matching Results' })} icon="scale" tone="rose" />
         <ul className="space-y-2 text-t14 text-charcoal list-disc pl-5">
           <li>
@@ -397,9 +396,9 @@ function MatchExtras({ extras, total, boyName, girlName }: { extras: NonNullable
       </GlassCard>
 
       {/* Manglik compatibility */}
-      <GlassCard className="p-4 sm:p-5">
+      <GlassCard tone="rose" className="p-4 sm:p-5">
         <SectionHeader title={t('match.manglikTitle', { defaultValue: 'Manglik compatibility' })} icon="warning" tone="rose" />
-        <div className={cn('rounded-xl px-3.5 py-3 border', manglik.compatible ? 'bg-emerald-soft/70 border-emerald/25' : 'bg-burgundy-soft border-burgundy/25')}>
+        <div className={cn('rounded-xl px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_3px_12px_-6px_rgba(42,36,32,0.14)]', manglik.compatible ? 'bg-emerald-soft/70' : 'bg-burgundy-soft')}>
           <p className={cn('text-t14 font-semibold', manglik.compatible ? 'text-emerald-deep' : 'text-burgundy')}>
             {manglik.compatible ? t('match.manglikOk', { defaultValue: 'Mangal Dosha levels agree' }) : t('match.manglikWarn', { defaultValue: 'Mangal Dosha levels differ' })}
           </p>
@@ -408,14 +407,14 @@ function MatchExtras({ extras, total, boyName, girlName }: { extras: NonNullable
       </GlassCard>
 
       {/* Dosha check and cancellations */}
-      <GlassCard className="p-4 sm:p-5">
+      <GlassCard tone="rose" className="p-4 sm:p-5">
         <SectionHeader title={t('match.doshaTitle', { defaultValue: 'Dosha check & cancellations' })} icon="scale" tone="rose" />
         {activeDoshas.length === 0 ? (
           <p className="text-t14 text-emerald-deep font-semibold">{t('match.noDosha', { defaultValue: 'No Nadi, Bhakoot or Gana dosha found.' })}</p>
         ) : (
           <div className="space-y-2.5">
             {activeDoshas.map((d) => (
-              <div key={d.key} className={cn('rounded-xl px-3.5 py-2.5 border', d.cancelled ? 'bg-emerald-soft/70 border-emerald/25' : 'bg-burgundy-soft border-burgundy/25')}>
+              <div key={d.key} className={cn('rounded-xl px-3.5 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]', d.cancelled ? 'bg-emerald-soft/70' : 'bg-burgundy-soft')}>
                 <p className={cn('text-t14 font-semibold', d.cancelled ? 'text-emerald-deep' : 'text-burgundy')}>
                   {d.key} {t('match.dosha.word', { defaultValue: 'dosha' })} —{' '}
                   {d.cancelled ? t('match.doshaCancelled', { defaultValue: 'cancelled' }) : t('match.doshaActive', { defaultValue: 'active' })}
@@ -436,9 +435,9 @@ function MatchExtras({ extras, total, boyName, girlName }: { extras: NonNullable
       </GlassCard>
 
       {/* Dashakoota */}
-      <GlassCard className="p-4 sm:p-5">
+      <GlassCard tone="rose" className="p-4 sm:p-5">
         <SectionHeader title={t('match.dashaTitle', { defaultValue: 'South Indian Dashakoota (10 Porutham)' })} icon="scale" tone="rose" />
-        <div className={cn('rounded-xl px-3.5 py-3 border mb-3', verdictTone ? 'bg-emerald-soft/70 border-emerald/25' : 'bg-burgundy-soft border-burgundy/25')}>
+        <div className={cn('rounded-xl px-3.5 py-3 mb-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_3px_12px_-6px_rgba(42,36,32,0.14)]', verdictTone ? 'bg-emerald-soft/70' : 'bg-burgundy-soft')}>
           <p className={cn('text-t14 font-semibold', verdictTone ? 'text-emerald-deep' : 'text-burgundy')}>
             {dashakoota.passed}/{dashakoota.max} · {t(`match.dasha.${dashakoota.verdict}`, { defaultValue: dashakoota.verdict.replace('_', ' ') })}
           </p>
@@ -447,13 +446,13 @@ function MatchExtras({ extras, total, boyName, girlName }: { extras: NonNullable
         <div className="space-y-2">
           {dashakoota.items.map((i) => (
             <div key={i.key} className="flex items-start gap-2.5">
-              <span className={cn('mt-0.5 text-t14 font-bold w-4 shrink-0', i.pass ? 'text-emerald-deep' : 'text-burgundy')} aria-label={i.pass ? 'pass' : 'fail'}>
+              <span className={cn('mt-0.5 text-t14 font-semibold w-4 shrink-0', i.pass ? 'text-emerald-deep' : 'text-burgundy')} aria-label={i.pass ? 'pass' : 'fail'}>
                 {i.pass ? '✔' : '✘'}
               </span>
               <div className="min-w-0">
                 <p className="text-t14 font-medium text-charcoal">
                   {i.key}
-                  {i.veto && <span className="ml-1.5 rounded-full bg-gold/15 border border-gold/40 px-1.5 py-px text-t12 text-gold align-middle">{t('match.veto', { defaultValue: 'key check' })}</span>}
+                  {i.veto && <span className="ml-1.5 rounded-full bg-gold/15 px-1.5 py-px text-t12 text-gold align-middle shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]">{t('match.veto', { defaultValue: 'key check' })}</span>}
                 </p>
                 <p className="text-t12 text-muted-foreground leading-relaxed">{i.note}</p>
               </div>
@@ -509,7 +508,7 @@ function KootaRow({ k }: { k: { key: string; score: number; max: number; note: s
             </span>
           </span>
           <span className="inline-flex shrink-0 items-center gap-1.5">
-            <span className={cn('text-t14 font-bold', good ? 'text-rose-deep' : k.score === 0 ? 'text-burgundy' : 'text-muted-foreground')}>
+            <span className={cn('text-t14 font-semibold', good ? 'text-rose-deep' : k.score === 0 ? 'text-burgundy' : 'text-muted-foreground')}>
               {k.score} / {k.max}
             </span>
             <Icon name="chevron-down" size={14} className={cn('text-muted-foreground transition-transform duration-200', open && 'rotate-180')} />
@@ -519,7 +518,7 @@ function KootaRow({ k }: { k: { key: string; score: number; max: number; note: s
       </button>
       {meta && <p className="mt-1 text-t12 leading-relaxed text-charcoal/80">{t(`match.koota.${meta.id}.${band}`)}</p>}
       {open && meta && (
-        <div className="mt-2 space-y-1 rounded-xl bg-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] px-3 py-2.5 animate-fade-in">
+        <div className="mt-2 space-y-1 rounded-xl bg-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] px-3 py-2.5 animate-fade-in">
           <p className="text-t12 leading-relaxed text-charcoal/85">
             <span className="font-semibold text-charcoal">{t('match.kootaMeasures')}: </span>
             {t(`match.koota.${meta.id}.what`)}
@@ -533,7 +532,7 @@ function KootaRow({ k }: { k: { key: string; score: number; max: number; note: s
 
 function DoshaTag({ label }: { label: string }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-burgundy/30 border border-burgundy/55 px-2.5 py-0.5 text-t12 text-[#ecd0d6]">
+    <span className="inline-flex items-center gap-1 rounded-full bg-burgundy/30 px-2.5 py-0.5 text-t12 text-[#ecd0d6] shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]">
       <Icon name="warning" size={11} /> {label}
     </span>
   );
@@ -555,24 +554,24 @@ function SummaryCard({
   const { t } = useTranslation();
   const level = levelOf(dosha);
   return (
-    <GlassCard className="p-4 sm:p-5">
-      <p className="text-t12 uppercase tracking-wider text-rose-deep font-semibold">{title}</p>
+    <GlassCard tone="rose" className="p-4 sm:p-5">
+      <p className="text-t12 tracking-wide text-rose-deep font-semibold">{title}</p>
       <div className="mt-2 grid grid-cols-3 gap-2 text-center">
-        <div className="rounded-lg bg-rose-faint/80 border border-rose/15 px-2 py-1.5">
+        <div className="rounded-lg bg-rose-faint/90 px-2 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
           <p className="text-t12 text-muted-foreground">{t('match.summaryAsc')}</p>
           <p className="text-t14 font-semibold text-charcoal">{summary.ascendant}</p>
         </div>
-        <div className="rounded-lg bg-rose-faint/80 border border-rose/15 px-2 py-1.5">
+        <div className="rounded-lg bg-rose-faint/90 px-2 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
           <p className="text-t12 text-muted-foreground">{t('match.summaryMoon')}</p>
           <p className="text-t14 font-semibold text-charcoal">{summary.moonSign}</p>
         </div>
-        <div className="rounded-lg bg-rose-faint/80 border border-rose/15 px-2 py-1.5">
+        <div className="rounded-lg bg-rose-faint/90 px-2 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
           <p className="text-t12 text-muted-foreground">{t('match.summaryNak')}</p>
           <p className="text-t14 font-semibold text-charcoal truncate">{summary.moonNakshatra}</p>
         </div>
       </div>
-      <div className={cn('mt-3 rounded-xl px-3.5 py-3 border', level === 'none' ? 'bg-emerald-soft/70 border-emerald/25' : 'bg-burgundy-soft border-burgundy/25')}>
-        <p className="text-t12 uppercase tracking-wide font-semibold text-muted-foreground">{t(titleKey, { name })}</p>
+      <div className={cn('mt-3 rounded-xl px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]', level === 'none' ? 'bg-emerald-soft/70' : 'bg-burgundy-soft')}>
+        <p className="text-t12 tracking-wide font-semibold text-muted-foreground">{t(titleKey, { name })}</p>
         <p className={cn('text-t14 font-semibold mt-1', level === 'none' ? 'text-emerald-deep' : 'text-burgundy')}>
           {t(`match.level.${level}`, { defaultValue: LEVEL_TEXT[level] })}
         </p>
@@ -585,7 +584,7 @@ function SummaryCard({
             .filter(([, house]) => house != null)
             .map(([chart, house, hit]) => (
               <p key={chart} className="text-t12 text-muted-foreground">
-                <span className={cn('font-bold mr-1', hit ? 'text-burgundy' : 'text-emerald-deep')}>{hit ? '●' : '○'}</span>
+                <span className={cn('font-semibold mr-1', hit ? 'text-burgundy' : 'text-emerald-deep')}>{hit ? '●' : '○'}</span>
                 {t('match.marsFrom', { defaultValue: 'Mars in house {{house}} from {{chart}}', house, chart })}
                 {hit ? '' : ` — ${t('match.notDoshaHouse', { defaultValue: 'not a dosha house' })}`}
               </p>
@@ -614,35 +613,47 @@ function PersonForm({
   const set = (patch: Partial<PersonInput>) => onChange({ ...value, ...patch });
 
   return (
-    <GlassCard className={cn('p-4 sm:p-5 overflow-visible', placeOpen && 'z-40')}>
+    <GlassCard tone="rose" className={cn('p-4 sm:p-5 overflow-visible', placeOpen && 'z-40')}>
       <div className="flex items-center justify-between">
-        <p className="text-t12 uppercase tracking-wider text-rose-deep font-semibold">{label}</p>
+        <p className="text-t12 tracking-wide text-rose-deep font-semibold">{label}</p>
         {extra}
       </div>
+
       <input
         value={value.name}
         onChange={(e) => set({ name: e.target.value })}
         placeholder={t('common.name')}
-        className="mt-3 w-full h-10 rounded-xl border border-gold/30 bg-white/70 px-3.5 text-t14 outline-none transition-all duration-250 focus:border-gold/60"
+        aria-label={`${label} — ${t('common.name')}`}
+        maxLength={40}
+        className="mt-3 w-full h-11 rounded-xl border border-gold/30 bg-white/70 px-4 text-t14 text-charcoal placeholder:text-muted-foreground/60 outline-none transition-all duration-250 focus:border-gold/60 focus:ring-2 focus:ring-gold/25"
       />
-      <div className="mt-2.5 grid grid-cols-2 gap-2.5">
-        {/* Premium picker (same as onboarding/chart-form) — replaces the raw
-            <input type="date"> whose mm/dd/yyyy chrome clashed with the app. */}
+
+      {/* Same premium selectors as the profile-making flow: cascading glass
+          date panel + wheel time picker — never the native browser inputs. */}
+      <label className="mt-3 block text-t12 font-medium text-muted-foreground tracking-wide">{t('onboarding.dobLabel')}</label>
+      <div className="mt-1.5">
         <GlassDatePicker
           value={value.dob}
           onChange={(dob) => set({ dob })}
           minYear={1900}
           ariaLabel={`${label} — ${t('onboarding.dobLabel')}`}
-        />
-        <input
-          type="time"
-          value={value.tob}
-          onChange={(e) => set({ tob: e.target.value })}
-          className="h-11 rounded-xl border border-gold/30 bg-white/70 px-3 text-t14 text-charcoal outline-none transition-all duration-250 focus:border-gold/60"
+          placeholder={t('date.unset')}
         />
       </div>
+
+      <label className="mt-3 block text-t12 font-medium text-muted-foreground tracking-wide">{t('onboarding.tobLabel')}</label>
+      <div className="mt-1.5">
+        <GlassTimePicker
+          value={value.tob}
+          onChange={(tob) => set({ tob })}
+          ariaLabel={`${label} — ${t('onboarding.tobLabel')}`}
+          placeholder={t('time.unset')}
+        />
+      </div>
+
+      <label className="mt-3 block text-t12 font-medium text-muted-foreground tracking-wide">{t('common.place')}</label>
       <LocationCombobox
-        className="mt-2.5"
+        className="mt-1.5"
         value={value.placeName ?? ''}
         onSelect={(p) => set({ lat: p.lat, lng: p.lng, timezone: p.timezone, placeName: p.name })}
         placeholder={t('common.place')}

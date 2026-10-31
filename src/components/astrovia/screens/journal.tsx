@@ -156,11 +156,11 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
           a slowly turning corner mandala accents the margin */}
       <header className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="font-serif text-t28 font-bold text-emerald-grad">{t('journal.title')}</h1>
+          <h1 className="font-serif text-t28 font-semibold text-charcoal">{t('journal.title')}</h1>
           <p className="text-t14 text-muted-foreground">{t('journal.subtitle')}</p>
         </div>
         {data && data.streak > 0 && (
-          <span className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-emerald-soft text-emerald-deep border border-emerald/35 px-3.5 py-1.5 text-t14 font-semibold">
+          <span className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-emerald-soft text-emerald-deep shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] px-3.5 py-1.5 text-t14 font-semibold">
             <Icon name="flame" size={16} className="flame-pulse" /> {t('journal.streak', { n: data.streak })}
           </span>
         )}
@@ -170,7 +170,7 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
       {error && <ErrorState onRetry={load} message={t('common.networkError')} />}
 
       {data && data.total === 0 && (
-        <GlassCard className="p-6">
+        <GlassCard tone="emerald" className="p-6">
           <EmptyState icon="journal" title={t('journal.empty')} body={t('journal.emptyBody')} />
           <div className="flex justify-center -mt-2">
             <GoldButton onClick={() => onNavigate?.('home')}>
@@ -183,7 +183,7 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
       {data && data.total > 0 && (
         <>
           {/* Mood timeline with dasha bands */}
-          <GlassCard className="p-4 sm:p-5">
+          <GlassCard tone="emerald" className="p-4 sm:p-5">
             <SectionHeader title={t('journal.timeline')} icon="trending" />
             <p className="text-t12 text-muted-foreground mb-3">{t('journal.timelineHint')}</p>
             <MoodTimeline entries={[...data.entries].reverse().slice(-60)} />
@@ -191,7 +191,7 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
           </GlassCard>
 
           {/* Correlation insight */}
-          <GlassCard className="p-4 sm:p-5">
+          <GlassCard tone="emerald" className="p-4 sm:p-5">
             <SectionHeader title={t('journal.insights')} icon="sparkle" />
             {!insights?.ready ? (
               <div>
@@ -238,7 +238,7 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
                 )}
                 {insights.periods.length >= 2 && (
                   <div>
-                    <p className="text-t12 uppercase tracking-wide font-semibold text-gold mb-2">{t('journal.periods')}</p>
+                    <p className="text-t12 tracking-wide font-semibold text-gold mb-2">{t('journal.periods')}</p>
                     <div className="space-y-1.5">
                       {insights.periods.map((p) => (
                         <div key={p.label} className="flex items-center gap-2.5">
@@ -257,8 +257,8 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
           </GlassCard>
 
           {/* Decision timing entry */}
-          <GlassCard onClick={() => setDecisionOpen(true)} className="p-4 sm:p-5 flex items-center gap-4 group">
-            <span className="shrink-0 inline-flex items-center justify-center w-12 h-12 rounded-full bg-gold-soft text-gold transition-all duration-250 group-hover:gold-grad group-hover:text-charcoal">
+          <GlassCard onClick={() => setDecisionOpen(true)} tone="emerald" className="p-4 sm:p-5 flex items-center gap-4 group">
+            <span className="shrink-0 inline-flex items-center justify-center w-12 h-12 rounded-full bg-gold-soft text-gold-deep">
               <Icon name="compass" size={22} />
             </span>
             <div className="flex-1 min-w-0">
@@ -269,7 +269,7 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
           </GlassCard>
 
           {/* History */}
-          <GlassCard className="p-4 sm:p-5">
+          <GlassCard tone="emerald" className="p-4 sm:p-5">
             <SectionHeader title={t('journal.history')} icon="list" />
             <div className="space-y-2.5 max-h-96 overflow-y-auto scroll-slim pr-1">
               {data.entries.map((e) => {
@@ -279,7 +279,7 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
                     key={e.id}
                     id={`entry-${e.date}`}
                     className={cn(
-                      'rounded-xl bg-white/50 border border-gold/15 px-3.5 py-3 transition-colors duration-250 hover:border-gold/35',
+                      'rounded-xl bg-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] px-3.5 py-3 transition-colors duration-250 hover:bg-white/75',
                       flashDate === e.date && 'focus-flash',
                     )}
                   >
@@ -298,7 +298,7 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
                           type="button"
                           onClick={() => void askMicroNote(e)}
                           disabled={microLoading != null}
-                          className="shrink-0 inline-flex items-center gap-1 rounded-full border border-gold/30 bg-gold-faint/50 px-2.5 py-1 text-t12 text-gold hover:bg-gold-faint hover:border-gold/50 active:scale-95 transition-all duration-250 disabled:opacity-50"
+                          className="shrink-0 inline-flex items-center gap-1 rounded-full bg-gold-faint/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] px-2.5 py-1 text-t12 text-gold hover:bg-gold-faint active:scale-95 transition-all duration-250 disabled:opacity-50"
                           title={t('journal.askNote')}
                         >
                           <Icon name="sparkle" size={12} className={microLoading === e.id ? 'animate-spin-slow' : undefined} />
@@ -327,7 +327,7 @@ export function JournalScreen({ initialDecisionOpen, onNavigate }: { initialDeci
                             <button
                               type="button"
                               onClick={() => discussNote(e, note as string)}
-                              className="mt-2 ml-11 inline-flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold-faint/50 px-2.5 py-1 text-t12 text-gold hover:bg-gold-faint hover:border-gold/50 active:scale-95 transition-all duration-250"
+                              className="mt-2 ml-11 inline-flex items-center gap-1.5 rounded-full bg-gold-faint/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] px-2.5 py-1 text-t12 text-gold hover:bg-gold-faint active:scale-95 transition-all duration-250"
                               title={t('journal.discuss')}
                             >
                               <Icon name="chat" size={12} />
@@ -355,7 +355,7 @@ const MOOD_COLORS = ['#6B2737', '#a4552f', '#b08a1e', '#7a8b6f', '#5c7a4f'];
 function MoodDot({ value }: { value: number }) {
   return (
     <span
-      className="shrink-0 w-8 h-8 rounded-full inline-flex items-center justify-center text-t12 font-bold text-white"
+      className="shrink-0 w-8 h-8 rounded-full inline-flex items-center justify-center text-t12 font-semibold text-white"
       style={{ background: MOOD_COLORS[Math.max(0, Math.min(4, value - 1))] }}
     >
       {value}
@@ -365,17 +365,17 @@ function MoodDot({ value }: { value: number }) {
 
 function InsightTile({ label, value, sub, icon, tone = 'gold' }: { label: string; value: string; sub?: string; icon: 'heart' | 'sun' | 'trending' | 'moon'; tone?: 'gold' | 'emerald' | 'burgundy' }) {
   const tones = {
-    gold: 'bg-gold-faint/70 border-gold/20 text-gold',
-    emerald: 'bg-emerald-faint border-emerald/25 text-emerald',
-    burgundy: 'bg-burgundy-soft/70 border-burgundy/20 text-burgundy',
+    gold: 'bg-gold-faint/80 text-gold',
+    emerald: 'bg-emerald-faint text-emerald',
+    burgundy: 'bg-burgundy-soft/80 text-burgundy',
   } as const;
   return (
-    <div className={cn('rounded-xl border px-3.5 py-3', tones[tone])}>
+    <div className={cn('rounded-xl px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]', tones[tone])}>
       <div className="flex items-center gap-1.5">
         <Icon name={icon} size={14} />
         <span className="text-t12 text-muted-foreground truncate">{label}</span>
       </div>
-      <p className="mt-1 text-t16 font-bold text-charcoal">{value}</p>
+      <p className="mt-1 text-t16 font-semibold text-charcoal">{value}</p>
       {sub && <p className="text-t12 text-muted-foreground">{sub}</p>}
     </div>
   );
@@ -422,7 +422,7 @@ function MoodTimeline({ entries }: { entries: Entry[] }) {
         ))}
       </svg>
       {/* dasha bands under the line */}
-      <div className="flex h-6 rounded-lg overflow-hidden mt-2 border border-gold/20">
+      <div className="flex h-6 rounded-lg overflow-hidden mt-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
         {bands.map((b, i) => (
           <div
             key={i}
@@ -476,7 +476,7 @@ function DecisionDialog({ open, onOpenChange, hasChart }: { open: boolean; onOpe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass max-w-lg max-h-[85vh] overflow-y-auto scroll-slim border-gold/30">
+      <DialogContent className="glass max-w-lg max-h-[85vh] overflow-y-auto scroll-slim">
         <DialogHeader>
           <DialogTitle className="font-serif text-t20 text-charcoal flex items-center gap-2">
             <span className="text-gold"><Icon name="compass" size={20} /></span>
@@ -504,15 +504,15 @@ function DecisionDialog({ open, onOpenChange, hasChart }: { open: boolean; onOpe
           <mot.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="space-y-3">
             <div
               className={cn(
-                'rounded-2xl px-4 py-3.5 border',
+                'rounded-2xl px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_3px_12px_-6px_rgba(42,36,32,0.14)]',
                 result.verdict === 'favorable'
-                  ? 'bg-emerald-soft border-emerald/35'
+                  ? 'bg-emerald-soft'
                   : result.verdict === 'mixed'
-                    ? 'bg-gold-faint/60 border-gold/30'
-                    : 'bg-burgundy-soft border-burgundy/30',
+                    ? 'bg-gold-faint/70'
+                    : 'bg-burgundy-soft',
               )}
             >
-              <p className={cn('font-serif text-t20 font-bold', result.verdict === 'wait' ? 'text-burgundy' : 'text-charcoal')}>
+              <p className={cn('font-serif text-t20 font-semibold', result.verdict === 'wait' ? 'text-burgundy' : 'text-charcoal')}>
                 {t('decision.verdict.' + result.verdict)}
                 <span className="text-t12 text-muted-foreground font-normal ml-2">{t('decision.alignmentScore', { score: result.score })}</span>
               </p>
@@ -520,7 +520,7 @@ function DecisionDialog({ open, onOpenChange, hasChart }: { open: boolean; onOpe
             </div>
 
             <div>
-              <p className="text-t12 uppercase tracking-wide font-semibold text-gold mb-1.5">{t('decision.factors')}</p>
+              <p className="text-t12 tracking-wide font-semibold text-gold mb-1.5">{t('decision.factors')}</p>
               <ul className="space-y-1.5">
                 {result.factors.map((f, i) => (
                   <li key={i} className="text-t12 text-charcoal/80 flex gap-2">
@@ -532,7 +532,7 @@ function DecisionDialog({ open, onOpenChange, hasChart }: { open: boolean; onOpe
             </div>
 
             <div>
-              <p className="text-t12 uppercase tracking-wide font-semibold text-gold mb-1.5">{t('decision.windows')}</p>
+              <p className="text-t12 tracking-wide font-semibold text-gold mb-1.5">{t('decision.windows')}</p>
               {result.windows.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {result.windows.map((w) => (

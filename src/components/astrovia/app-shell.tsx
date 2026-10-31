@@ -41,7 +41,7 @@ function NavItems({
     <div className={cn('relative flex w-full', vertical ? 'flex-col gap-2' : 'flex-row h-full')}>
       <span
         aria-hidden="true"
-        className="absolute rounded-full gold-grad shadow-[0_2px_12px_rgba(201,162,39,0.45)] transition-all duration-300 ease-out"
+        className="absolute rounded-full liquid liquid-gold transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
         style={
           vertical
             ? { top: 0, height: 58, left: 2, right: 2, transform: `translateY(${activeIndex * 66}px)` }
@@ -121,7 +121,7 @@ export function AppShellInner({
             type="button"
             aria-label="Astrovia home"
             onClick={() => onTabChange('home')}
-            className="mb-6 transition-transform duration-250 hover:scale-105 active:scale-95"
+            className="mb-6 transition-transform duration-150 active:scale-95"
           >
             <LogoMark size={38} />
           </button>
@@ -143,12 +143,11 @@ export function AppShellInner({
       </main>
 
       {/* Mobile floating pill nav (<1024px) — ALWAYS visible (scroll-away
-          behaviour reverted after user feedback). Shadow/bevel language matches
-          the liquid-glass feature tiles: crisp top highlight, deep float, warm
-          gold under-edge. */}
+          behaviour reverted after user feedback). Apple-quiet: one soft
+          neutral float shadow — no inset highlights, no gold under-edge. */}
       <nav
         aria-label="Main navigation"
-        className="lg:hidden fixed z-40 bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 right-4 glass glass-blur bar-texture rounded-full h-16 px-2 flex items-center shadow-[0_12px_28px_-10px_rgba(42,36,32,0.26),0_3px_10px_-4px_rgba(42,36,32,0.12),inset_0_1px_0_rgba(255,255,255,0.9),inset_0_-1px_0_rgba(201,162,39,0.14)]"
+        className="lg:hidden fixed z-40 bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 right-4 glass glass-blur rounded-full h-16 px-2 flex items-center shadow-[0_8px_24px_rgba(42,36,32,0.12)]"
       >
         <NavItems active={activeTab} onChange={onTabChange} labelOf={labelOf} />
       </nav>

@@ -1,0 +1,739 @@
+     1→'use client';
+     2→
+     3→import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+     4→import { createPortal } from 'react-dom';
+     5→import { AnimatePresence, motion } from 'framer-motion';
+     6→import { useTranslation } from 'react-i18next';
+     7→import { Icon } from './icons';
+     8→import { cn } from '@/lib/utils';
+     9→
+    10→/* ── Wheel picker (scroll-snap spinner) ─────────────────────────────────── */
+    11→
+    12→const ITEM_H = 40;
+    13→
+    14→export function WheelPicker({
+    15→  items,
+    16→  value,
+    17→  onChange,
+    18→  className,
+    19→  ariaLabel,
+    20→}: {
+    21→  items: string[];
+    22→  value: string;
+    23→  onChange: (v: string) => void;
+    24→  className?: string;
+    25→  ariaLabel?: string;
+    26→}) {
+    27→  const listRef = useRef<HTMLDivElement>(null);
+    28→  const rafRef = useRef<number>(0);
+    29→  const index = Math.max(0, items.indexOf(value));
+    30→
+    31→  const scrollToIndex = useCallback(
+    32→    (i: number, smooth = true) => {
+    33→      const el = listRef.current;
+    34→      if (el) el.scrollTo({ top: i * ITEM_H, behavior: smooth ? 'smooth' : 'auto' });
+    35→    },
+    36→    [],
+    37→  );
+    38→
+    39→  useEffect(() => {
+    40→    // position without animation on mount / external value set
+    41→    const el = listRef.current;
+    42→    if (el && Math.abs(el.scrollTop - index * ITEM_H) > 2) {
+    43→      scrollToIndex(index, false);
+    44→    }
+    45→     
+    46→  }, []);
+    47→
+    48→  const onScroll = useCallback(() => {
+    49→    cancelAnimationFrame(rafRef.current);
+    50→    rafRef.current = requestAnimationFrame(() => {
+    51→      const el = listRef.current;
+    52→      if (!el) return;
+    53→      const i = Math.round(el.scrollTop / ITEM_H);
+    54→      const clamped = Math.max(0, Math.min(items.length - 1, i));
+    55→      if (items[clamped] !== value) onChange(items[clamped]);
+    56→    });
+    57→  }, [items, onChange, value]);
+    58→
+    59→  return (
+    60→    <div className={cn('relative h-40 w-16', className)}>
+    61→      <div
+    62→        ref={listRef}
+    63→        role="listbox"
+    64→        aria-label={ariaLabel}
+    65→        tabIndex={0}
+    66→        onScroll={onScroll}
+    67→        className="wheel-mask scroll-slim h-full overflow-y-auto snap-y snap-mandatory overscroll-contain"
+    68→        style={{ scrollbarWidth: 'none' }}
+    69→      >
+    70→        <div style={{ height: 60 }} />
+    71→        {items.map((item, i) => (
+    72→          <button
+    73→            key={`${item}-${i}`}
+    74→            type="button"
+    75→            role="option"
+    76→            aria-selected={item === value}
+    77→            onClick={() => scrollToIndex(i)}
+    78→            className={cn(
+    79→              'w-full flex items-center justify-center text-center select-none transition-all duration-200 ease-out',
+    80→              item === value
+    81→                ? 'text-charcoal font-semibold text-t16'
+    82→                : 'text-muted-foreground/60 text-t14 hover:text-muted-foreground',
+    83→            )}
+    84→            style={{ height: ITEM_H, scrollSnapAlign: 'center' }}
+    85→          >
+    86→            {item}
+    87→          </button>
+    88→        ))}
+    89→        <div style={{ height: 60 }} />
+    90→      </div>
+    91→      {/* center indicator */}
+    92→      <div className="pointer-events-none absolute left-1 right-1 top-1/2 -translate-y-1/2 h-10 rounded-xl border border-gold/45 bg-gold-soft/45" />
+    93→    </div>
+    94→  );
+    95→}
+    96→
+    97→/* ── Time wheel: HH:MM (24h) via hour/min/ampm wheels ───────────────────── */
+    98→
+    99→export function TimeWheel({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+   100→  const [hh, mm] = value.split(':').map(Number);
+   101→  const hour12 = ((hh + 11) % 12) + 1;
+   102→  const ampm = hh >= 12 ? 'PM' : 'AM';
+   103→
+   104→  const hours = useMemo(() => Array.from({ length: 12 }, (_, i) => String(i + 1)), []);
+   105→  const minutes = useMemo(() => Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')), []);
+   106→
+   107→  const commit = (h12: number, m: number, ap: string) => {
+   108→    const h24 = ap === 'PM' ? (h12 % 12) + 12 : h12 % 12;
+   109→    onChange(`${String(h24).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+   110→  };
+   111→
+   112→  return (
+   113→    <div className="flex items-center justify-center gap-2">
+   114→      <WheelPicker ariaLabel="Hour" items={hours} value={String(hour12)} onChange={(v) => commit(Number(v), mm, ampm)} />
+   115→      <WheelPicker ariaLabel="Minute" items={minutes} value={String(mm).padStart(2, '0')} onChange={(v) => commit(hour12, Number(v), ampm)} />
+   116→      <WheelPicker ariaLabel="AM or PM" items={['AM', 'PM']} value={ampm} onChange={(v) => commit(hour12, mm, v)} className="w-20" />
+   117→    </div>
+   118→  );
+   119→}
+   120→
+   121→/* ── Shared date helpers (CalendarPicker + GlassDatePicker) ─────────────── */
+   122→
+   123→const pad2 = (n: number) => String(n).padStart(2, '0');
+   124→const toISO = (y: number, m: number, d: number) => `${y}-${pad2(m)}-${pad2(d)}`;
+   125→const todayISO = () => {
+   126→  const d = new Date();
+   127→  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+   128→};
+   129→const monthCells = (y: number, m: number): (number | null)[] => {
+   130→  const firstDow = new Date(Date.UTC(y, m - 1, 1)).getUTCDay();
+   131→  const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+   132→  return [
+   133→    ...Array.from({ length: firstDow }, () => null),
+   134→    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+   135→  ];
+   136→};
+   137→
+   138→/* ── Animated calendar picker ───────────────────────────────────────────── */
+   139→
+   140→const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+   141→const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+   142→
+   143→export function CalendarPicker({
+   144→  value,
+   145→  onChange,
+   146→}: {
+   147→  value: string; // YYYY-MM-DD
+   148→  onChange: (v: string) => void;
+   149→}) {
+   150→  const [y, m] = value.split('-').map(Number);
+   151→  const [view, setView] = useState({ y, m });
+   152→  const [dir, setDir] = useState(1);
+   153→
+   154→  // Reset the visible month when the value prop changes externally.
+   155→  // Render-time reset — the React-recommended alternative to a
+   156→  // setState-inside-effect sync (react-hooks/set-state-in-effect).
+   157→  const [prevValue, setPrevValue] = useState(value);
+   158→  if (value !== prevValue) {
+   159→    setPrevValue(value);
+   160→    setView({ y, m });
+   161→  }
+   162→
+   163→  const move = (delta: number) => {
+   164→    setDir(delta);
+   165→    setView((v) => {
+   166→      const nm = v.m + delta;
+   167→      if (nm < 1) return { y: v.y - 1, m: 12 };
+   168→      if (nm > 12) return { y: v.y + 1, m: 1 };
+   169→      return { ...v, m: nm };
+   170→    });
+   171→  };
+   172→
+   173→  const cells = monthCells(view.y, view.m);
+   174→  const todayStr = todayISO();
+   175→
+   176→  const pick = (day: number) => {
+   177→    onChange(toISO(view.y, view.m, day));
+   178→  };
+   179→
+   180→  return (
+   181→    <div className="select-none">
+   182→      <div className="flex items-center justify-between mb-3">
+   183→        <button
+   184→          type="button"
+   185→          aria-label="Previous month"
+   186→          onClick={() => move(-1)}
+   187→          className="w-9 h-9 rounded-full inline-flex items-center justify-center text-gold hover:bg-gold-soft active:scale-95 transition-all duration-200"
+   188→        >
+   189→          <Icon name="chevron-left" size={18} />
+   190→        </button>
+   191→        <div className="text-center">
+   192→          <div className="font-serif text-t16 font-semibold text-charcoal">
+   193→            {MONTHS[view.m - 1]} <span className="text-gold">{view.y}</span>
+   194→          </div>
+   195→        </div>
+   196→        <button
+   197→          type="button"
+   198→          aria-label="Next month"
+   199→          onClick={() => move(1)}
+   200→          className="w-9 h-9 rounded-full inline-flex items-center justify-center text-gold hover:bg-gold-soft active:scale-95 transition-all duration-200"
+   201→        >
+   202→          <Icon name="chevron-right" size={18} />
+   203→        </button>
+   204→      </div>
+   205→      <div className="grid grid-cols-7 gap-y-1 mb-1">
+   206→        {DOW.map((d) => (
+   207→          <div key={d} className="text-center text-t12 text-muted-foreground/70 font-medium py-1">{d}</div>
+   208→        ))}
+   209→      </div>
+   210→      <div key={`${view.y}-${view.m}-${dir}`} className="grid grid-cols-7 gap-y-1" style={{ animation: `month-in 0.28s ease-out ${dir < 0 ? 'reverse' : 'normal'} both` }}>
+   211→        {cells.map((day, i) => {
+   212→          if (day === null) return <div key={`x${i}`} />;
+   213→          const dateStr = `${view.y}-${String(view.m).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+   214→          const selected = dateStr === value;
+   215→          const isToday = dateStr === todayStr;
+   216→          return (
+   217→            <button
+   218→              key={dateStr}
+   219→              type="button"
+   220→              onClick={() => pick(day)}
+   221→              className={cn(
+   222→                'mx-auto w-9 h-9 rounded-full inline-flex items-center justify-center text-t14 transition-all duration-200 ease-out active:scale-90',
+   223→                selected
+   224→                  ? 'gold-grad text-charcoal font-bold shadow-[0_2px_10px_rgba(201,162,39,0.45)]'
+   225→                  : 'text-charcoal/80 hover:bg-gold-soft',
+   226→                isToday && !selected && 'ring-1 ring-gold/60',
+   227→              )}
+   228→            >
+   229→              {day}
+   230→            </button>
+   231→          );
+   232→        })}
+   233→      </div>
+   234→    </div>
+   235→  );
+   236→}
+   237→
+   238→/* ── Cascading glass date picker: Year → Month → Day ────────────────────── */
+   239→/* Built for birth dates: picking 1955 must not mean tapping arrows for
+   240→   minutes. Stage 1 is a scrolling year list with sticky decade headers and a
+   241→   decade fast-jump rail, stage 2 a month grid, stage 3 a compact day grid.
+   242→   Overlay renders through a portal so glass/transform ancestors can never
+   243→   distort the fixed mobile bottom-sheet positioning.                        */
+   244→
+   245→type DateStage = 'year' | 'month' | 'day';
+   246→
+   247→export function GlassDatePicker({
+   248→  value,
+   249→  onChange,
+   250→  minYear = 1900,
+   251→  maxYear = new Date().getFullYear(),
+   252→  ariaLabel,
+   253→}: {
+   254→  value: string; // YYYY-MM-DD
+   255→  onChange: (v: string) => void;
+   256→  minYear?: number;
+   257→  maxYear?: number;
+   258→  ariaLabel?: string;
+   259→}) {
+   260→  const { t, i18n } = useTranslation();
+   261→  const locale = i18n.language === 'hi' ? 'hi-IN' : 'en-IN';
+   262→  const [mounted, setMounted] = useState(false);
+   263→  const [isDesktop, setIsDesktop] = useState(false);
+   264→  const [open, setOpen] = useState(false);
+   265→  const [stage, setStage] = useState<DateStage>('year');
+   266→  const [pos, setPos] = useState<{ left: number; top: number; triggerTop: number; width: number } | null>(null);
+   267→
+   268→  const [selY, setSelY] = useState(() => Math.min(maxYear, Math.max(minYear, new Date().getFullYear() - 25)));
+   269→  const [selM, setSelM] = useState(1);
+   270→  const [activeY, setActiveY] = useState(selY);
+   271→  const [activeM, setActiveM] = useState(0);
+   272→  const [activeD, setActiveD] = useState(0);
+   273→
+   274→  const triggerRef = useRef<HTMLButtonElement>(null);
+   275→  const panelRef = useRef<HTMLDivElement>(null);
+   276→  const posRef = useRef<{ left: number; top: number; triggerTop: number; width: number } | null>(null);
+   277→  const yearListRef = useRef<HTMLDivElement>(null);
+   278→  const monthGridRef = useRef<HTMLDivElement>(null);
+   279→  const dayGridRef = useRef<HTMLDivElement>(null);
+   280→  const yearBtnRefs = useRef<Record<number, HTMLButtonElement | null>>({});
+   281→  const decadeHeadRefs = useRef<Record<number, HTMLDivElement | null>>({});
+   282→  const monthBtnRefs = useRef<(HTMLButtonElement | null)[]>([]);
+   283→  const dayBtnRefs = useRef<(HTMLButtonElement | null)[]>([]);
+   284→
+   285→  const [vy, vm, vd] = value.split('-').map(Number);
+   286→  const valid = Number.isInteger(vy) && Number.isInteger(vm) && Number.isInteger(vd) && vm >= 1 && vm <= 12 && vd >= 1 && vd <= 31;
+   287→  const daysInSel = new Date(Date.UTC(selY, selM, 0)).getUTCDate();
+   288→
+   289→  const years = useMemo(
+   290→    () => Array.from({ length: Math.max(0, maxYear - minYear + 1) }, (_, i) => maxYear - i),
+   291→    [minYear, maxYear],
+   292→  );
+   293→
+   294→  // newest-first decade groups: { decade: 1960, years: [1969 … 1960] }
+   295→  const decades = useMemo(() => {
+   296→    const groups: { decade: number; years: number[] }[] = [];
+   297→    for (const y of years) {
+   298→      const d = Math.floor(y / 10) * 10;
+   299→      const g = groups[groups.length - 1];
+   300→      if (g && g.decade === d) g.years.push(y);
+   301→      else groups.push({ decade: d, years: [y] });
+   302→    }
+   303→    return groups;
+   304→  }, [years]);
+   305→
+   306→  useEffect(() => {
+   307→    setMounted(true);
+   308→    const mq = window.matchMedia('(min-width: 640px)');
+   309→    const update = () => setIsDesktop(mq.matches);
+   310→    update();
+   311→    mq.addEventListener('change', update);
+   312→    return () => mq.removeEventListener('change', update);
+   313→  }, []);
+   314→
+   315→  // body scroll lock while the overlay is up
+   316→  useEffect(() => {
+   317→    if (!open) return;
+   318→    const prev = document.body.style.overflow;
+   319→    document.body.style.overflow = 'hidden';
+   320→    return () => {
+   321→      document.body.style.overflow = prev;
+   322→    };
+   323→  }, [open]);
+   324→
+   325→  const close = useCallback(() => {
+   326→    setOpen(false);
+   327→    triggerRef.current?.focus();
+   328→  }, []);
+   329→
+   330→  // Escape closes (document-level, panel-level Tab trap handled separately)
+   331→  useEffect(() => {
+   332→    if (!open) return;
+   333→    const onKey = (e: KeyboardEvent) => {
+   334→      if (e.key === 'Escape') close();
+   335→    };
+   336→    document.addEventListener('keydown', onKey);
+   337→    return () => document.removeEventListener('keydown', onKey);
+   338→  }, [open, close]);
+   339→
+   340→  const setPosBoth = (p: { left: number; top: number; triggerTop: number; width: number } | null) => {
+   341→    posRef.current = p;
+   342→    setPos(p);
+   343→  };
+   344→
+   345→  const openPanel = useCallback(() => {
+   346→    const [y, m] = value.split('-').map(Number);
+   347→    const cur = new Date().getFullYear();
+   348→    const initY = Number.isInteger(y) ? Math.min(maxYear, Math.max(minYear, y)) : Math.min(maxYear, Math.max(minYear, cur - 25));
+   349→    const initM = Number.isInteger(m) && m >= 1 && m <= 12 ? m : 1;
+   350→    setSelY(initY);
+   351→    setSelM(initM);
+   352→    setActiveY(initY);
+   353→    setActiveM(initM - 1);
+   354→    setActiveD(Number.isInteger(y) && Number.isInteger(m) && initM === m && initY === y && Number.isInteger(vd) ? vd - 1 : 0);
+   355→    setStage('year');
+   356→    const r = triggerRef.current?.getBoundingClientRect();
+   357→    const width = Math.min(window.innerWidth * 0.92, 380);
+   358→    const left = r ? Math.max(8, Math.min(r.left, window.innerWidth - width - 8)) : 8;
+   359→    const top = r ? Math.min(r.bottom + 8, window.innerHeight - 120) : 96;
+   360→    setPosBoth({ left, top, triggerTop: r?.top ?? 64, width });
+   361→    setOpen(true);
+   362→  }, [value, minYear, maxYear, vd]);
+   363→
+   364→  // desktop popover flip + per-stage auto-center / initial focus
+   365→  useLayoutEffect(() => {
+   366→    if (!open) return;
+   367→    const p = posRef.current;
+   368→    if (isDesktop && p && panelRef.current) {
+   369→      const h = panelRef.current.offsetHeight;
+   370→      if (p.top + h > window.innerHeight - 8) {
+   371→        const top = Math.max(8, p.triggerTop - h - 8);
+   372→        if (top !== p.top) setPosBoth({ ...p, top });
+   373→      }
+   374→    }
+   375→    if (stage === 'year') {
+   376→      const list = yearListRef.current;
+   377→      const btn = yearBtnRefs.current[selY];
+   378→      if (list && btn) list.scrollTop = btn.offsetTop - list.clientHeight / 2 + btn.clientHeight / 2;
+   379→      list?.focus();
+   380→    } else if (stage === 'month') {
+   381→      monthGridRef.current?.focus();
+   382→    } else {
+   383→      dayGridRef.current?.focus();
+   384→    }
+   385→  }, [open, stage, isDesktop, selY]);
+   386→
+   387→  // focus trap (Tab cycles inside the dialog)
+   388→  const trapTab = (e: React.KeyboardEvent) => {
+   389→    if (e.key !== 'Tab') return;
+   390→    const root = panelRef.current;
+   391→    if (!root) return;
+   392→    const els = Array.from(
+   393→      root.querySelectorAll<HTMLElement>('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'),
+   394→    );
+   395→    if (!els.length) return;
+   396→    const first = els[0];
+   397→    const last = els[els.length - 1];
+   398→    const activeEl = document.activeElement;
+   399→    if (e.shiftKey && (activeEl === first || activeEl === root)) {
+   400→      e.preventDefault();
+   401→      last.focus();
+   402→    } else if (!e.shiftKey && activeEl === last) {
+   403→      e.preventDefault();
+   404→      first.focus();
+   405→    }
+   406→  };
+   407→
+   408→  const onYearListKeys = (e: React.KeyboardEvent) => {
+   409→    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+   410→    e.preventDefault();
+   411→    const idx = years.indexOf(activeY);
+   412→    const next = Math.max(0, Math.min(years.length - 1, (idx < 0 ? 0 : idx) + (e.key === 'ArrowDown' ? 1 : -1)));
+   413→    const y = years[next];
+   414→    setActiveY(y);
+   415→    const el = yearBtnRefs.current[y];
+   416→    if (el) {
+   417→      el.focus();
+   418→      el.scrollIntoView({ block: 'nearest' });
+   419→    }
+   420→  };
+   421→
+   422→  const onMonthGridKeys = (e: React.KeyboardEvent) => {
+   423→    let delta = 0;
+   424→    if (e.key === 'ArrowRight') delta = 1;
+   425→    else if (e.key === 'ArrowLeft') delta = -1;
+   426→    else if (e.key === 'ArrowDown') delta = 3;
+   427→    else if (e.key === 'ArrowUp') delta = -3;
+   428→    else return;
+   429→    e.preventDefault();
+   430→    const next = Math.max(0, Math.min(11, activeM + delta));
+   431→    setActiveM(next);
+   432→    monthBtnRefs.current[next]?.focus();
+   433→  };
+   434→
+   435→  const onDayGridKeys = (e: React.KeyboardEvent) => {
+   436→    let delta = 0;
+   437→    if (e.key === 'ArrowRight') delta = 1;
+   438→    else if (e.key === 'ArrowLeft') delta = -1;
+   439→    else if (e.key === 'ArrowDown') delta = 7;
+   440→    else if (e.key === 'ArrowUp') delta = -7;
+   441→    else return;
+   442→    e.preventDefault();
+   443→    const next = Math.max(0, Math.min(daysInSel - 1, activeD + delta));
+   444→    setActiveD(next);
+   445→    dayBtnRefs.current[next]?.focus();
+   446→  };
+   447→
+   448→  const displayDate = (() => {
+   449→    if (!valid) return value;
+   450→    try {
+   451→      return new Date(Date.UTC(vy, vm - 1, vd)).toLocaleDateString(locale, {
+   452→        day: 'numeric',
+   453→        month: 'long',
+   454→        year: 'numeric',
+   455→        timeZone: 'UTC',
+   456→      });
+   457→    } catch {
+   458→      return value;
+   459→    }
+   460→  })();
+   461→
+   462→  const stages: { id: DateStage; label: string }[] = [
+   463→    { id: 'year', label: t('date.year') },
+   464→    { id: 'month', label: t('date.month') },
+   465→    { id: 'day', label: t('date.day') },
+   466→  ];
+   467→  const stageIdx = stage === 'year' ? 0 : stage === 'month' ? 1 : 2;
+   468→
+   469→  return (
+   470→    <div className="relative">
+   471→      <button
+   472→        ref={triggerRef}
+   473→        type="button"
+   474→        onClick={() => (open ? close() : openPanel())}
+   475→        aria-haspopup="dialog"
+   476→        aria-expanded={open}
+   477→        aria-label={ariaLabel ?? t('date.a11y.open')}
+   478→        className={cn(
+   479→          'w-full h-11 rounded-xl border border-gold/30 bg-white/70 px-4 flex items-center gap-2.5 text-left',
+   480→          'transition-all duration-250 focus:border-gold/60 focus:ring-2 focus:ring-gold/25',
+   481→        )}
+   482→      >
+   483→        <Icon name="calendar" size={18} className="text-gold shrink-0" />
+   484→        <span className={cn('flex-1 truncate text-t14', valid ? 'text-charcoal' : 'text-muted-foreground/60')}>{displayDate}</span>
+   485→        <Icon name="chevron-down" size={16} className="text-gold/70 shrink-0" />
+   486→      </button>
+   487→
+   488→      {mounted &&
+   489→        createPortal(
+   490→          <>
+   491→            <AnimatePresence>
+   492→              {open && (
+   493→                <motion.div
+   494→                  key="gdp-backdrop"
+   495→                  className="fixed inset-0 z-40 bg-ink/25 sm:bg-ink/10"
+   496→                  initial={{ opacity: 0 }}
+   497→                  animate={{ opacity: 1 }}
+   498→                  exit={{ opacity: 0 }}
+   499→                  transition={{ duration: 0.25, ease: 'easeOut' }}
+   500→                  onClick={close}
+   501→                  aria-hidden="true"
+   502→                />
+   503→              )}
+   504→            </AnimatePresence>
+   505→            <AnimatePresence>
+   506→              {open && (
+   507→                <motion.div
+   508→                  key="gdp-panel"
+   509→                  ref={panelRef}
+   510→                  role="dialog"
+   511→                  aria-modal="true"
+   512→                  aria-label={ariaLabel ?? t('date.title')}
+   513→                  initial={{ opacity: 0, scale: 0.96, y: 14 }}
+   514→                  animate={{ opacity: 1, scale: 1, y: 0 }}
+   515→                  exit={{ opacity: 0, scale: 0.97, y: 10 }}
+   516→                  transition={{ duration: 0.25, ease: 'easeOut' }}
+   517→                  onKeyDown={trapTab}
+   518→                  style={
+   519→                    isDesktop && pos
+   520→                      ? { left: pos.left, top: pos.top, width: pos.width }
+   521→                      : { paddingBottom: 'calc(env(safe-area-inset-bottom) + 8px)' }
+   522→                  }
+   523→                  className={cn(
+   524→                    'glass fixed z-50 flex flex-col',
+   525→                    'inset-x-0 bottom-0 max-h-[70vh] rounded-t-3xl',
+   526→                    isDesktop && 'inset-x-auto bottom-auto rounded-3xl max-h-[min(70vh,460px)]',
+   527→                  )}
+   528→                >
+   529→                  {/* header: title + breadcrumb + close */}
+   530→                  <div className="px-4 pt-3.5 pb-2 shrink-0">
+   531→                    <div className="flex items-center justify-between gap-2">
+   532→                      <p className="text-t12 uppercase tracking-wide font-semibold text-muted-foreground/80 truncate">
+   533→                        {t('date.title')}
+   534→                      </p>
+   535→                      <button
+   536→                        type="button"
+   537→                        onClick={close}
+   538→                        aria-label={t('date.close')}
+   539→                        className="w-8 h-8 -mr-1 rounded-full inline-flex items-center justify-center text-muted-foreground hover:text-charcoal hover:bg-gold-soft transition-colors duration-150"
+   540→                      >
+   541→                        <Icon name="x" size={16} />
+   542→                      </button>
+   543→                    </div>
+   544→                    <div className="mt-1 flex items-center gap-0.5 text-t14">
+   545→                      {stages.map((s, i) => {
+   546→                        const current = i === stageIdx;
+   547→                        const done = i < stageIdx;
+   548→                        return (
+   549→                          <React.Fragment key={s.id}>
+   550→                            {i > 0 && <Icon name="chevron-right" size={13} className="text-gold/60 shrink-0" />}
+   551→                            {done ? (
+   552→                              <button
+   553→                                type="button"
+   554→                                onClick={() => setStage(s.id)}
+   555→                                className="px-1 text-charcoal/55 hover:text-gold transition-colors duration-150"
+   556→                              >
+   557→                                {s.label}
+   558→                              </button>
+   559→                            ) : (
+   560→                              <span className={cn('px-1', current ? 'text-gold font-semibold' : 'text-muted-foreground/40')}>
+   561→                                {s.label}
+   562→                              </span>
+   563→                            )}
+   564→                          </React.Fragment>
+   565→                        );
+   566→                      })}
+   567→                    </div>
+   568→                  </div>
+   569→
+   570→                  {/* stage: year list with sticky decade headers + fast-jump rail */}
+   571→                  {stage === 'year' && (
+   572→                    <div className="flex gap-1 px-3 pb-3 flex-1 min-h-0">
+   573→                      <div
+   574→                        ref={yearListRef}
+   575→                        role="listbox"
+   576→                        aria-label={t('date.year')}
+   577→                        tabIndex={0}
+   578→                        onKeyDown={onYearListKeys}
+   579→                        className="relative flex-1 min-w-0 overflow-y-auto scroll-slim overscroll-contain"
+   580→                      >
+   581→                        {decades.map((g) => (
+   582→                          <div key={g.decade}>
+   583→                            <div
+   584→                              ref={(el) => {
+   585→                                decadeHeadRefs.current[g.decade] = el;
+   586→                              }}
+   587→                              className="sticky top-0 z-10 bg-white/85 text-t12 font-semibold text-gold px-2 py-1.5"
+   588→                            >
+   589→                              {`${g.decade}${t('date.decadeSuffix')}`}
+   590→                            </div>
+   591→                            {g.years.map((y) => {
+   592→                              const selected = y === selY;
+   593→                              return (
+   594→                                <button
+   595→                                  key={y}
+   596→                                  ref={(el) => {
+   597→                                    yearBtnRefs.current[y] = el;
+   598→                                  }}
+   599→                                  type="button"
+   600→                                  role="option"
+   601→                                  aria-selected={selected}
+   602→                                  onFocus={() => setActiveY(y)}
+   603→                                  onClick={() => {
+   604→                                    setSelY(y);
+   605→                                    setStage('month');
+   606→                                  }}
+   607→                                  className={cn(
+   608→                                    'w-full h-10 px-2.5 rounded-lg text-left text-t14 transition-colors duration-150',
+   609→                                    selected ? 'bg-gold-soft text-gold font-semibold' : 'text-charcoal/80 hover:bg-gold-faint',
+   610→                                  )}
+   611→                                >
+   612→                                  {y}
+   613→                                </button>
+   614→                              );
+   615→                            })}
+   616→                          </div>
+   617→                        ))}
+   618→                      </div>
+   619→                      <div className="flex flex-col shrink-0 py-1" aria-hidden="true">
+   620→                        {decades.map((g) => (
+   621→                          <button
+   622→                            key={g.decade}
+   623→                            type="button"
+   624→                            tabIndex={-1}
+   625→                            onClick={() => {
+   626→                              const head = decadeHeadRefs.current[g.decade];
+   627→                              const list = yearListRef.current;
+   628→                              if (head && list) list.scrollTop = head.offsetTop - 2;
+   629→                            }}
+   630→                            className="w-8 h-6 rounded text-[10px] leading-none text-muted-foreground/60 hover:text-gold hover:bg-gold-faint transition-colors duration-150"
+   631→                          >
+   632→                            {String(g.decade).slice(2)}
+   633→                          </button>
+   634→                        ))}
+   635→                      </div>
+   636→                    </div>
+   637→                  )}
+   638→
+   639→                  {/* stage: month grid */}
+   640→                  {stage === 'month' && (
+   641→                    <div
+   642→                      ref={monthGridRef}
+   643→                      role="listbox"
+   644→                      aria-label={t('date.month')}
+   645→                      tabIndex={0}
+   646→                      onKeyDown={onMonthGridKeys}
+   647→                      className="grid grid-cols-3 gap-1.5 px-4 pb-4 outline-none"
+   648→                    >
+   649→                      {Array.from({ length: 12 }, (_, i) => {
+   650→                        const selected = selM === i + 1;
+   651→                        return (
+   652→                          <button
+   653→                            key={i}
+   654→                            ref={(el) => {
+   655→                              monthBtnRefs.current[i] = el;
+   656→                            }}
+   657→                            type="button"
+   658→                            role="option"
+   659→                            aria-selected={selected}
+   660→                            onFocus={() => setActiveM(i)}
+   661→                            onClick={() => {
+   662→                              setSelM(i + 1);
+   663→                              setActiveD(valid && vy === selY && vm === i + 1 && vd >= 1 ? vd - 1 : 0);
+   664→                              setStage('day');
+   665→                            }}
+   666→                            className={cn(
+   667→                              'h-11 rounded-xl px-1 text-t14 truncate transition-all duration-150',
+   668→                              selected
+   669→                                ? 'gold-grad text-charcoal font-semibold shadow-[0_2px_10px_rgba(201,162,39,0.35)]'
+   670→                                : 'text-charcoal/80 hover:bg-gold-faint',
+   671→                            )}
+   672→                          >
+   673→                            {t(`date.months.${i}`)}
+   674→                          </button>
+   675→                        );
+   676→                      })}
+   677→                    </div>
+   678→                  )}
+   679→
+   680→                  {/* stage: compact day grid for the chosen year + month */}
+   681→                  {stage === 'day' && (
+   682→                    <div className="px-4 pb-4">
+   683→                      <div className="text-center font-serif text-t16 font-semibold text-charcoal mb-2">
+   684→                        {t(`date.months.${selM - 1}`)} <span className="text-gold">{selY}</span>
+   685→                      </div>
+   686→                      <div ref={dayGridRef} tabIndex={0} onKeyDown={onDayGridKeys} className="outline-none">
+   687→                        <div className="grid grid-cols-7 gap-y-1 mb-1">
+   688→                          {Array.from({ length: 7 }, (_, i) => (
+   689→                            <div key={i} className="text-center text-t12 text-muted-foreground/70 font-medium py-1">
+   690→                              {t(`weekdaysShort.${i}`)}
+   691→                            </div>
+   692→                          ))}
+   693→                        </div>
+   694→                        <div className="grid grid-cols-7 gap-y-1">
+   695→                          {monthCells(selY, selM).map((day, i) => {
+   696→                            if (day === null) return <div key={`x${i}`} />;
+   697→                            const dateStr = toISO(selY, selM, day);
+   698→                            const selected = dateStr === value;
+   699→                            const isToday = dateStr === todayISO();
+   700→                            const dayIdx = day - 1;
+   701→                            return (
+   702→                              <button
+   703→                                key={dateStr}
+   704→                                ref={(el) => {
+   705→                                  dayBtnRefs.current[dayIdx] = el;
+   706→                                }}
+   707→                                type="button"
+   708→                                aria-label={`${dateStr}${isToday ? ` · ${t('date.today')}` : ''}`}
+   709→                                onFocus={() => setActiveD(dayIdx)}
+   710→                                onClick={() => {
+   711→                                  onChange(dateStr);
+   712→                                  close();
+   713→                                }}
+   714→                                className={cn(
+   715→                                  'mx-auto w-9 h-9 rounded-full inline-flex items-center justify-center text-t14 transition-all duration-200 ease-out active:scale-90',
+   716→                                  selected
+   717→                                    ? 'gold-grad text-charcoal font-bold shadow-[0_2px_10px_rgba(201,162,39,0.45)]'
+   718→                                    : 'text-charcoal/80 hover:bg-gold-soft',
+   719→                                  isToday && !selected && 'ring-1 ring-gold/60',
+   720→                                )}
+   721→                              >
+   722→                                {day}
+   723→                              </button>
+   724→                            );
+   725→                          })}
+   726→                        </div>
+   727→                      </div>
+   728→                    </div>
+   729→                  )}
+   730→                </motion.div>
+   731→              )}
+   732→            </AnimatePresence>
+   733→          </>,
+   734→          document.body,
+   735→        )}
+   736→    </div>
+   737→  );
+   738→}
+   739→

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { stripMarkdownPreview } from '@/lib/utils';
 import { ensureUser, memberGuard } from '@/lib/session';
 import { getActiveChart } from '@/lib/active-chart';
 import { compactChartContext, ComputedChart } from '@/lib/astro/chart';
@@ -62,7 +61,7 @@ function conversationWhere(conversationId: string) {
 }
 
 function cleanTitle(content: string): string {
-  const title = stripMarkdownPreview(content);
+  const title = content.replace(/\s+/g, ' ').trim();
   return title.length > 72 ? `${title.slice(0, 69).trimEnd()}…` : title;
 }
 

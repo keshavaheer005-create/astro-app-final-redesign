@@ -1,0 +1,871 @@
+     1→@import "tailwindcss";
+     2→@import "tw-animate-css";
+     3→
+     4→@custom-variant dark (&:is(.dark *));
+     5→
+     6→@theme inline {
+     7→  --color-background: var(--background);
+     8→  --color-foreground: var(--foreground);
+     9→  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    10→  --font-serif: var(--font-playfair), Georgia, serif;
+    11→  --color-sidebar-ring: var(--sidebar-ring);
+    12→  --color-sidebar-border: var(--sidebar-border);
+    13→  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    14→  --color-sidebar-accent: var(--sidebar-accent);
+    15→  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    16→  --color-sidebar-primary: var(--sidebar-primary);
+    17→  --color-sidebar-foreground: var(--sidebar-foreground);
+    18→  --color-sidebar: var(--sidebar);
+    19→  --color-chart-5: var(--chart-5);
+    20→  --color-chart-4: var(--chart-4);
+    21→  --color-chart-3: var(--chart-3);
+    22→  --color-chart-2: var(--chart-2);
+    23→  --color-chart-1: var(--chart-1);
+    24→  --color-ring: var(--ring);
+    25→  --color-input: var(--input);
+    26→  --color-border: var(--border);
+    27→  --color-destructive: var(--destructive);
+    28→  --color-accent-foreground: var(--accent-foreground);
+    29→  --color-accent: var(--accent);
+    30→  --color-muted-foreground: var(--muted-foreground);
+    31→  --color-muted: var(--muted);
+    32→  --color-secondary-foreground: var(--secondary-foreground);
+    33→  --color-secondary: var(--secondary);
+    34→  --color-primary-foreground: var(--primary-foreground);
+    35→  --color-primary: var(--primary);
+    36→  --color-popover-foreground: var(--popover-foreground);
+    37→  --color-popover: var(--popover);
+    38→  --color-card-foreground: var(--card-foreground);
+    39→  --color-card: var(--card);
+    40→  --radius-sm: calc(var(--radius) - 4px);
+    41→  --radius-md: calc(var(--radius) - 2px);
+    42→  --radius-lg: var(--radius);
+    43→  --radius-xl: calc(var(--radius) + 4px);
+    44→}
+    45→
+    46→@theme {
+    47→  /* Self Sage palette */
+    48→  --color-cream: #faf7f0;
+    49→  --color-cream-deep: #f3ede0;
+    50→  --color-gold: #c9a227;
+    51→  --color-gold-light: #e8c568;
+    52→  --color-gold-soft: #f5e9c9;
+    53→  --color-gold-faint: #faf3dd;
+    54→  --color-charcoal: #1a1a1a;
+    55→  --color-ink: #2a2420;
+    56→  --color-ink-soft: #3a332d;
+    57→  --color-maroon: #6b2737;
+    58→  --color-maroon-soft: #f4e4e7;
+    59→  --color-sage: #7a8b6f;
+    60→
+    61→  /* Extended accent palette (semantic use only — gold remains the sole CTA colour) */
+    62→  --color-emerald: #3e8e6e;
+    63→  --color-emerald-deep: #2e7057;
+    64→  --color-emerald-soft: #e3f0e9;
+    65→  --color-emerald-faint: #f1f7f3;
+    66→  --color-violet: #6e4a9e;
+    67→  --color-violet-deep: #593a82;
+    68→  --color-violet-soft: #eee8f6;
+    69→  --color-violet-faint: #f6f2fa;
+    70→  --color-burgundy: #5c1a28;
+    71→  --color-burgundy-soft: #f3e2e5;
+    72→  --color-rose: #c2455a;
+    73→  --color-rose-deep: #a33347;
+    74→  --color-rose-soft: #f9e7ea;
+    75→  --color-rose-faint: #fcf1f3;
+    76→
+    77→  /* Fixed type scale: 12 / 14 / 16 / 20 / 28 */
+    78→  --text-t12: 0.75rem;
+    79→  --text-t12--line-height: 1.45;
+    80→  --text-t14: 0.875rem;
+    81→  --text-t14--line-height: 1.5;
+    82→  --text-t16: 1rem;
+    83→  --text-t16--line-height: 1.55;
+    84→  --text-t20: 1.25rem;
+    85→  --text-t20--line-height: 1.3;
+    86→  --text-t28: 1.75rem;
+    87→  --text-t28--line-height: 1.2;
+    88→
+    89→  --animate-fade-rise: fade-rise 0.3s ease-out both;
+    90→  --animate-fade-in: fade-in 0.3s ease-out both;
+    91→  --animate-slide-out: slide-out 0.25s ease-in both;
+    92→  --animate-spin-slow: spin 1.4s linear infinite;
+    93→}
+    94→
+    95→:root {
+    96→  --radius: 1.25rem;
+    97→  /* Faint handmade-paper grain, used by .texture-grain / .bar-texture / ChakraBackdrop */
+    98→  --ss-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    99→  --background: #faf7f0;
+   100→  --foreground: #1a1a1a;
+   101→  --card: rgba(255, 255, 255, 0.6);
+   102→  --card-foreground: #1a1a1a;
+   103→  --popover: #fffdf7;
+   104→  --popover-foreground: #1a1a1a;
+   105→  --primary: #c9a227;
+   106→  --primary-foreground: #1a1a1a;
+   107→  --secondary: #f3ede0;
+   108→  --secondary-foreground: #1a1a1a;
+   109→  --muted: #f3ede0;
+   110→  --muted-foreground: #6d6353;
+   111→  --accent: #f5e9c9;
+   112→  --accent-foreground: #1a1a1a;
+   113→  --destructive: #6b2737;
+   114→  --border: rgba(201, 162, 39, 0.22);
+   115→  --input: rgba(201, 162, 39, 0.3);
+   116→  --ring: rgba(201, 162, 39, 0.55);
+   117→  --chart-1: #c9a227;
+   118→  --chart-2: #6b2737;
+   119→  --chart-3: #7a8b6f;
+   120→  --chart-4: #e8c568;
+   121→  --chart-5: #2a2420;
+   122→  --sidebar: #faf7f0;
+   123→  --sidebar-foreground: #1a1a1a;
+   124→  --sidebar-primary: #c9a227;
+   125→  --sidebar-primary-foreground: #1a1a1a;
+   126→  --sidebar-accent: #f5e9c9;
+   127→  --sidebar-accent-foreground: #1a1a1a;
+   128→  --sidebar-border: rgba(201, 162, 39, 0.22);
+   129→  --sidebar-ring: rgba(201, 162, 39, 0.55);
+   130→}
+   131→
+   132→.dark {
+   133→  /* Reserved; Self Sage uses selective ink cards instead of a full dark mode */
+   134→  --background: #2a2420;
+   135→  --foreground: #f0e4c3;
+   136→  --card: #3a332d;
+   137→  --card-foreground: #f0e4c3;
+   138→  --popover: #3a332d;
+   139→  --popover-foreground: #f0e4c3;
+   140→  --primary: #e8c568;
+   141→  --primary-foreground: #2a2420;
+   142→  --secondary: #3a332d;
+   143→  --secondary-foreground: #f0e4c3;
+   144→  --muted: #3a332d;
+   145→  --muted-foreground: #b9a98c;
+   146→  --accent: #4a4038;
+   147→  --accent-foreground: #f0e4c3;
+   148→  --border: rgba(232, 197, 104, 0.25);
+   149→  --input: rgba(232, 197, 104, 0.3);
+   150→  --ring: rgba(232, 197, 104, 0.55);
+   151→}
+   152→
+   153→@layer base {
+   154→  * {
+   155→    @apply border-border outline-ring/50;
+   156→  }
+   157→  html {
+   158→    scroll-behavior: smooth;
+   159→    /* Hard guard: horizontal overflow (wide strips/tables) must never pan the page.
+   160→       `clip` avoids creating a scroll container (unlike `hidden`). */
+   161→    overflow-x: clip;
+   162→  }
+   163→  body {
+   164→    @apply bg-cream text-charcoal;
+   165→    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+   166→    -webkit-font-smoothing: antialiased;
+   167→    text-rendering: optimizeLegibility;
+   168→    overflow-x: clip;
+   169→  }
+   170→  ::selection {
+   171→    background: rgba(201, 162, 39, 0.28);
+   172→  }
+   173→}
+   174→
+   175→@layer components {
+   176→  /* ── Liquid glass card ─────────────────────────────────────────────── */
+   177→  .glass {
+   178→    position: relative;
+   179→    background: rgba(255, 255, 255, 0.6);
+   180→    -webkit-backdrop-filter: blur(20px) saturate(1.15);
+   181→    backdrop-filter: blur(20px) saturate(1.15);
+   182→    border: 1px solid rgba(201, 162, 39, 0.28);
+   183→    border-radius: 20px;
+   184→    box-shadow:
+   185→      0 8px 32px rgba(42, 36, 32, 0.08),
+   186→      0 2px 8px rgba(42, 36, 32, 0.06),
+   187→      inset 0 1px 0 rgba(255, 255, 255, 0.55);
+   188→    overflow: hidden;
+   189→  }
+   190→  .glass::before {
+   191→    content: "";
+   192→    position: absolute;
+   193→    inset: 0 0 auto 0;
+   194→    height: 38%;
+   195→    background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0));
+   196→    pointer-events: none;
+   197→  }
+   198→  @supports not ((backdrop-filter: blur(20px)) or (-webkit-backdrop-filter: blur(20px))) {
+   199→    .glass {
+   200→      background: rgba(255, 252, 244, 0.97);
+   201→    }
+   202→  }
+   203→
+   204→  /* ── Inverted premium ink card ─────────────────────────────────────── */
+   205→  .glass-ink {
+   206→    position: relative;
+   207→    background: #2a2420;
+   208→    color: #f0e4c3;
+   209→    border: 1px solid rgba(232, 197, 104, 0.25);
+   210→    border-radius: 20px;
+   211→    box-shadow:
+   212→      0 12px 40px rgba(42, 36, 32, 0.35),
+   213→      inset 0 1px 0 rgba(232, 197, 104, 0.18);
+   214→    overflow: hidden;
+   215→  }
+   216→  .glass-ink::before {
+   217→    content: "";
+   218→    position: absolute;
+   219→    inset: 0 0 auto 0;
+   220→    height: 34%;
+   221→    background: linear-gradient(180deg, rgba(232, 197, 104, 0.1), rgba(232, 197, 104, 0));
+   222→    pointer-events: none;
+   223→  }
+   224→
+   225→  /* ── Mandala backdrop ──────────────────────────────────────────────── */
+   226→  .mandala-bg {
+   227→    position: fixed;
+   228→    inset: 0;
+   229→    z-index: -1;
+   230→    pointer-events: none;
+   231→    opacity: 0.06;
+   232→    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='560' height='560' viewBox='0 0 560 560'%3E%3Cg fill='none' stroke='%23C9A227' stroke-width='1'%3E%3Ccircle cx='280' cy='280' r='270'/%3E%3Ccircle cx='280' cy='280' r='220'/%3E%3Ccircle cx='280' cy='280' r='160'/%3E%3Ccircle cx='280' cy='280' r='90'/%3E%3Ccircle cx='280' cy='280' r='30'/%3E%3Cg%3E%3Cpath d='M280 60 C340 140 340 220 280 280 C220 220 220 140 280 60Z'/%3E%3Cpath d='M280 60 C340 140 340 220 280 280 C220 220 220 140 280 60Z' transform='rotate(45 280 280)'/%3E%3Cpath d='M280 60 C340 140 340 220 280 280 C220 220 220 140 280 60Z' transform='rotate(90 280 280)'/%3E%3Cpath d='M280 60 C340 140 340 220 280 280 C220 220 220 140 280 60Z' transform='rotate(135 280 280)'/%3E%3Cpath d='M280 60 C340 140 340 220 280 280 C220 220 220 140 280 60Z' transform='rotate(180 280 280)'/%3E%3Cpath d='M280 60 C340 140 340 220 280 280 C220 220 220 140 280 60Z' transform='rotate(225 280 280)'/%3E%3Cpath d='M280 60 C340 140 340 220 280 280 C220 220 220 140 280 60Z' transform='rotate(270 280 280)'/%3E%3Cpath d='M280 60 C340 140 340 220 280 280 C220 220 220 140 280 60Z' transform='rotate(315 280 280)'/%3E%3C/g%3E%3Cg%3E%3Cpath d='M280 140 C316 190 316 240 280 280 C244 240 244 190 280 140Z' transform='rotate(22.5 280 280)'/%3E%3Cpath d='M280 140 C316 190 316 240 280 280 C244 240 244 190 280 140Z' transform='rotate(67.5 280 280)'/%3E%3Cpath d='M280 140 C316 190 316 240 280 280 C244 240 244 190 280 140Z' transform='rotate(112.5 280 280)'/%3E%3Cpath d='M280 140 C316 190 316 240 280 280 C244 240 244 190 280 140Z' transform='rotate(157.5 280 280)'/%3E%3Cpath d='M280 140 C316 190 316 240 280 280 C244 240 244 190 280 140Z' transform='rotate(202.5 280 280)'/%3E%3Cpath d='M280 140 C316 190 316 240 280 280 C244 240 244 190 280 140Z' transform='rotate(247.5 280 280)'/%3E%3Cpath d='M280 140 C316 190 316 240 280 280 C244 240 244 190 280 140Z' transform='rotate(292.5 280 280)'/%3E%3Cpath d='M280 140 C316 190 316 240 280 280 C244 240 244 190 280 140Z' transform='rotate(337.5 280 280)'/%3E%3C/g%3E%3Ccircle cx='280' cy='60' r='3'/%3E%3Ccircle cx='280' cy='500' r='3'/%3E%3Ccircle cx='60' cy='280' r='3'/%3E%3Ccircle cx='500' cy='280' r='3'/%3E%3C/g%3E%3C/svg%3E");
+   233→    background-size: 560px 560px;
+   234→  }
+   235→
+   236→  /* ── Gold gradient helpers ─────────────────────────────────────────── */
+   237→  .gold-grad {
+   238→    background: linear-gradient(135deg, #c9a227 0%, #e8c568 100%);
+   239→  }
+   240→  .text-gold-grad {
+   241→    background: linear-gradient(135deg, #b08a1e 0%, #e8c568 100%);
+   242→    -webkit-background-clip: text;
+   243→    background-clip: text;
+   244→    color: transparent;
+   245→  }
+   246→
+   247→  /* ── Extended accent gradients (semantic: emerald = growth, violet = intuition, rose = harmony) ── */
+   248→  .emerald-grad {
+   249→    background: linear-gradient(135deg, #2e7057 0%, #5aa887 100%);
+   250→  }
+   251→  .violet-grad {
+   252→    background: linear-gradient(135deg, #593a82 0%, #8f6cc0 100%);
+   253→  }
+   254→  .rose-grad {
+   255→    background: linear-gradient(135deg, #a33347 0%, #d9708a 100%);
+   256→  }
+   257→  .text-emerald-grad {
+   258→    background: linear-gradient(135deg, #2e7057 0%, #6cb595 100%);
+   259→    -webkit-background-clip: text;
+   260→    background-clip: text;
+   261→    color: transparent;
+   262→  }
+   263→  .text-violet-grad {
+   264→    background: linear-gradient(135deg, #593a82 0%, #a98cd1 100%);
+   265→    -webkit-background-clip: text;
+   266→    background-clip: text;
+   267→    color: transparent;
+   268→  }
+   269→
+   270→  /* ── Moving chakras (transform-only, GPU friendly, reduced-motion aware) ── */
+   271→  @keyframes chakra-spin {
+   272→    from { transform: rotate(0deg); }
+   273→    to { transform: rotate(360deg); }
+   274→  }
+   275→  @keyframes chakra-spin-rev {
+   276→    from { transform: rotate(360deg); }
+   277→    to { transform: rotate(0deg); }
+   278→  }
+   279→  @keyframes chakra-breathe {
+   280→    0%, 100% { transform: scale(1); opacity: 0.85; }
+   281→    50% { transform: scale(1.045); opacity: 1; }
+   282→  }
+   283→  .chakra-spin {
+   284→    animation: chakra-spin 90s linear infinite;
+   285→    will-change: transform;
+   286→  }
+   287→  .chakra-spin-mid {
+   288→    animation: chakra-spin 64s linear infinite reverse;
+   289→    will-change: transform;
+   290→  }
+   291→  .chakra-spin-fast {
+   292→    animation: chakra-spin 22s linear infinite;
+   293→    will-change: transform;
+   294→  }
+   295→  .chakra-breathe {
+   296→    animation: chakra-breathe 8s ease-in-out infinite;
+   297→    will-change: transform, opacity;
+   298→  }
+   299→  /* Slow celestial ring (zodiac wheel) — barely perceptible, deeply premium */
+   300→  .chakra-spin-zodiac {
+   301→    animation: chakra-spin 220s linear infinite;
+   302→    will-change: transform;
+   303→  }
+   304→  .chakra-spin-slow-rev {
+   305→    animation: chakra-spin 140s linear infinite reverse;
+   306→    will-change: transform;
+   307→  }
+   308→  /* Gentle vertical drift so layers feel suspended, not pinned */
+   309→  @keyframes chakra-drift {
+   310→    0%, 100% { transform: translate3d(0, 0, 0); }
+   311→    50% { transform: translate3d(0, -1.4vmin, 0); }
+   312→  }
+   313→  .chakra-drift {
+   314→    animation: chakra-drift 18s ease-in-out infinite;
+   315→    will-change: transform;
+   316→  }
+   317→  .chakra-drift-late {
+   318→    animation: chakra-drift 22s ease-in-out 3s infinite;
+   319→    will-change: transform;
+   320→  }
+   321→  /* Chakra-orb glow breathing (spine of seven) */
+   322→  @keyframes chakra-orb {
+   323→    0%, 100% { opacity: 0.45; transform: scale(0.92); }
+   324→    50% { opacity: 0.9; transform: scale(1.1); }
+   325→  }
+   326→  .chakra-orb {
+   327→    animation: chakra-orb 7s ease-in-out infinite;
+   328→    will-change: transform, opacity;
+   329→  }
+   330→
+   331→  /* ── Motion ────────────────────────────────────────────────────────── */
+   332→  .stagger-in {
+   333→    animation: fade-rise 0.32s ease-out both;
+   334→  }
+   335→  .screen-leave {
+   336→    animation: fade-in 0.25s ease-in both reverse;
+   337→  }
+   338→
+   339→  /* ── Hidden scrollbar (pill tab strips) ────────────────────────────── */
+   340→  .no-scrollbar {
+   341→    scrollbar-width: none;
+   342→    -ms-overflow-style: none;
+   343→  }
+   344→  .no-scrollbar::-webkit-scrollbar {
+   345→    display: none;
+   346→  }
+   347→
+   348→  /* ── Sky-ahead strip: snap scroll + edge fades ─────────────────────── */
+   349→  .sky-strip {
+   350→    scroll-snap-type: x proximity;
+   351→    overscroll-behavior-x: contain;
+   352→  }
+   353→  .sky-chip {
+   354→    scroll-snap-align: start;
+   355→  }
+   356→  .sky-fade {
+   357→    position: absolute;
+   358→    top: 0;
+   359→    bottom: 0;
+   360→    width: 28px;
+   361→    pointer-events: none;
+   362→    z-index: 1;
+   363→  }
+   364→  .sky-fade-l {
+   365→    left: -2px;
+   366→    background: linear-gradient(to right, #faf7f0, rgba(250, 247, 240, 0));
+   367→  }
+   368→  .sky-fade-r {
+   369→    right: -2px;
+   370→    background: linear-gradient(to left, #faf7f0, rgba(250, 247, 240, 0));
+   371→  }
+   372→
+   373→  /* ── Slim scrollbar ────────────────────────────────────────────────── */
+   374→  .scroll-slim {
+   375→    scrollbar-width: thin;
+   376→    scrollbar-color: rgba(201, 162, 39, 0.45) transparent;
+   377→  }
+   378→  .scroll-slim::-webkit-scrollbar {
+   379→    width: 6px;
+   380→    height: 6px;
+   381→  }
+   382→  .scroll-slim::-webkit-scrollbar-track {
+   383→    background: transparent;
+   384→  }
+   385→  .scroll-slim::-webkit-scrollbar-thumb {
+   386→    background: rgba(201, 162, 39, 0.45);
+   387→    border-radius: 999px;
+   388→  }
+   389→
+   390→  /* ── Wheel picker ──────────────────────────────────────────────────── */
+   391→  .wheel-mask {
+   392→    -webkit-mask-image: linear-gradient(180deg, transparent 4%, #000 32%, #000 68%, transparent 96%);
+   393→    mask-image: linear-gradient(180deg, transparent 4%, #000 32%, #000 68%, transparent 96%);
+   394→  }
+   395→
+   396→  /* ── Shimmer skeleton ──────────────────────────────────────────────── */
+   397→  .shimmer {
+   398→    position: relative;
+   399→    overflow: hidden;
+   400→    background: rgba(201, 162, 39, 0.1);
+   401→    border-radius: 12px;
+   402→  }
+   403→  .shimmer::after {
+   404→    content: "";
+   405→    position: absolute;
+   406→    inset: 0;
+   407→    transform: translateX(-100%);
+   408→    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+   409→    animation: shimmer-sweep 1.4s ease-in-out infinite;
+   410→  }
+   411→  @keyframes shimmer-sweep {
+   412→    100% {
+   413→      transform: translateX(100%);
+   414→    }
+   415→  }
+   416→
+   417→  /* ── Ink card gold aura (top-right radial) ─────────────────────────── */
+   418→  .glass-ink::after {
+   419→    content: "";
+   420→    position: absolute;
+   421→    top: -60px;
+   422→    right: -60px;
+   423→    width: 190px;
+   424→    height: 190px;
+   425→    background: radial-gradient(circle, rgba(232, 197, 104, 0.14), transparent 65%);
+   426→    pointer-events: none;
+   427→  }
+   428→
+   429→  /* ── Ink card sheen sweep (slow diagonal light band) ───────────────── */
+   430→  .sheen-sweep {
+   431→    position: relative;
+   432→  }
+   433→  .sheen-sweep::before {
+   434→    content: "";
+   435→    position: absolute;
+   436→    inset: -40% -20%;
+   437→    background: linear-gradient(115deg, transparent 42%, rgba(255, 240, 200, 0.09) 50%, transparent 58%);
+   438→    transform: translateX(-120%);
+   439→    animation: sheen 6.5s ease-in-out infinite;
+   440→    pointer-events: none;
+   441→    z-index: 1;
+   442→  }
+   443→  @keyframes sheen {
+   444→    0%, 55% {
+   445→      transform: translateX(-120%);
+   446→    }
+   447→    75%, 100% {
+   448→      transform: translateX(120%);
+   449→    }
+   450→  }
+   451→
+   452→  /* ── Streak flame heartbeat ────────────────────────────────────────── */
+   453→  .flame-pulse {
+   454→    animation: flame-pulse 2.4s ease-in-out infinite;
+   455→    transform-origin: 50% 90%;
+   456→  }
+   457→  @keyframes flame-pulse {
+   458→    0%, 100% {
+   459→      transform: scale(1) rotate(0deg);
+   460→    }
+   461→    35% {
+   462→      transform: scale(1.12) rotate(-2.5deg);
+   463→    }
+   464→    65% {
+   465→      transform: scale(1.04) rotate(2deg);
+   466→    }
+   467→  }
+   468→
+   469→  /* ── Voice input: mic icon heartbeat + expanding ring ─────────────── */
+   470→  .mic-pulse {
+   471→    animation: mic-pulse 1.2s ease-in-out infinite;
+   472→  }
+   473→  @keyframes mic-pulse {
+   474→    0%, 100% {
+   475→      transform: scale(1);
+   476→      opacity: 1;
+   477→    }
+   478→    50% {
+   479→      transform: scale(1.18);
+   480→      opacity: 0.75;
+   481→    }
+   482→  }
+   483→  .mic-ring {
+   484→    animation: mic-ring 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+   485→  }
+   486→  @keyframes mic-ring {
+   487→    0% {
+   488→      box-shadow: 0 0 0 0 rgba(107, 39, 55, 0.35);
+   489→    }
+   490→    70% {
+   491→      box-shadow: 0 0 0 12px rgba(107, 39, 55, 0);
+   492→    }
+   493→    100% {
+   494→      box-shadow: 0 0 0 0 rgba(107, 39, 55, 0);
+   495→    }
+   496→  }
+   497→  /* Violet variant (Acharya voice input) */
+   498→  .mic-ring-violet {
+   499→    animation: mic-ring-violet 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+   500→  }
+   501→  @keyframes mic-ring-violet {
+   502→    0% {
+   503→      box-shadow: 0 0 0 0 rgba(110, 74, 158, 0.4);
+   504→    }
+   505→    70% {
+   506→      box-shadow: 0 0 0 12px rgba(110, 74, 158, 0);
+   507→    }
+   508→    100% {
+   509→      box-shadow: 0 0 0 0 rgba(110, 74, 158, 0);
+   510→    }
+   511→  }
+   512→
+   513→  /* ── Gold focus ring for keyboard users ────────────────────────────── */
+   514→  :where(button, [role="tab"], a, input, textarea, [tabindex]):focus-visible {
+   515→    outline: 2px solid rgba(201, 162, 39, 0.75);
+   516→    outline-offset: 2px;
+   517→    border-radius: 10px;
+   518→  }
+   519→
+   520→  /* ── Drop cap for the weekly letter ────────────────────────────────── */
+   521→  .letter-body::first-letter {
+   522→    font-family: var(--font-playfair), Georgia, serif;
+   523→    font-size: 2.6em;
+   524→    line-height: 0.9;
+   525→    float: left;
+   526→    padding-right: 0.12em;
+   527→    padding-top: 0.05em;
+   528→    background: linear-gradient(135deg, #c9a227, #e8c568);
+   529→    -webkit-background-clip: text;
+   530→    background-clip: text;
+   531→    color: transparent;
+   532→  }
+   533→
+   534→  /* ── Section ornament divider ──────────────────────────────────────── */
+   535→  .ornament-divider {
+   536→    display: flex;
+   537→    align-items: center;
+   538→    gap: 12px;
+   539→    color: rgba(201, 162, 39, 0.5);
+   540→    font-size: 10px;
+   541→    letter-spacing: 4px;
+   542→  }
+   543→  .ornament-divider::before,
+   544→  .ornament-divider::after {
+   545→    content: "";
+   546→    flex: 1;
+   547→    height: 1px;
+   548→    background: linear-gradient(90deg, transparent, rgba(201, 162, 39, 0.4), transparent);
+   549→  }
+   550→
+   551→  /* ── Long-form text stays on solid cream for readability ───────────── */
+   552→  .prose-cream {
+   553→    background: #faf7f0;
+   554→    color: #1a1a1a;
+   555→    line-height: 1.65;
+   556→  }
+   557→
+   558→  /* ── Handmade paper grain (baked faint — safe to layer once) ───────── */
+   559→
+   560→  /* Standalone grain layer for backdrops / large surfaces */
+   561→  .texture-grain {
+   562→    background-image: var(--ss-grain);
+   563→    background-size: 160px 160px;
+   564→  }
+   565→
+   566→  /* Grain + gold hairline for bars / nav / tab strips (composes over .glass).
+   567→     Uses ::after because .glass already owns ::before for its top sheen. */
+   568→  .bar-texture::after {
+   569→    content: "";
+   570→    position: absolute;
+   571→    inset: 0;
+   572→    pointer-events: none;
+   573→    border-radius: inherit;
+   574→    background-image:
+   575→      var(--ss-grain),
+   576→      linear-gradient(90deg, transparent 4%, rgba(201, 162, 39, 0.3) 50%, transparent 96%);
+   577→    background-size: 160px 160px, 100% 1px;
+   578→    background-position: 0 0, 0 0;
+   579→    background-repeat: repeat, no-repeat;
+   580→  }
+   581→  /* Variant for non-glass solid bars (headers, sheets) */
+   582→  .bar-texture-solid {
+   583→    position: relative;
+   584→  }
+   585→  .bar-texture-solid::after {
+   586→    content: "";
+   587→    position: absolute;
+   588→    inset: 0;
+   589→    pointer-events: none;
+   590→    border-radius: inherit;
+   591→    background-image:
+   592→      var(--ss-grain),
+   593→      linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 55%);
+   594→    background-size: 160px 160px, 100% 100%;
+   595→  }
+   596→
+   597→  /* ── Android-style touch feedback ───────────────────────────────────── */
+   598→  .tap {
+   599→    -webkit-tap-highlight-color: transparent;
+   600→    transition: transform 0.16s cubic-bezier(0.34, 1.3, 0.64, 1), box-shadow 0.2s ease, filter 0.2s ease;
+   601→  }
+   602→  .tap:active {
+   603→    transform: scale(0.96);
+   604→  }
+   605→  .tap-sm {
+   606→    -webkit-tap-highlight-color: transparent;
+   607→    transition: transform 0.16s cubic-bezier(0.34, 1.3, 0.64, 1);
+   608→  }
+   609→  .tap-sm:active {
+   610→    transform: scale(0.985);
+   611→  }
+   612→  /* Material-style ripple (CSS-only: blooms on press, fades on release) */
+   613→  .ripple {
+   614→    position: relative;
+   615→    overflow: hidden;
+   616→    -webkit-tap-highlight-color: transparent;
+   617→  }
+   618→  .ripple::after {
+   619→    content: "";
+   620→    position: absolute;
+   621→    inset: 0;
+   622→    border-radius: inherit;
+   623→    background: radial-gradient(circle at 50% 50%, currentColor 0%, transparent 62%);
+   624→    opacity: 0;
+   625→    transform: scale(0.35);
+   626→    pointer-events: none;
+   627→    transition: transform 0s, opacity 0s;
+   628→  }
+   629→  .ripple:active::after {
+   630→    opacity: 0.13;
+   631→    transform: scale(1.7);
+   632→    transition: transform 0.5s ease-out, opacity 0.7s ease-out;
+   633→  }
+   634→
+   635→  /* ── Accent tint gradients for chips / badges / soft cards ─────────── */
+   636→  .burgundy-grad {
+   637→    background: linear-gradient(135deg, #4d1420 0%, #7a2a3c 100%);
+   638→  }
+   639→  .text-rose-grad {
+   640→    background: linear-gradient(135deg, #a33347 0%, #d9708a 100%);
+   641→    -webkit-background-clip: text;
+   642→    background-clip: text;
+   643→    color: transparent;
+   644→  }
+   645→  .text-burgundy-grad {
+   646→    background: linear-gradient(135deg, #4d1420 0%, #8a3a4e 100%);
+   647→    -webkit-background-clip: text;
+   648→    background-clip: text;
+   649→    color: transparent;
+   650→  }
+   651→}
+   652→
+   653→@keyframes fade-rise {
+   654→  from {
+   655→    opacity: 0;
+   656→    transform: translateY(10px);
+   657→  }
+   658→  to {
+   659→    opacity: 1;
+   660→    transform: translateY(0);
+   661→  }
+   662→}
+   663→@keyframes fade-in {
+   664→  from {
+   665→    opacity: 0;
+   666→  }
+   667→  to {
+   668→    opacity: 1;
+   669→  }
+   670→}
+   671→@keyframes slide-out {
+   672→  from {
+   673→    opacity: 1;
+   674→    transform: translateY(0);
+   675→  }
+   676→  to {
+   677→    opacity: 0;
+   678→    transform: translateY(8px);
+   679→  }
+   680→}
+   681→@keyframes month-in {
+   682→  from {
+   683→    opacity: 0;
+   684→    transform: translateX(14px);
+   685→  }
+   686→  to {
+   687→    opacity: 1;
+   688→    transform: translateX(0);
+   689→  }
+   690→}
+   691→@keyframes pulse-ring {
+   692→  0% {
+   693→    transform: scale(0.96);
+   694→    opacity: 0.7;
+   695→  }
+   696→  70% {
+   697→    transform: scale(1.08);
+   698→    opacity: 0;
+   699→  }
+   700→  100% {
+   701→    transform: scale(1.08);
+   702→    opacity: 0;
+   703→  }
+   704→}
+   705→
+   706→/* Reduced-motion opt-out (also togglable in-app) */
+   707→@media (prefers-reduced-motion: reduce) {
+   708→  *,
+   709→  *::before,
+   710→  *::after {
+   711→    animation-duration: 0.01ms !important;
+   712→    animation-iteration-count: 1 !important;
+   713→    transition-duration: 0.01ms !important;
+   714→  }
+   715→}
+   716→.reduce-motion *,
+   717→.reduce-motion *::before,
+   718→.reduce-motion *::after {
+   719→  animation-duration: 0.01ms !important;
+   720→  transition-duration: 0.01ms !important;
+   721→}
+   722→
+   723→/* High contrast display option */
+   724→.high-contrast {
+   725→  --muted-foreground: #3d3629;
+   726→}
+   727→.high-contrast .glass {
+   728→  background: rgba(255, 253, 246, 0.92);
+   729→}
+   730→
+   731→/* ── Reminder bell wiggle (fires once when a reminder arrives) ─────────── */
+   732→@keyframes bell-wiggle {
+   733→  0%, 100% { transform: rotate(0deg); }
+   734→  15% { transform: rotate(14deg); }
+   735→  30% { transform: rotate(-12deg); }
+   736→  45% { transform: rotate(9deg); }
+   737→  60% { transform: rotate(-6deg); }
+   738→  75% { transform: rotate(3deg); }
+   739→}
+   740→.bell-wiggle {
+   741→  animation: bell-wiggle 0.9s ease-in-out 2;
+   742→}
+   743→
+   744→/* ── Check-in card focus flash (navigated from bell / reminder toast) ──── */
+   745→@keyframes focus-flash {
+   746→  0% {
+   747→    box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.55);
+   748→  }
+   749→  60% {
+   750→    box-shadow: 0 0 0 7px rgba(201, 162, 39, 0);
+   751→  }
+   752→  100% {
+   753→    box-shadow: 0 0 0 0 rgba(201, 162, 39, 0);
+   754→  }
+   755→}
+   756→.focus-flash {
+   757→  animation: focus-flash 0.9s ease-out 2;
+   758→  border-color: rgba(201, 162, 39, 0.75) !important;
+   759→}
+   760→
+   761→/* ── Print view: the weekly letter as a keepsake page ──────────────────── */
+   762→@media print {
+   763→  @page {
+   764→    margin: 16mm;
+   765→  }
+   766→  body * {
+   767→    visibility: hidden !important;
+   768→  }
+   769→  #letter-print,
+   770→  #letter-print * {
+   771→    visibility: visible !important;
+   772→  }
+   773→  #letter-print {
+   774→    display: block !important;
+   775→    position: absolute;
+   776→    left: 0;
+   777→    top: 0;
+   778→    width: 100%;
+   779→    background: #fffdf8;
+   780→    padding: 10mm 6mm;
+   781→  }
+   782→  .lp-brand {
+   783→    font-family: var(--font-playfair), Georgia, serif;
+   784→    font-size: 30pt;
+   785→    font-weight: 700;
+   786→    letter-spacing: 1px;
+   787→    color: #6b5012;
+   788→    text-align: center;
+   789→  }
+   790→  .lp-byline {
+   791→    text-align: center;
+   792→    font-size: 10.5pt;
+   793→    color: #7d7461;
+   794→    margin-top: 2mm;
+   795→    font-style: italic;
+   796→  }
+   797→  .lp-week {
+   798→    text-align: center;
+   799→    font-size: 9.5pt;
+   800→    color: #9a8f76;
+   801→    margin-top: 1.5mm;
+   802→  }
+   803→  .lp-rule {
+   804→    height: 0;
+   805→    border-top: 1.5pt solid #c9a227;
+   806→    width: 38mm;
+   807→    margin: 7mm auto 9mm;
+   808→  }
+   809→  .lp-body {
+   810→    white-space: pre-wrap;
+   811→    font-size: 11.5pt;
+   812→    line-height: 1.85;
+   813→    color: #2a2420;
+   814→  }
+   815→  .lp-body::first-letter {
+   816→    font-family: var(--font-playfair), Georgia, serif;
+   817→    font-size: 30pt;
+   818→    line-height: 1;
+   819→    color: #8a6d10;
+   820→    float: left;
+   821→    padding-right: 2.5mm;
+   822→    padding-top: 1.5mm;
+   823→  }
+   824→  .lp-sign {
+   825→    margin-top: 9mm;
+   826→    text-align: right;
+   827→    font-family: var(--font-playfair), Georgia, serif;
+   828→    font-size: 12.5pt;
+   829→    font-style: italic;
+   830→    color: #6b5012;
+   831→  }
+   832→  .lp-foot {
+   833→    margin-top: 11mm;
+   834→    padding-top: 3mm;
+   835→    border-top: 0.5pt solid #d8cba4;
+   836→    display: flex;
+   837→    justify-content: space-between;
+   838→    font-size: 8.5pt;
+   839→    color: #9a8f76;
+   840→    letter-spacing: 0.5px;
+   841→  }
+   842→}
+   843→
+   844→/* ── Dasha progress hover tooltip (pure CSS — no framework dependency) ─── */
+   845→.dasha-tip-host {
+   846→  position: relative;
+   847→}
+   848→.dasha-tip {
+   849→  pointer-events: none;
+   850→  position: absolute;
+   851→  bottom: calc(100% + 6px);
+   852→  left: 50%;
+   853→  transform: translate(-50%, 4px);
+   854→  white-space: nowrap;
+   855→  border-radius: 0.5rem;
+   856→  background: #2a2420;
+   857→  color: #f0e4c3;
+   858→  font-size: 12px;
+   859→  padding: 6px 10px;
+   860→  border: 1px solid rgba(201, 162, 39, 0.35);
+   861→  box-shadow: 0 10px 24px rgba(42, 36, 32, 0.28);
+   862→  opacity: 0;
+   863→  transition: opacity 200ms ease, transform 200ms ease;
+   864→  z-index: 20;
+   865→}
+   866→.dasha-tip-host:hover .dasha-tip,
+   867→.dasha-tip-host:focus-within .dasha-tip {
+   868→  opacity: 1;
+   869→  transform: translate(-50%, 0);
+   870→}
+   871→

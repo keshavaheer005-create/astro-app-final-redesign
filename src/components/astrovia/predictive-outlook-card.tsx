@@ -21,14 +21,15 @@ const THEME_ICONS: Record<PredictionThemeId, IconName> = {
   wellbeing: 'sun',
 };
 
-// Keep new insight cards mostly neutral; use theme colours only as small accents.
+// Liquid-glass insight cards: theme colour lives ONLY in the small icon
+// chip + tone pill; the card itself stays a neutral glass bubble.
 const THEME_ACCENTS: Record<PredictionThemeId, { gradient: string; icon: string }> = {
-  career: { gradient: 'from-emerald/20 to-gold/20', icon: 'text-emerald-deep' },
-  relationships: { gradient: 'from-rose/25 to-burgundy/20', icon: 'text-burgundy' },
-  wealth: { gradient: 'from-gold/25 to-rose/10', icon: 'text-[#80651b]' },
-  learning: { gradient: 'from-violet/20 to-rose/10', icon: 'text-violet-deep' },
-  home: { gradient: 'from-rose/15 to-emerald/15', icon: 'text-emerald-deep' },
-  wellbeing: { gradient: 'from-gold/20 to-violet/15', icon: 'text-violet-deep' },
+  career: { gradient: 'bg-emerald-soft/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]', icon: 'text-emerald-deep' },
+  relationships: { gradient: 'bg-rose-soft/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]', icon: 'text-rose-deep' },
+  wealth: { gradient: 'bg-gold-soft/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]', icon: 'text-gold-deep' },
+  learning: { gradient: 'bg-violet-soft/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]', icon: 'text-violet-deep' },
+  home: { gradient: 'bg-emerald-faint/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]', icon: 'text-emerald-deep' },
+  wellbeing: { gradient: 'bg-burgundy-soft/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]', icon: 'text-burgundy' },
 };
 
 function signalText(signal: PredictionSignal, language: string, t: TFunction): string {
@@ -63,9 +64,10 @@ export function PredictiveOutlookCard({ chartId, timezone }: { chartId: string |
   }, [timezone]);
 
   useEffect(() => {
-    // A chartId change remounts this component via `key` (home.tsx); when no
-    // chart exists the initial state is already null, so nothing to reset here.
-    if (!chartId) return;
+    if (!chartId) {
+      setOutlook(null);
+      return;
+    }
     let cancelled = false;
     void apiSWR<{ outlook: PredictiveOutlook }>(
       '/api/predictive-outlook',
@@ -90,19 +92,18 @@ export function PredictiveOutlookCard({ chartId, timezone }: { chartId: string |
   };
 
   return (
-    <GlassCard className="relative overflow-hidden border-0 p-4 sm:p-5">
-      <div className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-gradient-to-br from-violet/12 via-rose/10 to-gold/10 blur-2xl" aria-hidden="true" />
+    <GlassCard tone="violet" className="relative overflow-hidden p-4 sm:p-5">
       <div className="relative flex items-start gap-3">
-        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet/20 to-rose/15 text-violet-deep">
-          <Icon name="planet" size={19} />
+        <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-soft/90 text-violet-deep shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_2px_10px_-3px_rgba(139,41,69,0.3)] backdrop-blur-sm">
+          <Icon name="planet" size={20} />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="font-serif text-t18 font-semibold text-charcoal">{t('prediction.title')}</h2>
-          <p className="mt-1 text-t12 leading-relaxed text-muted-foreground">{t('prediction.subtitle')}</p>
+          <h2 className="font-serif text-t22 font-bold tracking-[-0.02em] text-charcoal">{t('prediction.title')}</h2>
+          <p className="mt-1 text-t14 leading-relaxed text-charcoal/70">{t('prediction.subtitle')}</p>
         </div>
       </div>
 
-      <div className="relative mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="relative mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         {visibleThemes.map((theme) => {
           const active = expanded === theme.id;
           return (
@@ -112,21 +113,23 @@ export function PredictiveOutlookCard({ chartId, timezone }: { chartId: string |
               aria-expanded={active}
               onClick={() => setExpanded((current) => current === theme.id ? null : theme.id)}
               className={cn(
-                'tap-sm min-h-[82px] rounded-2xl px-3 py-3 text-left transition-[background,transform] duration-200 active:scale-[.98]',
-                active ? 'bg-white/85 shadow-[inset_0_1px_0_rgba(255,255,255,.95),0_3px_10px_rgba(42,36,32,.05)]' : 'bg-white/50 hover:bg-white/75',
+                'tap-sm min-h-[86px] rounded-2xl px-3 py-3 text-left backdrop-blur-sm',
+                'shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_3px_12px_-6px_rgba(42,36,32,0.16)]',
+                'transition-[background,transform,box-shadow] duration-200 active:scale-[.98]',
+                active ? 'bg-white/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_6px_18px_-6px_rgba(42,36,32,0.2)]' : 'bg-white/50 hover:bg-white/70',
               )}
             >
               <span className="flex items-center justify-between gap-2">
-                <span className={cn('inline-flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br', THEME_ACCENTS[theme.id].gradient)}>
+                <span className={cn('inline-flex h-8 w-8 items-center justify-center rounded-xl', THEME_ACCENTS[theme.id].gradient)}>
                   <Icon name={THEME_ICONS[theme.id]} size={16} className={THEME_ACCENTS[theme.id].icon} />
                 </span>
                 <span className={cn(
-                  'rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide',
-                  theme.tone === 'supportive' ? 'bg-emerald-soft text-emerald-deep' : theme.tone === 'reflective' ? 'bg-burgundy-soft text-burgundy' : 'bg-gold-soft text-[#80651b]',
+                  'rounded-full px-2 py-0.5 text-[10.5px] font-semibold tracking-wide shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]',
+                  theme.tone === 'supportive' ? 'bg-emerald-soft/90 text-emerald-deep' : theme.tone === 'reflective' ? 'bg-burgundy-soft/90 text-burgundy' : 'bg-gold-soft/90 text-[#7a5f18]',
                 )}>{t(`prediction.tone.${theme.tone}`)}</span>
               </span>
-              <span className="mt-2 block text-t12 font-semibold leading-tight text-charcoal">{t(`prediction.theme.${theme.id}`)}</span>
-              <span className="mt-1 block text-[10px] text-muted-foreground">{t('prediction.houses', { houses: theme.houses.slice(0, 3).join(' · ') })}</span>
+              <span className="mt-2.5 block text-t14 font-bold leading-tight tracking-[-0.01em] text-charcoal">{t(`prediction.theme.${theme.id}`)}</span>
+              <span className="mt-1 block text-[11px] leading-relaxed text-muted-foreground">{t('prediction.houses', { houses: theme.houses.slice(0, 3).join(' · ') })}</span>
             </button>
           );
         })}
@@ -140,13 +143,13 @@ export function PredictiveOutlookCard({ chartId, timezone }: { chartId: string |
       )}
 
       {chosen && (
-        <div className="relative mt-3 rounded-2xl bg-white/65 p-3.5 animate-in fade-in-50 duration-180" aria-live="polite">
+        <div className="relative mt-3 rounded-2xl bg-white/70 p-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_4px_16px_-8px_rgba(42,36,32,0.16)] backdrop-blur-sm animate-in fade-in-50 duration-180" aria-live="polite">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="font-serif text-t16 font-semibold text-charcoal">{t(`prediction.theme.${chosen.id}`)}</p>
+              <p className="font-serif text-t18 font-bold tracking-[-0.01em] text-charcoal">{t(`prediction.theme.${chosen.id}`)}</p>
               <p className="mt-0.5 text-t12 text-muted-foreground">{t('prediction.varga', { varga: chosen.varga })}</p>
             </div>
-            <span className="shrink-0 rounded-full bg-gold-faint px-2 py-1 text-[10px] font-semibold text-charcoal/75">{activeDasha}</span>
+            <span className="shrink-0 rounded-full bg-gold-faint/90 px-2 py-1 text-[11px] font-semibold text-charcoal/75 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">{activeDasha}</span>
           </div>
           {chosen.signals.length ? (
             <ul className="mt-3 space-y-2">
@@ -167,7 +170,7 @@ export function PredictiveOutlookCard({ chartId, timezone }: { chartId: string |
         </div>
       )}
 
-      <p className="relative mt-3 pt-3 text-[10.5px] leading-relaxed text-muted-foreground">{t('prediction.disclaimer')}</p>
+      <p className="relative mt-3 pt-3 border-t border-violet/10 text-t12 leading-relaxed text-muted-foreground">{t('prediction.disclaimer')}</p>
     </GlassCard>
   );
 }

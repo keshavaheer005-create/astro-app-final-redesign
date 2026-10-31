@@ -11,7 +11,6 @@ import { useSession } from '../session-context';
 import { PLANET_ORDER, SIGNS, SIGNS_HI } from '@/lib/astro/constants';
 import { dignityOf } from '@/lib/astro/dignity';
 import { useAppStore } from '@/store/app';
-import { birthDateLabel } from '@/lib/dates';
 import { cn } from '@/lib/utils';
 
 export function KundliChartScreen() {
@@ -75,9 +74,9 @@ export function KundliChartScreen() {
   return (
     <div className="space-y-5">
       <header>
-        <h1 className="font-serif text-t28 font-bold text-gold-grad">{chart.input.name}</h1>
+        <h1 className="font-serif text-t28 font-semibold text-charcoal">{chart.input.name}</h1>
         <p className="text-t12 text-muted-foreground mt-0.5">
-          {birthDateLabel(chart.input.dob, i18n.language)} · {chart.input.tob} · {chart.input.placeName ?? ''} · ayanamsa {chart.ayanamsa.toFixed(2)}°
+          {chart.input.dob} · {chart.input.tob} · {chart.input.placeName ?? ''} · ayanamsa {chart.ayanamsa.toFixed(2)}°
         </p>
       </header>
 
@@ -111,10 +110,10 @@ export function KundliChartScreen() {
         />
       </div>
 
-      {/* Chart diagrams */}
+      {/* Chart diagrams — gold essence for the Vedic chart, violet for Western */}
       {zodiac !== 'western' && (
-        <GlassCard className="p-4 sm:p-6">
-          <p className="text-t12 uppercase tracking-wider text-gold font-semibold mb-3">{t('chart.zodiac.vedic')}</p>
+        <GlassCard tone="gold" className="p-4 sm:p-6">
+          <p className="text-t14 tracking-wide text-gold-deep font-semibold mb-3">{t('chart.zodiac.vedic')}</p>
           {style === 'north' ? (
             <NorthChart ascSign={asc.sign} planets={vedicPlanets} onAskPlanet={askPlanet} onAskHouse={askHouse} planetName={planetLabel} />
           ) : (
@@ -126,7 +125,7 @@ export function KundliChartScreen() {
               type="button"
               onClick={() => setShowOuter((v) => !v)}
               aria-pressed={showOuter}
-              className="rounded-full border border-gold/40 px-3 py-1 font-semibold text-gold hover:bg-gold/10"
+              className="rounded-full bg-gold/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] px-3 py-1 font-semibold text-gold hover:bg-gold/20"
             >
               {showOuter
                 ? t('chart.outerOn', { defaultValue: 'Outer planets: on' })
@@ -137,11 +136,11 @@ export function KundliChartScreen() {
       )}
 
       {zodiac !== 'vedic' && (
-        <GlassCard className="p-4 sm:p-6">
-          <p className="text-t12 uppercase tracking-wider text-gold font-semibold mb-3">{t('chart.zodiac.western')}</p>
+        <GlassCard tone="violet" className="p-4 sm:p-6">
+          <p className="text-t14 tracking-wide text-violet-deep font-semibold mb-3">{t('chart.zodiac.western')}</p>
           {style === 'north' ? (
             <NorthChart
-              ascSign={Math.floor(chart.planets.length ? 0 : 0) + signIndexOfTropicalAsc(chart)}
+              ascSign={signIndexOfTropicalAsc(chart)}
               planets={westernPlanets}
               onAskPlanet={askPlanet}
               onAskHouse={askHouse}
@@ -160,14 +159,14 @@ export function KundliChartScreen() {
       )}
 
       {zodiac === 'both' && (
-        <GlassCard className="p-5">
+        <GlassCard tone="gold" className="p-5">
           <SectionHeader title={t('chart.agreement')} icon="eye" />
           {agreement.same.length > 0 ? (
-            <p className="text-t14 text-charcoal leading-relaxed">
+            <p className="text-t15 text-charcoal leading-relaxed">
               {t('chart.agreeLine', { count: agreement.same.length, list: agreement.same.join(', ') })}
             </p>
           ) : (
-            <p className="text-t14 text-muted-foreground leading-relaxed">
+            <p className="text-t15 text-muted-foreground leading-relaxed">
               {t('chart.disagreeLine', { deg: chart.ayanamsa.toFixed(1) })}
             </p>
           )}
@@ -175,7 +174,7 @@ export function KundliChartScreen() {
       )}
 
       {/* Planets table */}
-      <GlassCard className="p-4 sm:p-5">
+      <GlassCard tone="gold" className="p-4 sm:p-5">
         <div className="flex items-center justify-between gap-2 flex-wrap"><SectionHeader title={t('chart.planetsTable')} icon="list" /><AskAIAction compact label={t('ai.explain')} question={`Explain the planet placements table in my birth chart. Walk through the planets, signs, houses, dignity, nakshatras and retrograde/combust status that are actually present, then relate the most important placements to my current dasha. Avoid generic claims not supported by my chart.`} /></div>
         <div className="overflow-x-auto scroll-slim -mx-1 px-1">
           <table className="w-full text-t14 min-w-[520px]">
@@ -194,7 +193,7 @@ export function KundliChartScreen() {
                   <td className="py-2.5">
                     <button type="button" onClick={() => askPlanet({ key: p.key as ChartKey, sign: p.sign, deg: p.degInSign, retrograde: p.retrograde, combust: p.combust }, p.house)} aria-label={`Ask AI about ${t(`planet.${p.key}`)}`} className="inline-flex items-center gap-1.5 rounded-lg text-left font-semibold text-charcoal transition-colors hover:text-emerald-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/50">
                       {t(`planet.${p.key}`)} <span aria-hidden="true" className="text-emerald-deep text-t12">✦</span>
-                      {p.retrograde && <span className="text-t12 text-burgundy font-bold">℞</span>}
+                      {p.retrograde && <span className="text-t12 text-burgundy font-semibold">℞</span>}
                     </button>
                   </td>
                   <td className="py-2.5 text-charcoal/85">
@@ -206,7 +205,7 @@ export function KundliChartScreen() {
                   </td>
                   <td className="py-2.5 text-muted-foreground">{p.degInSign.toFixed(2)}°</td>
                   <td className="py-2.5 text-charcoal/85">{p.nakshatraName} <span className="text-t12 text-muted-foreground">·{p.pada}</span></td>
-                  <td className="py-2.5"><button type="button" onClick={() => askHouse(p.house, p.sign)} aria-label={`Ask AI about house ${p.house}`} className="inline-flex w-7 h-7 items-center justify-center rounded-full bg-gold-soft text-t12 font-bold text-[#8a6d10] hover:bg-emerald-soft hover:text-emerald-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/50">{p.house}</button></td>
+                  <td className="py-2.5"><button type="button" onClick={() => askHouse(p.house, p.sign)} aria-label={`Ask AI about house ${p.house}`} className="inline-flex w-7 h-7 items-center justify-center rounded-full bg-gold-soft text-t12 font-semibold text-[#8a6d10] hover:bg-emerald-soft hover:text-emerald-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/50">{p.house}</button></td>
                 </tr>
               ))}
               <tr className="hover:bg-gold-soft/40 transition-colors duration-150">
@@ -214,7 +213,7 @@ export function KundliChartScreen() {
                 <td className="py-2.5 text-charcoal/85">{hi ? asc.signNameHi : asc.signName}</td>
                 <td className="py-2.5 text-muted-foreground">{asc.degInSign.toFixed(2)}°</td>
                 <td className="py-2.5 text-charcoal/85">{asc.nakshatra} <span className="text-t12 text-muted-foreground">·{asc.pada}</span></td>
-                <td className="py-2.5"><span className="inline-flex w-7 h-7 items-center justify-center rounded-full bg-gold-soft text-t12 font-bold text-[#8a6d10]">1</span></td>
+                <td className="py-2.5"><span className="inline-flex w-7 h-7 items-center justify-center rounded-full bg-gold-soft text-t12 font-semibold text-[#8a6d10]">1</span></td>
               </tr>
             </tbody>
           </table>
@@ -232,7 +231,7 @@ function signIndexOfTropicalAsc(chart: NonNullable<ReturnType<typeof useSession>
 
 function SummaryTile({ label, value, sub, icon, tone = 'gold' }: { label: string; value: string; sub?: string; icon: 'compass' | 'moon' | 'sun'; tone?: 'gold' | 'violet' }) {
   return (
-    <GlassCard className="p-3.5 sm:p-4">
+    <GlassCard tone={tone === 'violet' ? 'violet' : 'gold'} className="p-3.5 sm:p-4">
       <div className={cn('flex items-center gap-1.5 min-w-0', tone === 'violet' ? 'text-violet' : 'text-gold')}>
         <Icon name={icon} size={13} className="shrink-0" />
         <span className="text-t12 text-muted-foreground leading-tight whitespace-nowrap truncate">{label}</span>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSession } from './session-context';
 import { GlassCard, SectionHeader } from './ui-primitives';
@@ -16,9 +16,9 @@ export function SavedInsightsCard() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Identity changes remount this component via `key` (home.tsx), so fresh
-    // initial state replaces the old sync-reset-in-effect pattern.
     let live = true;
+    setItems([]);
+    setExpandedId(null);
     if (!user?.id || !activeChartId) return () => { live = false; };
     void readSavedInsights(user.id, activeChartId).then((next) => {
       if (live) setItems(next);
@@ -26,12 +26,12 @@ export function SavedInsightsCard() {
     return () => { live = false; };
   }, [user?.id, activeChartId]);
 
-  const remove = async (id: string) => {
+  const remove = useCallback(async (id: string) => {
     if (!user?.id || !activeChartId) return;
     await removeSavedInsight(user.id, activeChartId, id);
     setItems((current) => current.filter((item) => item.id !== id));
     setExpandedId((current) => current === id ? null : current);
-  };
+  }, [user?.id, activeChartId]);
 
   if (!user?.id || !activeChartId || items.length === 0) return null;
   const expanded = items.find((item) => item.id === expandedId);
@@ -45,7 +45,7 @@ export function SavedInsightsCard() {
           {items.slice(0, 3).map((item) => (
             <div key={item.id} className={cn('rounded-2xl px-3 py-3 transition-colors duration-150', expandedId === item.id ? 'bg-emerald-soft/45' : 'bg-white/50')}>
               <div className="flex items-start gap-2.5">
-                <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-gold/20 to-rose/15 text-burgundy">
+                <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gold-soft text-gold-deep">
                   <Icon name="bookmark" size={15} />
                 </span>
                 <button type="button" onClick={() => setExpandedId((current) => current === item.id ? null : item.id)} className="min-w-0 flex-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald/50 rounded-md">

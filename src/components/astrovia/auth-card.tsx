@@ -227,10 +227,34 @@ export function AuthCard({
     }
   };
 
+  /**
+   * Preview bypass — one tap into the seeded demo account.
+   * Only offered when the app runs without Supabase (local/preview mode), so
+   * production sign-in flows are untouched. The login screen stays as-is.
+   */
+  const continueAsDemo = async () => {
+    setWorking(true);
+    setError(null);
+    setGoogleHint(false);
+    try {
+      const res = await authGateway.signIn('demo@astrovia.app', 'astrovia123');
+      if (res.user) {
+        setUser(res.user);
+        retryBootstrap();
+        onAuthed?.();
+      } else {
+        setError(mapAuthError(res.error ?? 'auth_failed'));
+      }
+    } catch {
+      setError(t('common.networkError'));
+    } finally {
+      setWorking(false);
+    }
+  };
+
   return (
     <Shell embedded={embedded}>
-      {/* Local emerald atmosphere — a calm gradient field inside the card
-          (the auth card is embedded, so this stays scoped, not fixed) */}
+      {/* ASTRA champagne atmosphere — calm and scoped inside the card */}
       {!embedded && (
         <>
           <div
@@ -238,9 +262,7 @@ export function AuthCard({
             aria-hidden="true"
             style={{
               background:
-                'radial-gradient(90% 55% at 12% -6%, rgba(62,142,110,0.20), transparent 60%),' +
-                'radial-gradient(80% 50% at 95% 8%, rgba(127,191,164,0.14), transparent 58%),' +
-                'radial-gradient(120% 60% at 50% 112%, rgba(62,142,110,0.12), transparent 64%)',
+                'radial-gradient(90% 55% at 12% -6%, rgba(213, 160, 69, 0.06), transparent 60%)',
             }}
           />
 
@@ -259,9 +281,10 @@ export function AuthCard({
         type="button"
         onClick={handleGoogle}
         className={cn(
-          'tap relative mt-5 flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-gold/40 bg-white/70',
+          'tap relative mt-5 flex h-11 w-full items-center justify-center gap-2.5 rounded-xl bg-white/70',
           'text-t14 font-semibold text-charcoal transition-all duration-250 ease-out',
-          'hover:border-gold/70 hover:bg-white/90 hover:shadow-[0_4px_16px_rgba(201,162,39,0.18)]',
+          'shadow-[inset_0_1px_0_rgba(255,255,255,0.8),0_2px_10px_-4px_rgba(42,36,32,0.14)] backdrop-blur-sm',
+          'hover:bg-white/90',
           'active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/25',
           googleDimmed && 'opacity-70',
         )}
@@ -272,21 +295,21 @@ export function AuthCard({
       {googleHint && <p className="relative mt-2 text-t12 text-muted-foreground leading-snug">{t('auth.googleHint')}</p>}
 
       <div className="relative my-4 flex items-center gap-3" aria-hidden="true">
-        <span className="h-px flex-1 bg-gradient-to-r from-transparent via-gold/30 to-gold/30" />
-        <span className="text-t12 uppercase tracking-wide text-muted-foreground/80">{t('auth.or')}</span>
-        <span className="h-px flex-1 bg-gradient-to-l from-transparent via-gold/30 to-gold/30" />
+        <span className="h-px flex-1 bg-gold/25" />
+        <span className="text-t12 tracking-wide text-muted-foreground/80">{t('auth.or')}</span>
+        <span className="h-px flex-1 bg-gold/25" />
       </div>
 
-      {/* mode toggle — segmented control with a sliding gold pill (260ms ease) */}
-      <div className="relative grid grid-cols-2 gap-1 rounded-xl border border-gold/25 bg-white/50 p-1" role="group">
+      {/* mode toggle — segmented control with a sliding champagne glass pill */}
+      <div className="relative grid grid-cols-2 gap-1 rounded-xl bg-white/50 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-sm" role="group">
         <span
           aria-hidden="true"
-          className="absolute rounded-lg gold-grad shadow-[0_2px_10px_rgba(201,162,39,0.35)]"
+          className="absolute rounded-lg liquid liquid-gold"
           style={{
             top: 4,
             bottom: 4,
             ...modePill,
-            transition: 'transform 260ms ease, width 260ms ease, opacity 200ms ease',
+            transition: 'transform 300ms cubic-bezier(0.32,0.72,0,1), width 300ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease',
           }}
         />
         {(['signup', 'login'] as const).map((m, i) => (
@@ -452,11 +475,22 @@ export function AuthCard({
       {/* guest escape — always visible, never trapped (hidden when already a guest) */}
       {!hideGuest && (
       <div className="relative mt-5 border-t border-gold/15 pt-4 text-center">
+        {authGateway.mode === 'local' && (
+          <button
+            type="button"
+            onClick={continueAsDemo}
+            disabled={working}
+            className="tap-sm mb-2 inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-gold/30 bg-gold-soft/60 px-3 py-2 text-t14 font-semibold text-charcoal transition-colors duration-150 hover:bg-gold-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/25 disabled:opacity-45 disabled:pointer-events-none"
+          >
+            <Icon name="sparkle" size={14} />
+            {t('auth.demo')}
+          </button>
+        )}
         <button
           type="button"
           onClick={continueWithout}
           disabled={working}
-          className="tap-sm inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-t14 font-medium text-gold transition-colors duration-200 hover:text-gold-light hover:bg-gold-soft/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/25 disabled:opacity-45 disabled:pointer-events-none"
+          className="tap-sm inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-t14 font-medium text-gold-deep transition-colors duration-200 hover:text-gold hover:bg-gold-soft/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/25 disabled:opacity-45 disabled:pointer-events-none"
         >
           <Icon name="user" size={14} />
           {t('auth.continueWithout')}

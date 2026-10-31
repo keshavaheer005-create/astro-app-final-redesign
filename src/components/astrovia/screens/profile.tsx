@@ -7,13 +7,13 @@ import { GlassCard, SectionHeader, GoldButton, GhostButton, useSlidingIndicator 
 import { Switch } from '@/components/ui/switch';
 import { api, useSession, type ChartData } from '../session-context';
 import { useAppStore } from '@/store/app';
-import { birthDateLabel } from '@/lib/dates';
 import { AuthCard } from '../auth-card';
 import { authGateway } from '@/lib/supabase/client';
 import { cancelDailyReminders, saveTextFile } from '@/lib/native';
 import { clearAccountCache, clearAllClientCaches, isPersistent } from '@/lib/client-cache';
 import { useAuthPrompt } from '../auth-prompt';
 import { ChartForm } from '../chart-form';
+import { GlassTimePicker } from '../pickers';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -180,7 +180,7 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
       {/* Deep burgundy atmosphere — the whole-screen gradient comes from
           ScreenGradient (app-shell); the wine-toned corner mandala accents it */}
       <header className="flex items-center justify-between">
-        <h1 className="font-serif text-t28 font-bold text-burgundy-grad">{t('profile.title')}</h1>
+        <h1 className="font-serif text-t28 font-semibold text-charcoal">{t('profile.title')}</h1>
         <LogoMark size={34} className="opacity-80" />
       </header>
 
@@ -199,18 +199,18 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
         />
       )}
 
-      {/* User card */}
-      <GlassCard className="p-5 flex items-center gap-4">
+      {/* User card — wraps gracefully on narrow phones so nothing truncates */}
+      <GlassCard tone="burgundy" className="p-5 flex flex-wrap items-center gap-4">
         <div className="relative flex h-14 w-14 shrink-0 items-center justify-center">
-          <div className="relative w-14 h-14 rounded-full gold-grad flex items-center justify-center text-charcoal font-serif text-t20 font-bold shadow-[0_4px_14px_rgba(201,162,39,0.35)]">
+          <div className="relative w-14 h-14 rounded-full gold-grad flex items-center justify-center text-charcoal font-serif text-t20 font-semibold">
             {(chart?.input?.name || user?.name || 'S').slice(0, 1).toUpperCase()}
           </div>
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-[180px]">
           <p className="font-serif text-t20 font-semibold text-charcoal truncate">{chart?.input?.name || user?.name || 'Seeker'}</p>
           {chart ? (
-            <p className="text-t12 text-muted-foreground line-clamp-2 leading-snug" title={`${birthDateLabel(chart.input.dob, language)} · ${chart.input.tob} · ${chart.input.placeName}`}>
-              {birthDateLabel(chart.input.dob, language)} · {chart.input.tob} · {chart.input.placeName}
+            <p className="text-t12 text-muted-foreground line-clamp-2 leading-snug" title={`${chart.input.dob} · ${chart.input.tob} · ${chart.input.placeName}`}>
+              {chart.input.dob} · {chart.input.tob} · {chart.input.placeName}
             </p>
           ) : (
             <p className="text-t12 text-muted-foreground">{t('home.noChartBody')}</p>
@@ -221,7 +221,7 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
         </div>
         {chart && (
           <GhostButton
-            className="shrink-0 h-9 px-3.5 text-t12"
+            className="ml-auto shrink-0 h-9 px-3.5 text-t12"
             onClick={() => setForm({ mode: 'edit', chart: activeSaved ?? chartFromSession() })}
           >
             <Icon name="edit" size={14} /> {t('profile.editBirth')}
@@ -252,10 +252,10 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
             <GlassCard key={c.id} className="px-4 py-3 flex items-center gap-3">
               <div className="flex-1 min-w-0">
                 <p className="text-t14 font-semibold text-charcoal truncate">
-                  {c.name} {c.isPrimary && <span className="ml-1.5 rounded-full gold-grad px-2 py-0.5 text-t12 font-bold text-charcoal">{t('profile.active')}</span>}
+                  {c.name} {c.isPrimary && <span className="ml-1.5 rounded-full gold-grad px-2 py-0.5 text-t12 font-semibold text-charcoal">{t('profile.active')}</span>}
                 </p>
                 <p className="text-t12 text-muted-foreground truncate">
-                  {birthDateLabel(c.dob, language)} · {c.tob} · {c.placeName ?? `${c.lat.toFixed(1)}, ${c.lng.toFixed(1)}`}
+                  {c.dob} · {c.tob} · {c.placeName ?? `${c.lat.toFixed(1)}, ${c.lng.toFixed(1)}`}
                 </p>
               </div>
               {!c.isPrimary && (
@@ -291,20 +291,20 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
       {/* Language */}
       <section>
         <SectionHeader title={t('profile.language')} icon="globe" />
-        <GlassCard className="p-4">
+        <GlassCard tone="burgundy" className="p-4">
           <p className="text-t12 text-muted-foreground mb-3">{t('profile.languageHint')}</p>
           {/* Segmented control with a sliding gold pill indicator (260ms ease).
               48px rows keep the 44px+ Android touch target; each option has
               press feedback and an aria-pressed state. */}
-          <div className="relative flex rounded-2xl border border-gold/25 bg-white/50 p-1" role="group" aria-label={t('profile.language')}>
+          <div className="relative flex rounded-2xl bg-white/50 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-sm" role="group" aria-label={t('profile.language')}>
             <span
               aria-hidden="true"
-              className="absolute rounded-xl gold-grad shadow-[0_2px_12px_rgba(201,162,39,0.35)]"
+              className="absolute rounded-xl liquid liquid-gold"
               style={{
                 top: 4,
                 bottom: 4,
                 ...langPill,
-                transition: 'transform 260ms ease, width 260ms ease, opacity 200ms ease',
+                transition: 'transform 300ms cubic-bezier(0.32,0.72,0,1), width 300ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease',
               }}
             />
             {(['en', 'hi'] as const).map((lang, i) => (
@@ -331,20 +331,21 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
       {/* Reminders */}
       <section>
         <SectionHeader title={t('profile.reminders')} icon="bell" />
-        <GlassCard className="p-4 divide-y divide-gold/15">
+        <GlassCard tone="burgundy" className="p-4 divide-y divide-gold/15">
           <div className="flex items-center justify-between gap-3 pb-3">
             <div>
               <p className="text-t14 font-medium text-charcoal">{t('profile.reminderCheckin')}</p>
               <p className="text-t12 text-muted-foreground">{t('profile.reminderTime', { time: reminderTime })}</p>
             </div>
             <div className="flex items-center gap-2.5">
-              <input
-                type="time"
-                value={reminderTime}
-                onChange={(e) => setReminder(reminderEnabled, e.target.value)}
-                className="h-9 rounded-lg border border-gold/25 bg-white/60 px-2 text-t12 outline-none"
-                aria-label={t('profile.reminderTime', { time: reminderTime })}
-              />
+              <div className="w-32 shrink-0">
+                <GlassTimePicker
+                  compact
+                  value={reminderTime}
+                  onChange={(v) => setReminder(reminderEnabled, v)}
+                  ariaLabel={t('profile.reminderTime', { time: reminderTime })}
+                />
+              </div>
               <Switch
                 checked={reminderEnabled}
                 onCheckedChange={(v) => setReminder(v, reminderTime)}
@@ -366,7 +367,7 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
       {/* Display */}
       <section>
         <SectionHeader title={t('profile.display')} icon="eye" />
-        <GlassCard className="p-4">
+        <GlassCard tone="burgundy" className="p-4">
           <div className="flex items-center justify-between gap-3">
             <p className="text-t14 font-medium text-charcoal">{t('profile.highContrast')}</p>
             <Switch checked={highContrast} onCheckedChange={setHighContrast} className="data-[state=checked]:bg-gold" />
@@ -377,7 +378,7 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
       {/* Account */}
       <section>
         <SectionHeader title={t('profile.account')} icon="user" />
-        <GlassCard className="p-4">
+        <GlassCard tone="burgundy" className="p-4">
           {user && !user.isGuest ? (
             <div className="flex items-center justify-between gap-3">
               <p className="text-t14 text-charcoal truncate">{user.email}</p>
@@ -415,12 +416,12 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
       {/* Your data */}
       <section>
         <SectionHeader title={t('profile.dataTitle')} icon="shield" />
-        <GlassCard className="p-4">
+        <GlassCard tone="burgundy" className="p-4">
           <p className="text-t12 leading-relaxed text-muted-foreground">{t('profile.clearAllHint')}</p>
           <button
             type="button"
             onClick={() => setConfirm({ kind: 'all' })}
-            className="tap-sm mt-3 inline-flex h-10 items-center gap-1.5 rounded-full border border-burgundy/40 px-4 text-t14 font-medium text-burgundy transition-colors duration-200 hover:bg-burgundy/5"
+            className="tap-sm mt-3 inline-flex h-10 items-center gap-1.5 rounded-full bg-burgundy-soft/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] px-4 text-t14 font-medium text-burgundy transition-colors duration-200 hover:bg-burgundy-soft"
           >
             <Icon name="x" size={14} /> {t('profile.clearAll')}
           </button>
@@ -433,7 +434,7 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
             >
               <Icon name="refresh" size={13} /> {t('profile.clearCache')}
             </button>
-            <p className="mt-1 text-[11px] leading-snug text-muted-foreground/70">
+            <p className="mt-1 text-t12 leading-snug text-muted-foreground">
               {isPersistent() ? t('profile.cacheKindIdb') : t('profile.cacheKindSession')}
             </p>
           </div>
@@ -443,7 +444,7 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
       {/* About */}
       <section>
         <SectionHeader title={t('profile.about')} icon="info" />
-        <GlassCard className="p-4">
+        <GlassCard tone="burgundy" className="p-4">
           <p className="text-t14 text-charcoal/85 leading-relaxed">{t('profile.aboutBody')}</p>
           <div className="mt-3 flex items-center gap-2 text-t12 text-muted-foreground">
             <Icon name="planet" size={14} className="text-gold" />
@@ -460,7 +461,7 @@ export function ProfileScreen({ onChartUpdated }: { onChartUpdated: () => void }
       </section>
 
       <AlertDialog open={confirm !== null} onOpenChange={(o) => { if (!o && !busy) setConfirm(null); }}>
-        <AlertDialogContent className="glass border-gold/30">
+        <AlertDialogContent className="glass">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-serif text-charcoal">
               {confirm?.kind === 'chart' ? t('profile.deleteChartTitle') : t('profile.clearAllTitle')}

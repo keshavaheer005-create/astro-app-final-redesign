@@ -221,7 +221,7 @@ export function CalendarPicker({
               className={cn(
                 'mx-auto w-9 h-9 rounded-full inline-flex items-center justify-center text-t14 transition-all duration-200 ease-out active:scale-90',
                 selected
-                  ? 'gold-grad text-charcoal font-bold shadow-[0_2px_10px_rgba(201,162,39,0.45)]'
+                  ? 'liquid liquid-gold font-semibold'
                   : 'text-charcoal/80 hover:bg-gold-soft',
                 isToday && !selected && 'ring-1 ring-gold/60',
               )}
@@ -250,12 +250,15 @@ export function GlassDatePicker({
   minYear = 1900,
   maxYear = new Date().getFullYear(),
   ariaLabel,
+  placeholder,
 }: {
   value: string; // YYYY-MM-DD
   onChange: (v: string) => void;
   minYear?: number;
   maxYear?: number;
   ariaLabel?: string;
+  /** Shown in the trigger when the value is empty / not a valid date. */
+  placeholder?: string;
 }) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language === 'hi' ? 'hi-IN' : 'en-IN';
@@ -345,7 +348,10 @@ export function GlassDatePicker({
   const openPanel = useCallback(() => {
     const [y, m] = value.split('-').map(Number);
     const cur = new Date().getFullYear();
-    const initY = Number.isInteger(y) ? Math.min(maxYear, Math.max(minYear, y)) : Math.min(maxYear, Math.max(minYear, cur - 25));
+    // '' parses as Number('') === 0 — treat any year outside the range as
+    // "no date yet" so the picker opens on a sensible default (~25 years ago).
+    const yInRange = Number.isInteger(y) && y >= minYear && y <= maxYear;
+    const initY = yInRange ? y : Math.min(maxYear, Math.max(minYear, cur - 25));
     const initM = Number.isInteger(m) && m >= 1 && m <= 12 ? m : 1;
     setSelY(initY);
     setSelM(initM);
@@ -476,12 +482,14 @@ export function GlassDatePicker({
         aria-expanded={open}
         aria-label={ariaLabel ?? t('date.a11y.open')}
         className={cn(
-          'w-full h-11 rounded-xl border border-gold/30 bg-white/70 px-4 flex items-center gap-2.5 text-left',
+          'w-full h-11 rounded-xl bg-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] px-4 flex items-center gap-2.5 text-left',
           'transition-all duration-250 focus:border-gold/60 focus:ring-2 focus:ring-gold/25',
         )}
       >
         <Icon name="calendar" size={18} className="text-gold shrink-0" />
-        <span className={cn('flex-1 truncate text-t14', valid ? 'text-charcoal' : 'text-muted-foreground/60')}>{displayDate}</span>
+        <span className={cn('flex-1 truncate text-t14', valid ? 'text-charcoal' : 'text-muted-foreground/60')}>
+          {valid ? displayDate : placeholder ?? value}
+        </span>
         <Icon name="chevron-down" size={16} className="text-gold/70 shrink-0" />
       </button>
 
@@ -529,7 +537,7 @@ export function GlassDatePicker({
                   {/* header: title + breadcrumb + close */}
                   <div className="px-4 pt-3.5 pb-2 shrink-0">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-t12 uppercase tracking-wide font-semibold text-muted-foreground/80 truncate">
+                      <p className="text-t12 tracking-wide font-semibold text-muted-foreground/80 truncate">
                         {t('date.title')}
                       </p>
                       <button
@@ -666,7 +674,7 @@ export function GlassDatePicker({
                             className={cn(
                               'h-11 rounded-xl px-1 text-t14 truncate transition-all duration-150',
                               selected
-                                ? 'gold-grad text-charcoal font-semibold shadow-[0_2px_10px_rgba(201,162,39,0.35)]'
+                                ? 'liquid liquid-gold font-semibold'
                                 : 'text-charcoal/80 hover:bg-gold-faint',
                             )}
                           >
@@ -714,7 +722,7 @@ export function GlassDatePicker({
                                 className={cn(
                                   'mx-auto w-9 h-9 rounded-full inline-flex items-center justify-center text-t14 transition-all duration-200 ease-out active:scale-90',
                                   selected
-                                    ? 'gold-grad text-charcoal font-bold shadow-[0_2px_10px_rgba(201,162,39,0.45)]'
+                                    ? 'liquid liquid-gold font-semibold'
                                     : 'text-charcoal/80 hover:bg-gold-soft',
                                   isToday && !selected && 'ring-1 ring-gold/60',
                                 )}
@@ -727,6 +735,221 @@ export function GlassDatePicker({
                       </div>
                     </div>
                   )}
+                </mot.div>
+              )}
+            </AnimatePresence>
+          </>,
+          document.body,
+        )}
+    </div>
+  );
+}
+
+/* ── Cascading glass time picker: trigger → sheet/popover with TimeWheel ── */
+/* The time counterpart of GlassDatePicker: same glass trigger language,
+   portal-rendered panel (bottom sheet on mobile, anchored popover on desktop)
+   and the same wheel mechanism the profile-making flow uses inline.          */
+
+export function GlassTimePicker({
+  value,
+  onChange,
+  ariaLabel,
+  placeholder,
+  compact = false,
+  title,
+}: {
+  value: string; // HH:MM 24h
+  onChange: (v: string) => void;
+  ariaLabel?: string;
+  /** Shown in the trigger when the value is empty / not a valid time. */
+  placeholder?: string;
+  /** Compact h-9 variant for dense settings rows. */
+  compact?: boolean;
+  /** Panel header text (defaults to t('time.title')). */
+  title?: string;
+}) {
+  const { t } = useTranslation();
+  const [mounted, setMounted] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ left: number; top: number; triggerTop: number; width: number } | null>(null);
+  const posRef = useRef<{ left: number; top: number; triggerTop: number; width: number } | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  const [hh, mm] = value.split(':').map(Number);
+  const valid = Number.isInteger(hh) && Number.isInteger(mm) && hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59;
+  const display = valid
+    ? `${((hh + 11) % 12) + 1}:${String(mm).padStart(2, '0')} ${hh >= 12 ? 'PM' : 'AM'}`
+    : value;
+
+  useEffect(() => {
+    setMounted(true);
+    const mq = window.matchMedia('(min-width: 640px)');
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
+  // body scroll lock while the overlay is up
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  const close = useCallback(() => {
+    setOpen(false);
+    triggerRef.current?.focus();
+  }, []);
+
+  // Escape closes
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open, close]);
+
+  const openPanel = useCallback(() => {
+    const r = triggerRef.current?.getBoundingClientRect();
+    const width = Math.min(window.innerWidth * 0.92, 300);
+    const left = r ? Math.max(8, Math.min(r.left, window.innerWidth - width - 8)) : 8;
+    const top = r ? Math.min(r.bottom + 8, window.innerHeight - 120) : 96;
+    const p = { left, top, triggerTop: r?.top ?? 64, width };
+    posRef.current = p;
+    setPos(p);
+    setOpen(true);
+  }, []);
+
+  // desktop popover flip-up when it would overflow the viewport
+  useLayoutEffect(() => {
+    if (!open) return;
+    const p = posRef.current;
+    if (isDesktop && p && panelRef.current) {
+      const h = panelRef.current.offsetHeight;
+      if (p.top + h > window.innerHeight - 8) {
+        const top = Math.max(8, p.triggerTop - h - 8);
+        if (top !== p.top) {
+          posRef.current = { ...p, top };
+          setPos({ ...p, top });
+        }
+      }
+    }
+  }, [open, isDesktop]);
+
+  // focus trap (Tab cycles inside the dialog)
+  const trapTab = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab') return;
+    const root = panelRef.current;
+    if (!root) return;
+    const els = Array.from(
+      root.querySelectorAll<HTMLElement>('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'),
+    );
+    if (!els.length) return;
+    const first = els[0];
+    const last = els[els.length - 1];
+    const activeEl = document.activeElement;
+    if (e.shiftKey && (activeEl === first || activeEl === root)) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && activeEl === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+
+  return (
+    <div className="relative">
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => (open ? close() : openPanel())}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-label={ariaLabel ?? t('time.a11y.open')}
+        className={cn(
+          'w-full rounded-xl bg-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] flex items-center gap-2.5 text-left',
+          compact ? 'h-9 px-3' : 'h-11 px-4',
+          'transition-all duration-250 focus:ring-2 focus:ring-gold/25',
+        )}
+      >
+        <Icon name="clock" size={compact ? 14 : 18} className="text-gold shrink-0" />
+        <span
+          className={cn(
+            'flex-1 truncate',
+            compact ? 'text-t12 font-medium' : 'text-t14',
+            valid ? 'text-charcoal' : 'text-muted-foreground/60',
+          )}
+        >
+          {valid ? display : placeholder ?? value}
+        </span>
+        {!compact && <Icon name="chevron-down" size={16} className="text-gold/70 shrink-0" />}
+      </button>
+
+      {mounted &&
+        createPortal(
+          <>
+            <AnimatePresence>
+              {open && (
+                <mot.div
+                  key="gtp-backdrop"
+                  className="fixed inset-0 z-40 bg-ink/25 sm:bg-ink/10"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.25, ease: 'easeOut' }}
+                  onClick={close}
+                  aria-hidden="true"
+                />
+              )}
+            </AnimatePresence>
+            <AnimatePresence>
+              {open && (
+                <mot.div
+                  key="gtp-panel"
+                  ref={panelRef}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={ariaLabel ?? title ?? t('time.title')}
+                  initial={{ opacity: 0, scale: 0.96, y: 14 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.97, y: 10 }}
+                  transition={{ duration: 0.25, ease: 'easeOut' }}
+                  onKeyDown={trapTab}
+                  style={
+                    isDesktop && pos
+                      ? { left: pos.left, top: pos.top, width: pos.width }
+                      : { paddingBottom: 'calc(env(safe-area-inset-bottom) + 8px)' }
+                  }
+                  className={cn(
+                    'glass glass-blur fixed z-50 flex flex-col',
+                    'inset-x-0 bottom-0 rounded-t-3xl',
+                    isDesktop && 'inset-x-auto bottom-auto rounded-3xl',
+                  )}
+                >
+                  <div className="px-4 pt-3.5 pb-1 flex items-center justify-between gap-2 shrink-0">
+                    <p className="text-t12 tracking-wide font-semibold text-muted-foreground/80 truncate">
+                      {title ?? t('time.title')}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={close}
+                      aria-label={t('common.close')}
+                      className="w-8 h-8 -mr-1 rounded-full inline-flex items-center justify-center text-muted-foreground hover:text-charcoal hover:bg-gold-soft transition-colors duration-150"
+                    >
+                      <Icon name="x" size={16} />
+                    </button>
+                  </div>
+                  <div className="px-2 pb-4 pt-1">
+                    <TimeWheel value={valid ? value : '00:00'} onChange={onChange} />
+                  </div>
                 </mot.div>
               )}
             </AnimatePresence>

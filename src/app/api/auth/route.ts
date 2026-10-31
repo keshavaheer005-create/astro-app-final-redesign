@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { scryptSync, randomBytes, timingSafeEqual } from 'crypto';
 import { db } from '@/lib/db';
-import { ensureUser, setSessionCookie, clearSessionCookie, getSessionUserId } from '@/lib/session';
+import { ensureUser, issueSession, clearSessionCookie, getSessionUserId } from '@/lib/session';
 import { supabaseConfiguredOnServer, verifySupabaseAccessToken } from '@/lib/supabase/server';
 import { getActiveChart } from '@/lib/active-chart';
 
@@ -55,6 +55,21 @@ export async function GET(req: Request) {
   }
 }
 
+/**
+ * Sign the user in over the response: sets the httpOnly cookie AND returns the
+ * signed token in the body so the client can replay it via `x-session-token`
+ * when the browser drops cookies (embedded previews, strict privacy modes).
+ */
+async function sessionResponse(user: {
+  id: string;
+  name: string | null;
+  email: string | null;
+  isGuest: boolean;
+}) {
+  const sessionToken = await issueSession(user.id);
+  return NextResponse.json({ user, sessionToken });
+}
+
 /** POST /api/auth — { action: 'guest'|'login'|'signup'|'logout'|'saveProfile', ... } */
 export async function POST(req: Request) {
   try {
@@ -63,7 +78,7 @@ export async function POST(req: Request) {
 
     if (action === 'guest') {
       const user = await ensureUser();
-      return NextResponse.json({ user });
+      return await sessionResponse(user);
     }
 
     if (action === 'logout') {
@@ -123,10 +138,7 @@ export async function POST(req: Request) {
           ]);
         }
       }
-      await setSessionCookie(user.id);
-      return NextResponse.json({
-        user: { id: user.id, name: user.name, email: user.email, isGuest: false },
-      });
+      return await sessionResponse({ id: user.id, name: user.name, email: user.email, isGuest: false });
     }
 
     // With Supabase as the auth provider, the old local email+password
@@ -154,14 +166,13 @@ export async function POST(req: Request) {
               where: { id: currentId },
               data: { email, passwordHash: hashPassword(password), isGuest: false, name: body.name ? String(body.name) : current.name },
             });
-            return NextResponse.json({ user: { id: updated.id, email: updated.email, isGuest: false } });
+            return await sessionResponse({ id: updated.id, name: updated.name, email: updated.email, isGuest: false });
           }
         }
         const user = await db.user.create({
           data: { email, passwordHash: hashPassword(password), isGuest: false, name: body.name ? String(body.name) : null },
         });
-        await setSessionCookie(user.id);
-        return NextResponse.json({ user: { id: user.id, email: user.email, isGuest: false } });
+        return await sessionResponse({ id: user.id, name: user.name, email: user.email, isGuest: false });
       }
 
       // login
@@ -169,8 +180,7 @@ export async function POST(req: Request) {
       if (!user || !user.passwordHash || !verifyPassword(password, user.passwordHash)) {
         return NextResponse.json({ error: 'invalid_credentials' }, { status: 401 });
       }
-      await setSessionCookie(user.id);
-      return NextResponse.json({ user: { id: user.id, email: user.email, isGuest: false } });
+      return await sessionResponse({ id: user.id, name: user.name, email: user.email, isGuest: false });
     }
 
     if (action === 'saveProfile') {

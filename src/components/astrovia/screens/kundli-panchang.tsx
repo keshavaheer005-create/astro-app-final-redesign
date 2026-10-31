@@ -184,14 +184,14 @@ export function PanchangScreen() {
     <div className="space-y-5">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-serif text-t28 font-bold text-gold-grad">{t('panchang.title')}</h1>
+          <h1 className="font-serif text-t28 font-semibold text-charcoal">{t('panchang.title')}</h1>
           <p className="text-t14 text-muted-foreground">{t('panchang.subtitle')} · {chart.input.placeName}</p>
         </div>
         {/* Day / Month segmented toggle — sliding gold pill indicator */}
         <div className="glass rounded-full p-1 flex items-center relative" role="tablist" aria-label={t('panchang.modeAria')}>
           <span
             aria-hidden="true"
-            className="absolute rounded-full gold-grad shadow-[0_2px_8px_rgba(201,162,39,0.35)]"
+            className="absolute rounded-full gold-grad"
             style={{
               top: 4,
               bottom: 4,
@@ -228,7 +228,7 @@ export function PanchangScreen() {
         />
       ) : mode === 'day' ? (
         <div className="grid lg:grid-cols-[300px_1fr] gap-4 items-start">
-          <GlassCard className="p-4">
+          <GlassCard tone="gold" className="p-4">
             <GlassDatePicker value={date} onChange={setDate} minYear={1900} maxYear={new Date().getFullYear() + 1} ariaLabel={t('panchang.mode.day')} />
           </GlassCard>
 
@@ -242,7 +242,7 @@ export function PanchangScreen() {
                   <GlassCard key={l.label} className="p-4">
                     <div className="flex items-center gap-2 text-gold">
                       <Icon name={l.icon} size={16} />
-                      <span className="text-t12 uppercase tracking-wide font-semibold text-muted-foreground">{l.label}</span>
+                      <span className="tracking-wide text-t12 font-semibold text-muted-foreground">{l.label}</span>
                     </div>
                     <p className="mt-2 font-serif text-t20 text-charcoal">{l.value}</p>
                     {l.ends && (
@@ -273,12 +273,12 @@ export function PanchangScreen() {
                       onClick={() => setFestDetail({ en: f.en, hi: f.hi, kind: f.kind, date, anchor: anchorText(f) })}
                       title={t('panchang.festDetailHint')}
                       className={cn(
-                        'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-t12 font-semibold border transition-all duration-200 hover:-translate-y-px active:scale-95 cursor-pointer',
+                        'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-t12 font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.5)] transition-colors duration-150 active:scale-95 cursor-pointer',
                         f.kind === 'sankranti'
-                          ? 'bg-sage/10 border-sage/40 text-[#5c6b52]'
+                          ? 'bg-sage/15 text-[#5c6b52]'
                           : f.kind === 'ekadashi'
-                            ? 'bg-gold-faint border-gold/40 text-[#8a6d1f]'
-                            : 'bg-rose-soft border-rose/45 text-rose-deep shadow-[0_1px_6px_rgba(194,69,90,0.22)]',
+                            ? 'bg-gold-faint text-[#8a6d1f]'
+                            : 'bg-rose-soft text-rose-deep',
                       )}
                     >
                       <Icon name={f.kind === 'sankranti' ? 'compass' : 'lotus'} size={13} />
@@ -293,14 +293,14 @@ export function PanchangScreen() {
                   {t('panchang.lunarMonth')}:{' '}
                   <span className="text-charcoal font-medium">{language === 'hi' ? observance.lunarMonth.hi : observance.lunarMonth.en}</span>
                   {observance.lunarMonth.adhika && (
-                    <span className="ml-1.5 inline-flex items-center rounded-full bg-gold-faint border border-gold/40 px-2 py-0.5 text-[10px] font-semibold text-[#8a6d1f] uppercase tracking-wide">
+                    <span className="ml-1.5 inline-flex items-center rounded-full bg-gold-faint px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#8a6d1f] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
                       {t('panchang.adhika')}
                     </span>
                   )}
                 </p>
               )}
 
-              <GlassCard className="p-4 sm:p-5">
+              <GlassCard tone="gold" className="p-4 sm:p-5">
                 <SectionHeader title={language === 'hi' ? 'समय' : 'Timings'} icon="clock" />
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <TimeTile icon="sunrise" label={t('panchang.sunrise')} value={fmtTime(data.sunriseISO)} />
@@ -309,7 +309,7 @@ export function PanchangScreen() {
                   <TimeTile icon="moon" label={t('panchang.moonset')} value={fmtTime(data.moonsetISO)} />
                 </div>
                 {data.rahuKaal.startISO && data.rahuKaal.endISO && (
-                  <div className="mt-4 rounded-xl bg-burgundy-soft border border-burgundy/25 px-4 py-3 flex items-start gap-3">
+                  <div className="mt-4 rounded-xl bg-burgundy-soft shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_3px_12px_-6px_rgba(42,36,32,0.12)] px-4 py-3 flex items-start gap-3">
                     <Icon name="warning" size={18} className="text-burgundy mt-0.5" />
                     <div>
                       <p className="text-t14 font-semibold text-burgundy">
@@ -328,10 +328,10 @@ export function PanchangScreen() {
               {data.muhurtas.length > 0 && (
                 <div className="grid grid-cols-2 gap-3">
                   {data.muhurtas.map((m) => (
-                    <GlassCard key={m.name} className="p-4">
+                    <GlassCard tone="gold" key={m.name} className="p-4">
                       <div className="flex items-center gap-2 text-gold">
                         <Icon name="lotus" size={16} />
-                        <span className="text-t12 uppercase tracking-wide font-semibold text-muted-foreground">{t(`muhurta.${m.name.toLowerCase()}`)}</span>
+                        <span className="tracking-wide text-t12 font-semibold text-muted-foreground">{t(`muhurta.${m.name.toLowerCase()}`)}</span>
                       </div>
                       <p className="mt-2 text-t14 font-semibold text-charcoal">
                         {fmtTime(m.startISO)} – {fmtTime(m.endISO)}
@@ -344,7 +344,7 @@ export function PanchangScreen() {
 
               {/* Choghadiya */}
               {data.choghadiya.day.length > 0 && (
-                <GlassCard className="p-4 sm:p-5">
+                <GlassCard tone="gold" className="p-4 sm:p-5">
                   <SectionHeader title={t('choghadiya.title')} icon="clock" />
                   <ChoghadiyaGrid slots={data.choghadiya.day} label={t('choghadiya.day')} locale={locale} tz={chart.input.timezone} now language={language} />
                   <div className="h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent my-4" />
@@ -373,7 +373,7 @@ export function PanchangScreen() {
       </div>
       ) : (
         /* ── Month view ── */
-        <GlassCard className="p-4 sm:p-5">
+        <GlassCard tone="gold" className="p-4 sm:p-5">
           {loading && !monthData && <PageLoader label={t('common.loading')} />}
           {error && monthData && <ErrorState onRetry={load} message={t('common.networkError')} />}
           {monthData && monthData.length > 0 && (
@@ -490,13 +490,13 @@ function MonthGrid({
       {/* Lunar month + adhika strip */}
       {lunarInfo && (
         <div className="flex items-center gap-2 mb-3 flex-wrap">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/60 border border-gold/25 px-2.5 py-1 text-t12 text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/65 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] px-2.5 py-1 text-t12 text-muted-foreground">
             <Icon name="moon" size={13} className="text-gold" />
             {t('panchang.lunarMonth')}:{' '}
             <span className="text-charcoal font-medium">{language === 'hi' ? lunarInfo.name.hi : lunarInfo.name.en}</span>
           </span>
           {lunarInfo.adhika && (
-            <span className="inline-flex items-center rounded-full bg-gold-faint/80 border border-gold/40 px-2.5 py-1 text-t12 font-semibold text-[#8a6d1f]">
+            <span className="inline-flex items-center rounded-full bg-gold-faint shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] px-2.5 py-1 text-t12 font-semibold text-[#8a6d1f]">
               {t('panchang.adhika')}
             </span>
           )}
@@ -529,12 +529,11 @@ function MonthGrid({
               onClick={() => onPickDay(d.date)}
               title={`${d.date} · ${language === 'hi' ? `${d.tithi.paksha === 'Shukla' ? 'शुक्ल' : 'कृष्ण'} ${d.tithi.nameHi}` : `${d.tithi.paksha} ${d.tithi.name}`} · ${language === 'hi' ? d.nakshatra.nameHi : d.nakshatra.name}${festName ? ` · ${festName}` : ''}`}
               className={cn(
-                'relative rounded-lg border px-0.5 py-1.5 text-center transition-all duration-200 active:scale-90 hover:border-gold/50',
-                d.tithi.paksha === 'Shukla' ? 'bg-gold-faint/60 border-gold/25' : 'bg-white/50 border-gold/15',
-                d.special === 'purnima' && 'bg-gold-soft/80 border-gold/60 shadow-[0_1px_8px_rgba(201,162,39,0.35)]',
-                d.special === 'amavasya' && 'bg-maroon-soft border-maroon/35',
-                d.special === 'ekadashi' && 'bg-sage/15 border-sage/40',
-                festival && 'border-gold/70',
+                'relative rounded-lg px-0.5 py-1.5 text-center transition-all duration-200 active:scale-90 shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]',
+                d.tithi.paksha === 'Shukla' ? 'bg-gold-faint/70' : 'bg-white/55',
+                d.special === 'purnima' && 'bg-gold-soft',
+                d.special === 'amavasya' && 'bg-maroon-soft',
+                d.special === 'ekadashi' && 'bg-sage/20',
                 isToday && 'ring-2 ring-gold ring-offset-1 ring-offset-[#FAF7F0]',
               )}
             >
@@ -568,7 +567,7 @@ function MonthGrid({
                     ev.stopPropagation();
                     onInfo(d.date, festival);
                   }}
-                  className={`absolute -top-1 -left-1 w-5 h-5 rounded-full shadow-[0_1px_5px_rgba(201,162,39,0.5)] inline-flex items-center justify-center cursor-pointer transition-transform duration-150 hover:scale-110 active:scale-90 animate-in zoom-in-50 fade-in duration-300 ${festival.kind === 'festival' ? 'rose-grad text-white' : 'gold-grad text-charcoal'}`}
+                  className={`absolute -top-1 -left-1 w-5 h-5 rounded-full inline-flex items-center justify-center cursor-pointer transition-transform duration-150 active:scale-90 animate-in zoom-in-50 fade-in duration-300 ${festival.kind === 'festival' ? 'rose-grad text-white' : 'gold-grad text-charcoal'}`}
                 >
                   <Icon name={festival.kind === 'sankranti' ? 'compass' : 'lotus'} size={11} />
                 </span>
@@ -583,10 +582,10 @@ function MonthGrid({
         const festDays = days.filter((d) => d.festivals.length > 0);
         if (festDays.length === 0) return null;
         return (
-          <div className="mt-4 rounded-xl bg-rose-faint/80 border border-rose/25 border-l-4 border-l-rose/50 overflow-hidden">
+          <div className="mt-4 rounded-xl bg-rose-faint/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] overflow-hidden">
             <div className="px-3.5 py-2.5 border-b border-rose/20 flex items-center gap-2 bar-texture-solid">
               <Icon name="lotus" size={14} className="text-rose" />
-              <p className="text-t12 font-bold uppercase tracking-wider text-rose-deep">{t('panchang.festivalsThisMonth')}</p>
+              <p className="text-t12 font-semibold tracking-wide text-rose-deep">{t('panchang.festivalsThisMonth')}</p>
             </div>
             <div className="max-h-56 overflow-y-auto scroll-slim">
               {festDays.map((d) =>
@@ -597,7 +596,7 @@ function MonthGrid({
                       onClick={() => onPickDay(d.date)}
                       className="tap-sm flex-1 min-w-0 text-left px-3.5 py-2 flex items-center gap-2.5"
                     >
-                      <span className="w-9 shrink-0 text-center rounded-md bg-white/80 border border-rose/25 py-0.5 text-t12 font-bold text-charcoal">
+                      <span className="w-9 shrink-0 text-center rounded-md bg-white/85 py-0.5 text-t12 font-semibold text-charcoal shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
                         {Number(d.date.slice(8, 10))}
                       </span>
                       <span className="flex-1 min-w-0 text-t12 text-charcoal truncate">{language === 'hi' ? f.hi : f.en}</span>
@@ -640,7 +639,7 @@ function MonthGrid({
 
 function TimeTile({ icon, label, value }: { icon: 'sunrise' | 'sunset' | 'moon'; label: string; value: string }) {
   return (
-    <div className="rounded-xl bg-gold-faint/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] px-3 py-2.5">
+    <div className="rounded-xl bg-gold-faint/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] px-3 py-2.5">
       <div className="flex items-center gap-1.5 text-gold">
         <Icon name={icon} size={14} />
         <span className="text-t12 text-muted-foreground truncate">{label}</span>
@@ -651,9 +650,9 @@ function TimeTile({ icon, label, value }: { icon: 'sunrise' | 'sunset' | 'moon';
 }
 
 const QUALITY_STYLE = {
-  good: 'bg-gold-faint border-gold/40 text-[#7a8b6f]',
-  medium: 'bg-white/55 border-gold/20 text-muted-foreground',
-  bad: 'bg-burgundy-soft/80 border-burgundy/25 text-burgundy',
+  good: 'bg-gold-faint text-[#7a8b6f] shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]',
+  medium: 'bg-white/55 text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]',
+  bad: 'bg-burgundy-soft/80 text-burgundy shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]',
 } as const;
 
 function ChoghadiyaGrid({
@@ -675,7 +674,7 @@ function ChoghadiyaGrid({
   const nowMs = Date.now();
   return (
     <div className="mt-2">
-      <p className="text-t12 font-semibold uppercase tracking-wide text-gold mb-2">{label}</p>
+      <p className="text-t12 font-semibold tracking-wide text-gold mb-2">{label}</p>
       <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
         {slots.map((s, i) => {
           const isNow = now && new Date(s.startISO).getTime() <= nowMs && new Date(s.endISO).getTime() > nowMs;
@@ -683,15 +682,15 @@ function ChoghadiyaGrid({
             <div
               key={`${s.name}-${i}`}
               className={cn(
-                'rounded-lg border px-1.5 py-2 text-center transition-all duration-200',
+                'rounded-lg px-1.5 py-2 text-center transition-all duration-200',
                 QUALITY_STYLE[s.quality],
-                isNow && 'ring-2 ring-gold shadow-[0_2px_10px_rgba(201,162,39,0.3)] scale-[1.04]',
+                isNow && 'ring-2 ring-gold',
               )}
               title={`${new Date(s.startISO).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: tz })} – ${new Date(s.endISO).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: tz })}`}
             >
               <p className="text-t12 font-semibold truncate">{choghName(t, s.name)}</p>
               <p className="text-t12 opacity-70">{t(`choghadiya.${s.quality}`)}</p>
-              {isNow && <p className="text-t12 font-bold text-gold mt-0.5">{t('choghadiya.now')}</p>}
+              {isNow && <p className="text-t12 font-semibold text-gold mt-0.5">{t('choghadiya.now')}</p>}
             </div>
           );
         })}
@@ -826,7 +825,7 @@ function FestivalDetailDialog({ detail, onClose }: { detail: FestDetail | null; 
               <div className="flex items-center gap-2">
                 <span
                   className={cn(
-                    'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+                    'rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide',
                     detail.kind === 'sankranti' ? 'bg-sage/15 text-[#5c6b52]' : detail.kind === 'ekadashi' ? 'bg-gold-faint text-[#8a6d1f]' : 'bg-rose-soft text-rose-deep',
                   )}
                 >
@@ -854,7 +853,7 @@ function FestivalDetailDialog({ detail, onClose }: { detail: FestDetail | null; 
                   <div className="flex items-center gap-2.5 mb-2.5">
                     <AcharyaAvatar size={30} />
                     <div>
-                      <p className="text-t12 font-semibold text-gold-grad font-serif">Acharya Abhishek Sharma</p>
+                      <p className="text-t12 font-semibold text-gold-light font-serif">Acharya Abhishek Sharma</p>
                       <p className="text-[10px] text-[#a5947a]">{t('panchang.festBy')}</p>
                     </div>
                   </div>
@@ -867,7 +866,7 @@ function FestivalDetailDialog({ detail, onClose }: { detail: FestDetail | null; 
                   onClick={() => void toggleAudio()}
                   disabled={audioState === 'loading'}
                   title={t('panchang.festListen')}
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold-faint/50 px-3 py-1.5 text-t12 text-gold hover:bg-gold-faint hover:border-gold/50 active:scale-95 transition-all duration-250 disabled:opacity-60"
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gold-faint/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] px-3 py-1.5 text-t12 text-gold hover:bg-gold-faint active:scale-95 transition-all duration-250 disabled:opacity-60"
                 >
                   <Icon name="speaker" size={13} className={audioState === 'playing' ? 'animate-pulse' : undefined} />
                   {audioState === 'loading' ? t('acharya.preparingAudio') : audioState === 'playing' ? t('acharya.stopAudio') : t('acharya.listen')}

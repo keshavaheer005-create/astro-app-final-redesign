@@ -18,6 +18,7 @@ import { QuickToolsSheet } from '../quick-tools-sheet';
 import { AskAIAction } from '../ask-ai-action';
 import { SavedInsightsCard } from '../saved-insights-card';
 import { PredictiveOutlookCard } from '../predictive-outlook-card';
+import { Mandala } from '../mandala';
 import { normalizeToolIds, toolsFromIds } from '@/lib/quick-tools';
 import { cn, choghName } from '@/lib/utils';
 
@@ -107,13 +108,13 @@ function LiveNowStrip({ choghadiya, rahuKaal, tz, locale }: {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-60" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-gold" />
             </span>
-            <span className="text-t12 font-bold uppercase tracking-wider text-gold">{t('home.liveTitle')}</span>
+            <span className="text-t12 font-semibold tracking-wide text-gold">{t('home.liveTitle')}</span>
           </span>
           <span className="font-serif text-t16 font-semibold text-charcoal">{choghName(t, cur.name)}</span>
           <span
             className={cn(
               'rounded-full px-2 py-0.5 text-t12 font-semibold',
-              cur.quality === 'good' ? 'bg-gold-faint text-[#7a8b6f]' : cur.quality === 'medium' ? 'bg-white/60 text-muted-foreground' : 'bg-burgundy-soft text-burgundy',
+              cur.quality === 'good' ? 'bg-emerald-faint text-emerald-deep' : cur.quality === 'medium' ? 'bg-white/60 text-muted-foreground' : 'bg-burgundy-soft text-burgundy',
             )}
           >
             {t(`choghadiya.${cur.quality}`)}
@@ -127,7 +128,7 @@ function LiveNowStrip({ choghadiya, rahuKaal, tz, locale }: {
         </div>
       )}
       {rahuActive && rahuEnd && (
-        <p className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-t12 font-semibold bg-burgundy-soft text-burgundy border border-burgundy/25', cur && 'mt-2')}>
+        <p className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-t12 font-semibold bg-burgundy-soft/90 text-burgundy shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]', cur && 'mt-2')}>
           <Icon name="warning" size={13} />
           {t('home.liveRahu', { time: fmtT(rahuKaal?.endISO as string) })}
         </p>
@@ -496,18 +497,17 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
   const moonPhase = panchang ? ((panchang.tithi.index - 1) + panchang.tithi.percent / 100) / 30 : null;
 
   // Shortcut tile tints — one accent domain per destination (gold stays CTA-only).
-  // `chipGrad` fills the icon badge with a soft two-tone gradient (no hairline
-  // border — a border on a small circular chip reads as a cheap outline-icon
-  // kit; a gradient fill reads as a premium, tactile mark instead).
+  // ASTRA: flat, barely-there chip fills — a single soft tint per domain
+  // (the old two-tone diagonal gradients are gone).
   const QUICK_TONES = [
-    { chipGrad: 'linear-gradient(150deg, rgba(110,74,158,0.16), rgba(110,74,158,0.05))', text: 'text-violet-deep' }, // Ask Acharya
-    { chipGrad: 'linear-gradient(150deg, rgba(201,162,39,0.20), rgba(201,162,39,0.06))', text: 'text-gold' }, // Today's Panchang
-    { chipGrad: 'linear-gradient(150deg, rgba(194,69,90,0.16), rgba(194,69,90,0.05))', text: 'text-rose-deep' }, // Decision check
-    { chipGrad: 'linear-gradient(150deg, rgba(62,142,110,0.18), rgba(62,142,110,0.06))', text: 'text-emerald-deep' }, // My journal
-    { chipGrad: 'linear-gradient(150deg, rgba(110,74,158,0.14), rgba(62,142,110,0.06))', text: 'text-violet-deep' }, // Timeline
-    { chipGrad: 'linear-gradient(150deg, rgba(201,162,39,0.16), rgba(110,74,158,0.05))', text: 'text-gold' }, // Reports
-    { chipGrad: 'linear-gradient(150deg, rgba(194,69,90,0.14), rgba(201,162,39,0.05))', text: 'text-rose-deep' }, // Matching
-    { chipGrad: 'linear-gradient(150deg, rgba(62,142,110,0.14), rgba(194,69,90,0.05))', text: 'text-emerald-deep' }, // Horoscope
+    { chipGrad: 'rgba(139, 41, 69, 0.10)', text: 'text-violet-deep' }, // Ask Acharya
+    { chipGrad: 'rgba(213, 160, 69, 0.16)', text: 'text-gold-deep' }, // Today's Panchang
+    { chipGrad: 'rgba(192, 111, 121, 0.12)', text: 'text-rose-deep' }, // Decision check
+    { chipGrad: 'rgba(46, 128, 108, 0.12)', text: 'text-emerald-deep' }, // My journal
+    { chipGrad: 'rgba(139, 41, 69, 0.08)', text: 'text-violet-deep' }, // Timeline
+    { chipGrad: 'rgba(213, 160, 69, 0.12)', text: 'text-gold-deep' }, // Reports
+    { chipGrad: 'rgba(192, 111, 121, 0.10)', text: 'text-rose-deep' }, // Matching
+    { chipGrad: 'rgba(46, 128, 108, 0.10)', text: 'text-emerald-deep' }, // Horoscope
   ];
 
   // Home Quick Tools — user-ordered, navigation-only (see lib/quick-tools.ts).
@@ -561,20 +561,17 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
       {/* Full-viewport gold gradient comes from ScreenGradient (app-shell) */}
 
       {/* Cohesive header band — greeting, date and the at-a-glance stats read
-          as ONE premium unit: gold-tinted liquid glass, dawn glow and a slowly
-          turning mandala watermark instead of two disconnected pieces. */}
+          as ONE quiet premium unit. Apple-quiet: no blur blobs, no glow pools —
+          the single glass surface carries the hierarchy by itself. */}
       <header
-        className="glass glass-tint-gold glass-liquid relative overflow-hidden rounded-[26px] px-5 pt-5 pb-3.5 sm:px-6 sm:pt-6 sm:pb-4 stagger-in"
+        className="glass glass-tint-gold relative overflow-hidden rounded-[20px] px-5 pt-5 pb-3.5 sm:px-6 sm:pt-6 sm:pb-4 stagger-in"
         style={{ animationDelay: '10ms', animationFillMode: 'backwards' }}
       >
-        {/* dawn glow + mandala watermark (decorative, non-interactive) */}
-        <div className="pointer-events-none absolute -top-20 -right-14 h-52 w-52 rounded-full bg-gold/25 blur-3xl" aria-hidden="true" />
-        <div className="pointer-events-none absolute -bottom-24 -left-16 h-48 w-48 rounded-full bg-gold-soft/50 blur-3xl" aria-hidden="true" />
-
+        <span aria-hidden="true" className="essence essence-gold" />
         <div className="relative flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-t14 font-medium text-muted-foreground">{greeting},</p>
-            <h1 className="font-serif text-t28 font-bold text-gold-grad truncate leading-tight">{displayName}</h1>
+            <h1 className="font-serif text-t28 font-semibold text-charcoal truncate leading-tight">{displayName}</h1>
             <p className="mt-1 inline-flex items-center gap-1.5 text-t12 text-muted-foreground">
               <Icon name="sun" size={12} className="text-gold/80" />
               {dateLine}
@@ -586,7 +583,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                 type="button"
                 aria-label={t('home.headerBell')}
                 className={cn(
-                  'relative w-11 h-11 shrink-0 rounded-full bg-white/70 border border-gold/25 shadow-[0_2px_10px_rgba(201,162,39,0.18),inset_0_1px_0_rgba(255,255,255,0.9)] inline-flex items-center justify-center text-gold hover:scale-105 active:scale-95 transition-transform duration-250',
+                  'relative w-11 h-11 shrink-0 rounded-full bg-white/65 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_2px_8px_-2px_rgba(42,36,32,0.14)] inline-flex items-center justify-center text-gold-deep backdrop-blur-sm active:scale-95 transition-transform duration-150',
                   reminderAlert && 'bell-wiggle',
                 )}
               >
@@ -596,9 +593,9 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                 )}
               </button>
             </PopoverTrigger>
-          <PopoverContent align="end" sideOffset={10} className="w-72 glass glass-blur border-gold/30 p-0 overflow-hidden">
+          <PopoverContent align="end" sideOffset={10} className="w-72 glass glass-blur p-0 overflow-hidden">
             <div className="px-4 pt-3 pb-2 border-b border-gold/15 bg-gold-faint/60 bar-texture-solid">
-              <p className="text-t12 font-bold uppercase tracking-wider text-gold">{t('notifications.title')}</p>
+              <p className="text-t12 font-semibold tracking-wide text-gold-deep">{t('notifications.title')}</p>
             </div>
             <div className="max-h-72 overflow-y-auto scroll-slim">
               {checkin && !checkin.checkedInToday && (
@@ -724,7 +721,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
           className="relative mt-4 flex items-stretch gap-1 border-t border-gold/20 pt-3"
         >
           <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-1">
-            <p className="text-[9.5px] sm:text-[10.5px] uppercase tracking-[0.03em] leading-[1.25] text-muted-foreground/85 [overflow-wrap:anywhere]">{t('home.glance.streak')}</p>
+            <p className="text-t12 tracking-[0.01em] leading-[1.25] text-muted-foreground [overflow-wrap:anywhere]">{t('home.glance.streak')}</p>
             <p className="inline-flex items-center gap-1.5 text-t16 font-semibold text-emerald-deep">
               <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-soft/90">
                 <Icon name="flame" size={12} className="flame-pulse" />
@@ -734,7 +731,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
           </div>
           <div className="w-px bg-gold/20" aria-hidden="true" />
           <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-1">
-            <p className="text-[9.5px] sm:text-[10.5px] uppercase tracking-[0.03em] leading-[1.25] text-muted-foreground/85 [overflow-wrap:anywhere]">{t('home.glance.dasha')}</p>
+            <p className="text-t12 tracking-[0.01em] leading-[1.25] text-muted-foreground [overflow-wrap:anywhere]">{t('home.glance.dasha')}</p>
             <p className="inline-flex items-center gap-1.5 text-t16 font-semibold text-gold tabular-nums">
               <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-gold-soft/90">
                 <Icon name="timeline" size={12} />
@@ -744,11 +741,11 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
           </div>
           <div className="w-px bg-gold/20" aria-hidden="true" />
           <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-1">
-            <p className="text-[9.5px] sm:text-[10.5px] uppercase tracking-[0.03em] leading-[1.25] text-muted-foreground/85 [overflow-wrap:anywhere]">{t('home.glance.moon')}</p>
+            <p className="text-t12 tracking-[0.01em] leading-[1.25] text-muted-foreground [overflow-wrap:anywhere]">{t('home.glance.moon')}</p>
             {moonPhase !== null ? (
-              <p className="inline-flex items-center gap-1 text-t12 font-semibold text-violet-deep">
+              <p className="inline-flex items-center gap-1 text-t16 font-semibold text-violet-deep">
                 <MoonPhaseGlyph phase={moonPhase} size={20} className="shrink-0" />
-                <span className="min-w-0 leading-[1.2]">{t(phaseKeyOf(moonPhase))}</span>
+                <span className="min-w-0 truncate leading-[1.2]">{t(phaseKeyOf(moonPhase))}</span>
               </p>
             ) : (
               <p className="text-t16 font-semibold text-muted-foreground">—</p>
@@ -762,7 +759,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
           floating-bar language: no hairline borders, icon badges are soft
           gradient fills, and the strip carries the only edge. */}
       <div className="flex items-center justify-between px-1">
-        <span className="text-t12 uppercase tracking-wider text-gold font-semibold">{t('home.quickTools.label')}</span>
+        <span className="text-t12 tracking-wide text-gold font-semibold">{t('home.quickTools.label')}</span>
         <button
           type="button"
           onClick={() => setToolsOpen(true)}
@@ -774,7 +771,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
       </div>
       <nav
         aria-label={t('home.quick.aria')}
-        className="glass glass-liquid bar-texture stagger-in grid grid-cols-4 gap-1 rounded-[24px] px-1.5 py-2.5 sm:px-2.5 sm:py-3"
+        className="glass bar-texture stagger-in grid grid-cols-4 gap-1 rounded-[20px] px-1.5 py-2.5 sm:px-2.5 sm:py-3"
         style={{ animationDelay: '20ms', animationFillMode: 'backwards', marginTop: '-0.5rem' }}
       >
         {quickActions.map((qa, i) => (
@@ -787,14 +784,14 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
           >
             <span
               className={cn(
-                'inline-flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full transition-transform duration-250 group-hover:scale-110 group-active:scale-95',
+                'inline-flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full transition-transform duration-150 group-active:scale-95',
                 QUICK_TONES[i % QUICK_TONES.length].text,
               )}
               style={{ background: QUICK_TONES[i % QUICK_TONES.length].chipGrad }}
             >
               <Icon name={qa.icon} size={19} />
             </span>
-            <span className="text-[10.5px] sm:text-t12 font-medium leading-tight text-charcoal/85 [overflow-wrap:anywhere]">
+            <span className="text-t12 font-medium leading-tight text-charcoal/85 [overflow-wrap:anywhere]">
               {t(qa.labelKey)}
             </span>
           </button>
@@ -803,11 +800,11 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
 
       <QuickToolsSheet open={toolsOpen} onOpenChange={setToolsOpen} />
 
-      {/* Hero: today's panchang + Acharya CTA — gold gradient glass elevation */}
-      <GlassCard className="glass-elev glass-tint-gold p-5 sm:p-6">
-        <div className="flex items-start justify-between gap-4">
+      {/* Hero: today's panchang + Acharya CTA — golden essence breathing through glass */}
+      <GlassCard tone="gold" className="glass-tint-gold p-5 sm:p-6">
+        <div className="relative flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-t12 uppercase tracking-wider text-gold font-semibold">{t('home.heroTitle')}</p>
+            <p className="text-t14 tracking-wide text-gold-deep font-semibold">{t('home.heroTitle')}</p>
             {panchang ? (
               <div className="mt-2.5 space-y-1.5">
                 <p className="text-t16 text-charcoal">
@@ -860,7 +857,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
               <span className="text-t12 font-medium leading-tight text-charcoal/80">{t(phaseKeyOf(((panchang.tithi.index - 1) + panchang.tithi.percent / 100) / 30))}</span>
             )}
             {panchang && (
-              <span className="text-[10.5px] leading-tight text-muted-foreground">
+              <span className="text-t12 leading-tight text-muted-foreground">
                 {t('home.moonLit', { pct: Math.round(((1 - Math.cos(2 * Math.PI * (((panchang.tithi.index - 1) + panchang.tithi.percent / 100) / 30))) / 2) * 100) })}
               </span>
             )}
@@ -870,39 +867,38 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
         <button
           type="button"
           onClick={() => onNavigate('acharya')}
-          className="mt-4 w-full glass-ink sheen-sweep rounded-2xl px-4 py-3.5 flex items-center gap-3 text-left transition-transform duration-250 ease-out hover:-translate-y-0.5 active:scale-[0.99] group"
+          className="mt-4 w-full glass-ink rounded-2xl px-4 py-3.5 flex items-center gap-3 text-left active:scale-[0.98] transition-transform duration-150 group"
         >
-          {/* violet intuition aura — Acharya's domain colour */}
-          <span className="pointer-events-none absolute -bottom-10 -left-10 w-32 h-32 rounded-full bg-violet/25 blur-2xl" aria-hidden="true" />
           <AcharyaAvatar size={44} className="shrink-0 relative" />
           <span className="flex-1 min-w-0">
-            <span className="block text-t14 font-semibold text-gold-grad font-serif">{t('home.talkToAcharya')}</span>
+            <span className="block text-t14 font-semibold text-gold-light font-serif">{t('home.talkToAcharya')}</span>
             <span className="block text-t12 text-[#cdb98e] truncate">{t('home.acharyaByline')}</span>
           </span>
           <Icon name="chevron-right" size={18} className="text-gold transition-transform duration-250 group-hover:translate-x-0.5" />
         </button>
       </GlassCard>
 
-      {/* Daily Astro Briefing and contextual shortcuts reuse data already loaded
-          on Home; the buttons only hand a draft to Acharya and never auto-send. */}
-      <GlassCard className="p-4 sm:p-5 border-0 relative overflow-hidden">
-        <div className="pointer-events-none absolute -top-10 -right-8 h-28 w-28 rounded-full bg-gradient-to-br from-rose/20 via-gold/15 to-violet/15 blur-2xl" aria-hidden="true" />
+      {/* Daily Astro Briefing — emerald essence + still mandala art + editorial
+          serif hierarchy (22px title, 14px supporting). The contextual Explore
+          block gets a full SectionHeader-grade title. Buttons never auto-send. */}
+      <GlassCard tone="emerald" className="p-4 sm:p-5 overflow-hidden">
+        <Mandala variant="star" size={168} className="absolute -right-10 -top-12 opacity-[0.12] pointer-events-none" aria-hidden="true" />
         <div className="relative flex items-start gap-3">
-          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-rose/20 via-gold/15 to-emerald/15 text-emerald-deep">
-            <Icon name="sparkle" size={19} />
+          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-soft/85 text-emerald-deep shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_2px_10px_-3px_rgba(37,106,88,0.3)] backdrop-blur-sm">
+            <Icon name="sparkle" size={20} />
           </span>
           <div className="min-w-0 flex-1">
-            <h2 className="font-serif text-t18 font-semibold text-emerald-grad">{t('home.dailyBriefing.title')}</h2>
-            <p className="mt-1 text-t12 leading-relaxed text-muted-foreground">{t('home.dailyBriefing.subtitle')}</p>
+            <h2 className="font-serif text-t22 font-bold tracking-[-0.02em] text-charcoal">{t('home.dailyBriefing.title')}</h2>
+            <p className="mt-1 text-t14 leading-relaxed text-charcoal/70">{t('home.dailyBriefing.subtitle')}</p>
             {panchang && (
-              <p className="mt-2 text-t12 text-charcoal/80">
-                {language === 'hi' ? panchang.nakshatra.nameHi : panchang.nakshatra.name}
+              <p className="mt-2 text-t14 text-charcoal/85">
+                <span className="font-medium">{language === 'hi' ? panchang.nakshatra.nameHi : panchang.nakshatra.name}</span>
                 {dashaNow ? ` · ${t(`planet.${dashaNow.mahaLord}`)}${dashaNow.antarLord ? ` / ${t(`planet.${dashaNow.antarLord}`)}` : ''}` : ''}
               </p>
             )}
           </div>
         </div>
-        <div className="relative mt-3 flex flex-wrap gap-2">
+        <div className="relative mt-3.5 flex flex-wrap gap-2">
           <AskAIAction
             label={t('ai.dailyBriefing')}
             question={`Prepare a useful, personalized daily astrology briefing for today from my saved birth chart. Current Mahadasha: ${dashaNow?.mahaLord ?? 'read from chart context'}; current Antardasha: ${dashaNow?.antarLord ?? 'read from chart context'}. Today's Tithi: ${panchang ? `${panchang.tithi.paksha} ${panchang.tithi.name}` : 'read available Panchang context'}; Nakshatra: ${panchang ? panchang.nakshatra.name : 'read available Panchang context'}; Moon sign today: ${panchang?.moonSign.name ?? 'read available Panchang context'}. Give a concise theme, helpful focus, caution, and one practical reflection. Cite the actual chart factors used, avoid deterministic promises, and do not invent placements.`}
@@ -913,8 +909,12 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
             question={`Explain today's Panchang in a practical way for me, using my saved birth chart when relevant. Today's Tithi: ${panchang ? `${panchang.tithi.paksha} ${panchang.tithi.name}` : 'use available Panchang context'}; Nakshatra: ${panchang ? panchang.nakshatra.name : 'use available Panchang context'}; Moon sign: ${panchang?.moonSign.name ?? 'use available Panchang context'}. Distinguish tradition from certainty and avoid generic fear-based claims.`}
           />
         </div>
-        <div className="relative mt-3 pt-3">
-          <p className="mb-2 text-t12 font-semibold uppercase tracking-wide text-emerald-deep">{t('home.smartExplore.title')}</p>
+        <div className="relative mt-4 pt-3.5 border-t border-emerald/12">
+          <div className="mb-2.5 flex items-center gap-2">
+            <Icon name="sparkle" size={15} className="shrink-0 text-emerald" />
+            <h3 className="font-serif text-t20 font-bold tracking-[-0.01em] text-charcoal">{t('home.smartExplore.title')}</h3>
+            <div className="hidden sm:flex-1 h-px bg-gradient-to-r from-emerald/35 to-transparent" aria-hidden="true" />
+          </div>
           <div className="flex flex-wrap gap-2">
             {dashaNow && (
               <AskAIAction
@@ -932,35 +932,44 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
         </div>
       </GlassCard>
 
-      {chart && <PredictiveOutlookCard key={`po-${activeChartId ?? 'none'}`} chartId={activeChartId} timezone={chart.input.timezone} />}
+      {chart && <PredictiveOutlookCard chartId={activeChartId} timezone={chart.input.timezone} />}
 
-      <SavedInsightsCard key={`si-${activeChartId ?? 'none'}`} />
+      <SavedInsightsCard />
 
-      {/* Daily affirmation — grounded in the running maha-dasha lord */}
+      {/* Daily affirmation — a proper editorial quote card: emerald essence,
+          still lotus mandala, large serif italic quote with a decorative
+          quotation mark, and a 14px season line. Grounded in the running
+          maha-dasha lord. */}
       {dashaNow?.mahaLord && (
         <div
-          className="glass glass-tint-emerald relative overflow-hidden p-4 sm:p-5 stagger-in"
+          className="glass relative overflow-hidden p-4 sm:p-5 stagger-in"
           style={{ animationDelay: '45ms', animationFillMode: 'backwards' }}
         >
-          <div className="pointer-events-none absolute -top-9 -right-7 w-28 h-28 rounded-full bg-emerald/15 blur-2xl" aria-hidden="true" />
-          <p className="text-t12 font-semibold uppercase tracking-wider text-emerald-deep flex items-center gap-1.5">
-            <Icon name="sparkle" size={12} />
-            {t('home.affirm.title')}
-          </p>
-          <p className="mt-1.5 font-serif text-t16 italic leading-relaxed text-charcoal">
-            {t(`home.affirm.${dashaNow.mahaLord}`)}
-          </p>
-          {panchang && (
-            <p className="mt-2 text-t12 text-muted-foreground">
-              {t('home.affirm.season', { maha: t(`planet.${dashaNow.mahaLord}`), nakshatra: language === 'hi' ? panchang.nakshatra.nameHi : panchang.nakshatra.name })}
+          <span aria-hidden="true" className="essence essence-emerald" />
+          <Mandala variant="lotus" size={140} className="absolute -right-8 -top-9 opacity-[0.13] pointer-events-none" aria-hidden="true" />
+          <div className="relative">
+            <p className="text-t14 font-semibold text-emerald-deep flex items-center gap-1.5">
+              <Icon name="sparkle" size={14} />
+              {t('home.affirm.title')}
             </p>
-          )}
-          <AskAIAction
-            compact
-            className="mt-3"
-            label={t('ai.explain')}
-            question={`Explain why a reflection for ${dashaNow.mahaLord} Mahadasha may fit my current Vedic chart period. Use my actual natal chart, current Antardasha ${dashaNow.antarLord ?? 'if available'}, and today's Panchang Nakshatra ${panchang?.nakshatra.name ?? 'if available'}. Avoid treating a short affirmation as a factual prediction.`}
-          />
+            <blockquote className="mt-2.5 flex gap-2.5">
+              <span aria-hidden="true" className="font-serif text-t28 leading-[0.7] text-gold/70 select-none">“</span>
+              <p className="font-serif text-t18 sm:text-t20 italic leading-relaxed text-charcoal">
+                {t(`home.affirm.${dashaNow.mahaLord}`)}
+              </p>
+            </blockquote>
+            {panchang && (
+              <p className="mt-2.5 text-t14 text-muted-foreground">
+                {t('home.affirm.season', { maha: t(`planet.${dashaNow.mahaLord}`), nakshatra: language === 'hi' ? panchang.nakshatra.nameHi : panchang.nakshatra.name })}
+              </p>
+            )}
+            <AskAIAction
+              compact
+              className="mt-3"
+              label={t('ai.explain')}
+              question={`Explain why a reflection for ${dashaNow.mahaLord} Mahadasha may fit my current Vedic chart period. Use my actual natal chart, current Antardasha ${dashaNow.antarLord ?? 'if available'}, and today's Panchang Nakshatra ${panchang?.nakshatra.name ?? 'if available'}. Avoid treating a short affirmation as a factual prediction.`}
+            />
+          </div>
         </div>
       )}
 
@@ -987,7 +996,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                     aria-label={`${language === 'hi' ? item.name.hi : item.name.en}, ${whenLabel}`}
                     className={cn(
                       'sky-chip group/chip shrink-0 min-w-[168px] max-w-[236px] text-left glass rounded-xl px-3 py-2.5',
-                      'transition-all duration-250 ease-out hover:-translate-y-0.5 hover:shadow-[0_6px_18px_-8px_rgba(201,162,39,0.45)] active:scale-[0.97]',
+                      'transition-all duration-150 ease-out active:scale-[0.97]',
                       'animate-in fade-in-0 slide-in-from-left-2 focus-visible:ring-2 focus-visible:ring-gold/60 focus-visible:outline-none',
                     )}
                     style={{ animationDelay: `${Math.min(i, 8) * 45}ms`, animationFillMode: 'backwards' }}
@@ -995,10 +1004,10 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                     <span className="flex items-center gap-2">
                       <span
                         className={cn(
-                          'shrink-0 w-7 h-7 rounded-full border flex items-center justify-center transition-transform duration-250 group-hover/chip:scale-110',
+                          'shrink-0 w-7 h-7 rounded-full flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-transform duration-250 group-hover/chip:scale-110',
                           item.kind === 'festival'
-                            ? 'bg-rose-soft border-rose/35'
-                            : 'bg-gold-soft/70 border-gold/25',
+                            ? 'bg-rose-soft/90'
+                            : 'bg-gold-soft/80',
                         )}
                       >
                         <Icon name={SKY_ICON[item.kind]} size={14} className={item.kind === 'festival' ? 'text-rose-deep' : 'text-gold'} />
@@ -1024,8 +1033,8 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
         <GlassCard className="p-5 sm:p-6 glass-ink relative overflow-hidden">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-t12 uppercase tracking-wider text-gold font-semibold">{t('dasha.cardTitle')}</p>
-              <p className="mt-2 text-t16 font-serif text-gold-grad font-semibold">
+              <p className="text-t12 tracking-wide text-gold font-semibold">{t('dasha.cardTitle')}</p>
+              <p className="mt-2 text-t16 font-serif text-gold-light font-semibold">
                 {t('dasha.current', { maha: t(`planet.${dashaNow.mahaLord}`), antar: dashaNow.antarLord ? t(`planet.${dashaNow.antarLord}`) : '' })}
               </p>
               <p className="mt-1 text-t14 text-[#cdb98e]">
@@ -1056,8 +1065,8 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
         </GlassCard>
       )}
 
-      {/* Daily check-in */}
-      <GlassCard id="daily-checkin" className={cn('p-5 sm:p-6', flashCheckin && 'focus-flash')}>
+      {/* Daily check-in — golden essence through the glass */}
+      <GlassCard id="daily-checkin" tone="gold" className={cn('p-5 sm:p-6', flashCheckin && 'focus-flash')}>
         <AnimatePresence mode="wait">
           {checkin?.checkedInToday ? (
             <mot.div
@@ -1067,7 +1076,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
               exit={{ opacity: 0, y: -8 }}
               className="flex items-center gap-4"
             >
-              <span className="shrink-0 w-12 h-12 rounded-full emerald-grad flex items-center justify-center text-white shadow-[0_4px_14px_rgba(62,142,110,0.35)]">
+              <span className="shrink-0 w-12 h-12 rounded-full emerald-grad flex items-center justify-center text-white">
                 <Icon name="check" size={24} strokeWidth={2} />
               </span>
               <div className="flex-1 min-w-0">
@@ -1093,7 +1102,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
           ) : (
             <mot.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -8 }}>
               <div className="flex items-center justify-between">
-                <h2 className="font-serif text-t20 font-semibold text-charcoal">{t('home.checkinTitle')}</h2>
+                <h2 className="font-serif text-t22 font-bold tracking-[-0.02em] text-charcoal">{t('home.checkinTitle')}</h2>
                 <span className="inline-flex items-center gap-1 text-t12 text-muted-foreground">
                   <Icon name="flame" size={14} className="text-emerald-deep" />
                   {checkin.streak > 0 ? t('home.streak', { n: checkin.streak }) : t('home.streakNew')}
@@ -1136,7 +1145,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                     : PROMPT_LORDS[maha] ?? ['Su', 'Mo', 'Ju'];
                   const promptOf = (lord: string) => (lord === antar ? t(`home.prompt2.${lord}`) : t(`home.prompt.${lord}`));
                   return (
-                    <div className="rounded-xl bg-gold-faint/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] px-3 py-2.5">
+                    <div className="rounded-xl bg-gold-faint/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] px-3 py-2.5">
                       <p className="text-t12 text-muted-foreground flex items-center gap-1.5">
                         <Icon name="sparkle" size={12} className="text-gold" />
                         {antar
@@ -1152,7 +1161,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                               setNote(promptOf(lord));
                               document.getElementById('checkin-note')?.focus();
                             }}
-                            className="inline-flex items-center gap-1 rounded-full bg-white/70 border border-gold/30 px-2.5 py-1 text-t12 text-charcoal/80 hover:border-gold/60 hover:bg-gold-faint active:scale-95 transition-all duration-250"
+                            className="inline-flex items-center gap-1 rounded-full bg-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] px-2.5 py-1 text-t12 text-charcoal/80 hover:bg-gold-faint active:scale-95 transition-all duration-250"
                           >
                             <span className="text-gold font-semibold">{t(`planet.${lord}`)}</span>
                             <span className="max-w-52 truncate">{promptOf(lord)}</span>
@@ -1179,18 +1188,16 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
       {/* Weekly reflection letter (ink card) */}
       <div>
         <SectionHeader title={t('home.weeklyTitle')} icon="journal" tone="violet" />
-        <GlassCard id="weekly-letter" ink className={cn('sheen-sweep p-5 sm:p-6', flashLetter && 'focus-flash')}>
-          {/* violet intuition vignette — the letter is Acharya's reflective gift */}
-          <div className="pointer-events-none absolute -top-14 -left-14 w-40 h-40 rounded-full bg-violet/30 blur-2xl" aria-hidden="true" />
+        <GlassCard id="weekly-letter" ink className={cn('p-5 sm:p-6', flashLetter && 'focus-flash')}>
           {checkin?.reflection ? (
             <>
               <button type="button" onClick={() => setLetterOpen((v) => !v)} className="w-full text-left">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-t12 uppercase tracking-wider text-[#c9aee8] font-semibold flex items-center gap-1.5">
+                    <p className="text-t12 tracking-wide text-[#c9aee8] font-semibold flex items-center gap-1.5">
                       {t('home.weeklyReady')}
                       {letterAlert && (
-                        <span className="inline-flex items-center gap-1 rounded-full violet-grad border border-violet-deep/40 px-1.5 py-0.5 text-[9px] font-bold tracking-normal text-white animate-pulse">
+                        <span className="inline-flex items-center gap-1 rounded-full liquid liquid-violet px-1.5 py-0.5 text-[10px] font-semibold tracking-normal animate-pulse">
                           <span className="w-1 h-1 rounded-full bg-white" />
                           {t('notifications.reflectionNewShort')}
                         </span>
@@ -1202,8 +1209,8 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                     {weekRangeLabel && <p className="mt-1 text-t12 text-[#a5947a] italic">{weekRangeLabel}</p>}
                   </div>
                   <span className="shrink-0 flex flex-col items-center gap-1" aria-hidden>
-                    <span className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gold/40 bg-gold/10 rotate-45">
-                      <span className="block w-3.5 h-3.5 rounded-[2px] bg-gradient-to-br from-[#E8C568] to-[#C9A227] shadow-[0_0_10px_rgba(232,197,104,0.45)]" />
+                    <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-gold/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] rotate-45">
+                      <span className="block w-3.5 h-3.5 rounded-[2px] bg-gold" />
                     </span>
                     <Icon name="chevron-down" size={16} className={cn('text-gold transition-transform duration-250', letterOpen && 'rotate-180')} />
                   </span>
@@ -1226,7 +1233,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                       <button
                         type="button"
                         onClick={toggleLetterAudio}
-                        className="inline-flex items-center gap-2 rounded-full bg-gold/15 border border-gold/40 px-4 py-1.5 text-t12 font-medium text-gold-light hover:bg-gold/25 active:scale-95 transition-all duration-250"
+                        className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-t12 font-medium text-gold-light shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-white/15 active:scale-95 transition-all duration-250"
                       >
                         <Icon name={audioState === 'playing' ? 'pause' : 'speaker'} size={14} />
                         {audioState === 'loading' ? t('letter.loadingAudio') : audioState === 'playing' ? t('letter.stop') : t('letter.listen')}
@@ -1235,7 +1242,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
                       <button
                         type="button"
                         onClick={() => window.print()}
-                        className="inline-flex items-center gap-2 rounded-full border border-gold/25 px-4 py-1.5 text-t12 font-medium text-[#cdb98e] hover:bg-gold/15 hover:text-gold-light active:scale-95 transition-all duration-250"
+                        className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-t12 font-medium text-[#cdb98e] shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-white/15 hover:text-gold-light active:scale-95 transition-all duration-250"
                       >
                         <Icon name="download" size={14} />
                         {t('letter.export')}
@@ -1285,7 +1292,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
 
       {/* Feature grid */}
       {!chart && (
-        <GlassCard className="p-5 flex items-center gap-4 border-burgundy/25">
+        <GlassCard className="p-5 flex items-center gap-4">
           <span className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-burgundy-soft text-burgundy shrink-0">
             <Icon name="warning" size={20} />
           </span>
@@ -1306,7 +1313,7 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
               <GlassCard
                 key={item.titleKey}
                 onClick={() => onNavigate('kundli', item.view)}
-                className="glass-liquid p-4 sm:p-5 group ripple rounded-[22px]"
+                className="p-4 sm:p-5 group ripple rounded-[20px]"
               >
                 <span className={cn('inline-flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-250', SECTION_CHIP_TONES[section.tone])}>
                   <Icon name={item.icon} size={20} />
@@ -1323,13 +1330,13 @@ export function HomeScreen({ onNavigate }: { onNavigate: (tab: 'kundli' | 'journ
 }
 
 /**
- * Per-section icon chip tints — gold stays primary; predictions lean rose,
- * tools lean violet (secondary atmospheric colours only, never CTA).
+ * Per-section icon chip tints — flat soft colours, constant (no hover fill:
+ * gold is for selection/CTA, never a hover surface — ASTRA).
  */
 const SECTION_CHIP_TONES: Record<'gold' | 'rose' | 'violet', string> = {
-  gold: 'bg-gold-soft/80 text-gold group-hover:gold-grad group-hover:text-charcoal',
-  rose: 'bg-rose-soft text-rose-deep group-hover:rose-grad group-hover:text-white',
-  violet: 'bg-violet-soft text-violet-deep group-hover:violet-grad group-hover:text-white',
+  gold: 'bg-gold-soft text-gold-deep',
+  rose: 'bg-rose-soft text-rose-deep',
+  violet: 'bg-violet-soft text-violet-deep',
 };
 
 /**

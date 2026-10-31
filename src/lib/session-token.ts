@@ -19,12 +19,15 @@
  * the caller to re-issue a v2 cookie (see `verifySessionToken().needsUpgrade`).
  */
 import { createHmac, timingSafeEqual } from 'crypto';
+import {
+  SESSION_COOKIE,
+  SESSION_TOKEN_HEADER,
+  SESSION_TOKEN_STORAGE_KEY,
+  SESSION_TTL_MS,
+} from '@/lib/session-constants';
 
-/** Cookie name. Kept for compatibility with existing deployments. */
-export const SESSION_COOKIE = 'selfsage_sid';
-
-/** How long a freshly issued session token stays valid. */
-export const SESSION_TTL_MS = 90 * 24 * 60 * 60 * 1000; // 90 days
+// Re-exported so existing `from '@/lib/session-token'` imports keep working.
+export { SESSION_COOKIE, SESSION_TOKEN_HEADER, SESSION_TOKEN_STORAGE_KEY, SESSION_TTL_MS };
 
 /** Tolerated clock skew for a token issued "in the future". */
 const FUTURE_SKEW_MS = 5 * 60 * 1000;
@@ -114,12 +117,24 @@ export function verifySessionToken(
   return { userId, needsUpgrade: true, issuedAt: null };
 }
 
-/** Cookie attributes shared by every environment. */
-export function sessionCookieOptions(isProduction: boolean) {
+/**
+ * Cookie attributes.
+ *
+ * `crossSite` — true when the app is served through an HTTPS reverse proxy /
+ * embedded preview where the browser treats our requests as third-party (the
+ * chat shell renders the app inside a cross-origin iframe). There a `lax`
+ * cookie is silently dropped on every request, which logged the user out on
+ * refresh; `SameSite=None; Secure` is the only combination that survives.
+ *
+ * Plain top-level deployments keep the original `lax` behaviour (and its CSRF
+ * mitigation). `SESSION_COOKIE_SAMESITE=none` forces the cross-site shape for
+ * deployments that embed the app but do not run through this detection.
+ */
+export function sessionCookieOptions(crossSite: boolean) {
   return {
     httpOnly: true as const,
-    sameSite: 'lax' as const,
-    secure: isProduction,
+    sameSite: (crossSite ? 'none' : 'lax') as 'none' | 'lax',
+    secure: crossSite,
     path: '/',
     maxAge: Math.floor(SESSION_TTL_MS / 1000),
   };

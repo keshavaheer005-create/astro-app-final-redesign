@@ -72,7 +72,7 @@ const ASPECT_OFFSETS: Partial<Record<PlanetKey, number[]>> = {
 const THEME_KEYWORDS: Record<PredictionThemeId, string[]> = {
   career: ['career', 'job', 'work', 'promotion', 'business', 'interview', 'profession', 'करियर', 'नौकरी', 'काम', 'व्यवसाय', 'प्रमोशन'],
   relationships: ['relationship', 'marriage', 'partner', 'love', 'spouse', 'dating', 'विवाह', 'शादी', 'प्रेम', 'रिश्ता', 'जीवनसाथी'],
-  wealth: ['money', 'finance', 'salary', 'wealth', 'income', 'invest', 'investment', 'savings', 'debt', 'loan', 'धन', 'पैसा', 'वित्त', 'निवेश', 'बचत', 'कर्ज', 'आय'],
+  wealth: ['money', 'finance', 'salary', 'wealth', 'income', 'investment', 'invest', 'saving', 'debt', 'loan', 'धन', 'पैसा', 'वित्त', 'निवेश', 'कर्ज', 'आय', 'बचत'],
   learning: ['study', 'exam', 'education', 'course', 'learning', 'school', 'college', 'पढ़ाई', 'परीक्षा', 'शिक्षा', 'अध्ययन', 'कॉलेज'],
   home: ['home', 'family', 'property', 'house', 'relocation', 'parents', 'घर', 'परिवार', 'संपत्ति', 'मकान', 'जमीन', 'माता-पिता'],
   wellbeing: ['health', 'wellbeing', 'well-being', 'stress', 'fitness', 'routine', 'healthcare', 'स्वास्थ्य', 'सेहत', 'तनाव', 'फिटनेस'],

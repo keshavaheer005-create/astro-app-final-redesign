@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { LazyMotion, domAnimation, MotionConfig } from 'framer-motion';
+import { LazyMotion, domAnimation } from 'framer-motion';
 import i18next from 'i18next';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import { resources } from '@/i18n/locales';
@@ -84,14 +84,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <NativeBootstrap />
       <ReminderScheduler />
       {/* `m.*` components + the slim domAnimation feature set (no drag/layout) ≈ half the size of full `motion` */}
-      {/* reducedMotion="user" — framer animations (message fade-rise, drawer slides,
-          reading-mode transitions) honour the OS reduced-motion preference,
-          matching the CSS-side @media (prefers-reduced-motion) kill switch. */}
-      <LazyMotion features={domAnimation} strict>
-        <MotionConfig reducedMotion="user" transition={{ duration: 0.22, ease: 'easeOut' }}>
-          {children}
-        </MotionConfig>
-      </LazyMotion>
+      <LazyMotion features={domAnimation}>{children}</LazyMotion>
     </I18nextProvider>
   );
 }

@@ -1,10 +1,11 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
 import { db } from '@/lib/db';
 import { getSessionSecret } from '@/lib/env';
 import {
   SESSION_COOKIE,
+  SESSION_TOKEN_HEADER,
   sessionCookieOptions,
   signSessionToken,
   verifySessionToken,
@@ -21,29 +22,74 @@ import {
  * else trusts a client-supplied id.
  */
 
-const isProduction = process.env.NODE_ENV === 'production';
-
 export async function getSessionUserId(): Promise<string | null> {
   const jar = await cookies();
   const raw = jar.get(SESSION_COOKIE)?.value;
   const verified = verifySessionToken(raw, getSessionSecret(), { legacy: 'accept' });
-  if (!verified) return null;
-  if (verified.needsUpgrade) {
-    // Legacy cookie: it proves identity but has no expiry, so replace it with
-    // a v2 token right away. `cookies().set` is allowed in route handlers and
-    // server actions; when it is not, the caller still gets a valid user id.
-    try {
-      await setSessionCookie(verified.userId);
-    } catch {
-      /* read-only cookie context (e.g. RSC render) — upgraded on next POST */
+  if (verified) {
+    if (verified.needsUpgrade) {
+      // Legacy cookie: it proves identity but has no expiry, so replace it with
+      // a v2 token right away. `cookies().set` is allowed in route handlers and
+      // server actions; when it is not, the caller still gets a valid user id.
+      try {
+        await setSessionCookie(verified.userId);
+      } catch {
+        /* read-only cookie context (e.g. RSC render) — upgraded on next POST */
+      }
     }
+    return verified.userId;
   }
-  return verified.userId;
+  // Cookie could not be read (embedded preview dropping SameSite cookies, or
+  // strict third-party-cookie blocking). The client re-sends the SAME signed
+  // token in `x-session-token`; it passes the identical HMAC verification, so
+  // this is no weaker than the cookie path — and we re-seat the cookie while
+  // we are here so the browser recovers on its own.
+  try {
+    const h = await headers();
+    const headerToken = h.get(SESSION_TOKEN_HEADER);
+    const fromHeader = verifySessionToken(headerToken, getSessionSecret(), { legacy: 'reject' });
+    if (fromHeader) {
+      try {
+        await setSessionCookie(fromHeader.userId);
+      } catch {
+        /* read-only cookie context — header keeps working either way */
+      }
+      return fromHeader.userId;
+    }
+  } catch {
+    /* headers() unavailable outside a request scope */
+  }
+  return null;
+}
+
+/** True when the request arrived through an HTTPS reverse proxy / preview. */
+async function isProxiedHttps(): Promise<boolean> {
+  try {
+    const h = await headers();
+    const proto = (h.get('x-forwarded-proto') ?? '').split(',')[0].trim().toLowerCase();
+    return proto === 'https';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Sign a fresh session for `userId`, set the cookie and return the token so
+ * the route handler can hand it to the client as the header fallback.
+ */
+export async function issueSession(userId: string): Promise<string> {
+  const token = signSessionToken(userId, getSessionSecret());
+  const jar = await cookies();
+  // Cross-site cookie shape when served through an HTTPS proxy (embedded
+  // previews), or when explicitly forced via env; top-level plain deployments
+  // keep SameSite=Lax. Never `none` without `secure` — browsers reject that.
+  const crossSite = (await isProxiedHttps()) || process.env.SESSION_COOKIE_SAMESITE === 'none';
+  jar.set(SESSION_COOKIE, token, sessionCookieOptions(crossSite));
+  return token;
 }
 
 export async function setSessionCookie(userId: string): Promise<void> {
-  const jar = await cookies();
-  jar.set(SESSION_COOKIE, signSessionToken(userId, getSessionSecret()), sessionCookieOptions(isProduction));
+  await issueSession(userId);
 }
 
 export async function clearSessionCookie(): Promise<void> {

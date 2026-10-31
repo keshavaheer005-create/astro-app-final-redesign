@@ -12,6 +12,7 @@
  */
 import { clearSwrCaches, readAccountPointer } from '@/lib/client-cache';
 import { count, elapsed, end, start } from '@/lib/perf';
+import { sessionHeader } from '@/lib/session-storage';
 
 export const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL ?? '').replace(/\/+$/, '');
 
@@ -30,9 +31,12 @@ export function notifySignInRequired(reason?: string) {
 async function doFetch<T>(url: string, init?: RequestInit): Promise<T> {
   const t0 = start();
   try {
+    // Replay the signed session token when the browser dropped the cookie
+    // (embedded previews / strict third-party-cookie modes). Harmless when
+    // the cookie is present — the server checks the cookie first.
     const res = await fetch(apiUrl(url), {
       ...init,
-      headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
+      headers: { 'Content-Type': 'application/json', ...sessionHeader(), ...(init?.headers ?? {}) },
     });
     if (!res.ok) {
       const body = (await res.json().catch(() => ({}))) as { error?: string; reason?: string };

@@ -44,45 +44,60 @@
 }
 
 @theme {
-  /* Astrovia palette */
-  --color-cream: #faf7f0;
-  --color-cream-deep: #f3ede0;
-  --color-gold: #c9a227;
-  --color-gold-light: #e8c568;
-  --color-gold-soft: #f5e9c9;
-  --color-gold-faint: #faf3dd;
-  --color-charcoal: #1a1a1a;
-  --color-ink: #2a2420;
-  --color-ink-soft: #3a332d;
-  --color-maroon: #6b2737;
-  --color-maroon-soft: #f4e4e7;
-  --color-sage: #7a8b6f;
+  /* ASTRA palette — "Gold is an accent, not a surface."
+     Warm ivory canvas · soft cream surfaces · champagne-gold accents ·
+     jewel-tone semantic chips · ink charcoal text. Flat, calm, premium. */
+  --color-cream: #fffdf7;
+  --color-cream-deep: #f8f2e4;
+  --color-gold: #d5a045;
+  --color-gold-light: #e3b968;
+  --color-gold-deep: #b98a22;
+  --color-gold-soft: #f4e8d2;
+  --color-gold-faint: #faf4e6;
+  --color-charcoal: #39352f;
+  --color-ink: #39352f;
+  --color-ink-soft: #55504a;
+  --color-maroon: #8b2945;
+  --color-maroon-soft: #f5e4e9;
+  --color-sage: #2e806c;
 
-  /* Extended accent palette (semantic use only — gold remains the sole CTA colour) */
-  --color-emerald: #3e8e6e;
-  --color-emerald-deep: #2e7057;
-  --color-emerald-soft: #e3f0e9;
-  --color-emerald-faint: #f1f7f3;
-  --color-violet: #6e4a9e;
-  --color-violet-deep: #593a82;
-  --color-violet-soft: #eee8f6;
-  --color-violet-faint: #f6f2fa;
-  --color-burgundy: #5c1a28;
-  --color-burgundy-soft: #f3e2e5;
-  --color-rose: #c2455a;
-  --color-rose-deep: #a33347;
-  --color-rose-soft: #f9e7ea;
-  --color-rose-faint: #fcf1f3;
+  /* Extended accent palette (semantic use only — gold remains the sole CTA colour).
+     ASTRA mapping: emerald = success, burgundy = spiritual highlight, rose = gentle
+     secondary. Violet is NOT in the ASTRA palette → aliases the burgundy family so
+     every former violet accent now reads as the same calm spiritual plum. */
+  --color-emerald: #2e806c;
+  --color-emerald-deep: #256a58;
+  --color-emerald-soft: #e2efe9;
+  --color-emerald-faint: #f1f6f3;
+  --color-violet: #8b2945;
+  --color-violet-deep: #73203a;
+  --color-violet-soft: #f5e4e9;
+  --color-violet-faint: #faf2f4;
+  --color-burgundy: #8b2945;
+  --color-burgundy-soft: #f5e4e9;
+  --color-rose: #c06f79;
+  --color-rose-deep: #a85862;
+  --color-rose-soft: #f7e7e8;
+  --color-rose-faint: #fbf2f2;
 
-  /* Fixed type scale: 12 / 14 / 16 / 20 / 28 */
+  /* Fixed type scale: 12 / 14 / 15 / 16 / 18 / 20 / 28.
+     t15 and t18 were USED in components but never defined — every one of those
+     elements silently fell back to the inherited 16px, which read as random
+     text resizing. Now the whole ramp is explicit. */
   --text-t12: 0.75rem;
   --text-t12--line-height: 1.45;
   --text-t14: 0.875rem;
   --text-t14--line-height: 1.5;
+  --text-t15: 0.9375rem;
+  --text-t15--line-height: 1.5;
   --text-t16: 1rem;
   --text-t16--line-height: 1.55;
+  --text-t18: 1.125rem;
+  --text-t18--line-height: 1.4;
   --text-t20: 1.25rem;
   --text-t20--line-height: 1.3;
+  --text-t22: 1.375rem;
+  --text-t22--line-height: 1.25;
   --text-t28: 1.75rem;
   --text-t28--line-height: 1.2;
 
@@ -93,40 +108,40 @@
 }
 
 :root {
-  --radius: 1.25rem;
+  --radius: 1.25rem; /* 20px — the single card radius used everywhere */
   /* Faint handmade-paper grain, used by .texture-grain / .bar-texture / ChakraBackdrop */
   --ss-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
-  --background: #faf7f0;
-  --foreground: #1a1a1a;
-  --card: rgba(255, 255, 255, 0.6);
-  --card-foreground: #1a1a1a;
+  --background: #fffdf7;
+  --foreground: #39352f;
+  --card: rgba(255, 255, 255, 0.78);
+  --card-foreground: #39352f;
   --popover: #fffdf7;
-  --popover-foreground: #1a1a1a;
-  --primary: #c9a227;
-  --primary-foreground: #1a1a1a;
-  --secondary: #f3ede0;
-  --secondary-foreground: #1a1a1a;
-  --muted: #f3ede0;
-  --muted-foreground: #6d6353;
-  --accent: #f5e9c9;
-  --accent-foreground: #1a1a1a;
-  --destructive: #6b2737;
-  --border: rgba(201, 162, 39, 0.22);
-  --input: rgba(201, 162, 39, 0.3);
-  --ring: rgba(201, 162, 39, 0.55);
-  --chart-1: #c9a227;
-  --chart-2: #6b2737;
-  --chart-3: #7a8b6f;
-  --chart-4: #e8c568;
-  --chart-5: #2a2420;
-  --sidebar: #faf7f0;
-  --sidebar-foreground: #1a1a1a;
-  --sidebar-primary: #c9a227;
-  --sidebar-primary-foreground: #1a1a1a;
-  --sidebar-accent: #f5e9c9;
-  --sidebar-accent-foreground: #1a1a1a;
-  --sidebar-border: rgba(201, 162, 39, 0.22);
-  --sidebar-ring: rgba(201, 162, 39, 0.55);
+  --popover-foreground: #39352f;
+  --primary: #d5a045;
+  --primary-foreground: #39352f;
+  --secondary: #f8f2e4;
+  --secondary-foreground: #39352f;
+  --muted: #f8f2e4;
+  --muted-foreground: #6d6355;
+  --accent: #f4e8d2;
+  --accent-foreground: #39352f;
+  --destructive: #8b2945;
+  --border: rgba(185, 138, 34, 0.18);
+  --input: rgba(185, 138, 34, 0.26);
+  --ring: rgba(213, 160, 69, 0.5);
+  --chart-1: #d5a045;
+  --chart-2: #8b2945;
+  --chart-3: #2e806c;
+  --chart-4: #e3b968;
+  --chart-5: #39352f;
+  --sidebar: #fffdf7;
+  --sidebar-foreground: #39352f;
+  --sidebar-primary: #d5a045;
+  --sidebar-primary-foreground: #39352f;
+  --sidebar-accent: #f4e8d2;
+  --sidebar-accent-foreground: #39352f;
+  --sidebar-border: rgba(185, 138, 34, 0.18);
+  --sidebar-ring: rgba(213, 160, 69, 0.5);
 }
 
 .dark {
@@ -137,7 +152,7 @@
   --card-foreground: #f0e4c3;
   --popover: #3a332d;
   --popover-foreground: #f0e4c3;
-  --primary: #e8c568;
+  --primary: #e3b968;
   --primary-foreground: #2a2420;
   --secondary: #3a332d;
   --secondary-foreground: #f0e4c3;
@@ -168,111 +183,128 @@
     overflow-x: clip;
   }
   ::selection {
-    background: rgba(201, 162, 39, 0.28);
+    background: rgba(213, 160, 69, 0.28);
   }
 }
 
 @layer components {
-  /* ── Liquid glass card ─────────────────────────────────────────────── */
+  /* ── Card ────────────────────────────────────────────────────────────
+     Liquid glass: a translucent white surface that blurs what moves behind
+     it, ONE specular top edge, ONE soft ambient shadow. No borders, no
+     bevels — depth comes from blur + light, the way Apple's materials do. */
   .glass {
     position: relative;
-    /* Liquid-glass look WITHOUT a live backdrop blur: the screen behind is a
-       smooth gradient, so blurring it changed almost nothing visually but forced
-       the phone to re-blur every card on every scroll/transition. The fill is a
-       little denser instead, and the light rim + inset highlights stay. Surfaces
-       that really sit over scrolling content opt in with .glass-blur below. */
-    background: linear-gradient(168deg, rgba(255, 255, 255, 0.86) 0%, rgba(255, 253, 246, 0.72) 46%, rgba(255, 250, 236, 0.78) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.34);
+    background: rgba(255, 255, 255, 0.66);
     border-radius: 20px;
+    -webkit-backdrop-filter: blur(18px) saturate(1.45);
+    backdrop-filter: blur(18px) saturate(1.45);
     box-shadow:
-      0 8px 24px rgba(42, 36, 32, 0.08),
-      0 1px 3px rgba(42, 36, 32, 0.05),
-      inset 0 1px 0 rgba(255, 255, 255, 0.85),
-      inset 0 -1px 0 rgba(201, 162, 39, 0.08);
+      inset 0 1px 0 rgba(255, 255, 255, 0.75),
+      0 6px 24px -10px rgba(42, 36, 32, 0.14);
     overflow: hidden;
   }
   /* Real glass blur — ONLY for the floating bottom bar, dialogs, popovers and
      dropdowns (things that overlap moving content). Light radius = cheap. */
   .glass-blur {
-    -webkit-backdrop-filter: blur(12px) saturate(1.25);
-    backdrop-filter: blur(12px) saturate(1.25);
-  }
-  .glass::before {
-    content: "";
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 38%;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0));
-    pointer-events: none;
+    -webkit-backdrop-filter: blur(24px) saturate(1.7);
+    backdrop-filter: blur(24px) saturate(1.7);
   }
   @supports not ((backdrop-filter: blur(20px)) or (-webkit-backdrop-filter: blur(20px))) {
     .glass {
-      background: rgba(255, 252, 244, 0.97);
+      background: rgba(255, 252, 244, 0.92);
     }
   }
 
-  /* ── Inverted premium ink card ─────────────────────────────────────── */
+  /* ── Ink card (deep liquid glass) ────────────────────────────────────
+     The one intentional DARK moment of the app (Acharya CTA, weekly letter,
+     dasha panel). Deep translucent charcoal — never flat black — with a
+     white specular edge and a soft melt shadow. Black reads as glass here,
+     with white doing the accent work. */
   .glass-ink {
     position: relative;
-    /* Jewel-tone "ink": deep emerald melting into violet — calm, spiritual, and
-       still rich enough for light text. Replaces the old near-black slab. A
-       gold mandala watermark sits in the bottom-right corner. */
-    background:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='560' height='560' viewBox='0 0 560 560'%3E%3Cg fill='none' stroke='%23F3DC96' stroke-width='1'%3E%3Ccircle cx='280' cy='280' r='270'/%3E%3Ccircle cx='280' cy='280' r='220'/%3E%3Ccircle cx='280' cy='280' r='160'/%3E%3Ccircle cx='280' cy='280' r='90'/%3E%3Ccircle cx='280' cy='280' r='30'/%3E%3Cg%3E%3Cpath d='M280 60 C340 140 340 220 280 280 C220 220 220 140 280 60Z'/%3E%3Cpath d='M280 60 C340 140 340 220 280 280 C220 220 220 140 280 60Z' transform='rotate(45 280 280)'/%3E%3Cpath d='M280 60 C340 140 340 220 280 280 C220 220 220 140 280 60Z' transform='rotate(90 280 280)'/%3E%3Cpath d='M280 60 C340 140 340 220 280 280 C220 220 220 140 280 60Z' transform='rotate(135 280 280)'/%3E%3Cpath d='M280 60 C340 140 340 220 280 280 C220 220 220 140 280 60Z' transform='rotate(180 280 280)'/%3E%3Cpath d='M280 60 C340 140 340 220 280 280 C220 220 220 140 280 60Z' transform='rotate(225 280 280)'/%3E%3Cpath d='M280 60 C340 140 340 220 280 280 C220 220 220 140 280 60Z' transform='rotate(270 280 280)'/%3E%3Cpath d='M280 60 C340 140 340 220 280 280 C220 220 220 140 280 60Z' transform='rotate(315 280 280)'/%3E%3C/g%3E%3Cg%3E%3Cpath d='M280 140 C316 190 316 240 280 280 C244 240 244 190 280 140Z' transform='rotate(22.5 280 280)'/%3E%3Cpath d='M280 140 C316 190 316 240 280 280 C244 240 244 190 280 140Z' transform='rotate(67.5 280 280)'/%3E%3Cpath d='M280 140 C316 190 316 240 280 280 C244 240 244 190 280 140Z' transform='rotate(112.5 280 280)'/%3E%3Cpath d='M280 140 C316 190 316 240 280 280 C244 240 244 190 280 140Z' transform='rotate(157.5 280 280)'/%3E%3Cpath d='M280 140 C316 190 316 240 280 280 C244 240 244 190 280 140Z' transform='rotate(202.5 280 280)'/%3E%3Cpath d='M280 140 C316 190 316 240 280 280 C244 240 244 190 280 140Z' transform='rotate(247.5 280 280)'/%3E%3Cpath d='M280 140 C316 190 316 240 280 280 C244 240 244 190 280 140Z' transform='rotate(292.5 280 280)'/%3E%3Cpath d='M280 140 C316 190 316 240 280 280 C244 240 244 190 280 140Z' transform='rotate(337.5 280 280)'/%3E%3C/g%3E%3Ccircle cx='280' cy='60' r='3'/%3E%3Ccircle cx='280' cy='500' r='3'/%3E%3Ccircle cx='60' cy='280' r='3'/%3E%3Ccircle cx='500' cy='280' r='3'/%3E%3C/g%3E%3C/svg%3E") right -46px bottom -52px / 200px 200px no-repeat,
-      radial-gradient(120% 90% at 100% 0%, rgba(143, 108, 192, 0.55), transparent 58%),
-      radial-gradient(110% 100% at 0% 100%, rgba(70, 160, 124, 0.6), transparent 62%),
-      linear-gradient(145deg, #1d5a47 0%, #2a5964 46%, #41367a 100%);
-    color: #f8eed0;
-    border: none;
+    background: linear-gradient(155deg, rgba(64, 58, 51, 0.92), rgba(43, 38, 33, 0.88));
+    color: #f7f1e3;
     border-radius: 20px;
+    -webkit-backdrop-filter: blur(14px) saturate(1.25);
+    backdrop-filter: blur(14px) saturate(1.25);
     box-shadow:
-      0 18px 42px -14px rgba(52, 58, 110, 0.5),
-      0 4px 14px rgba(29, 90, 71, 0.28),
-      inset 0 1px 0 rgba(255, 255, 255, 0.28),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+      0 10px 28px -10px rgba(42, 36, 32, 0.42);
     overflow: hidden;
   }
-  .glass-ink::before {
-    content: "";
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 42%;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0));
-    pointer-events: none;
+
+  /* ── Liquid glass pills (sliders, nav, segmented, chips, CTAs) ────────
+     Apple-style tinted translucency: each pill is a thin coloured glass —
+     a saturated tint at ~90% opacity over the content behind it, a white
+     specular top edge, a soft coloured shadow. `.liquid` carries the
+     shared optics; tone classes carry the tint + contrast colour. */
+  .liquid {
+    -webkit-backdrop-filter: blur(10px) saturate(1.6);
+    backdrop-filter: blur(10px) saturate(1.6);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.42),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.1),
+      0 3px 14px -4px var(--liquid-shadow, rgba(42, 36, 32, 0.28));
+  }
+  /* Champagne — pulled away from yellow toward bronze/beige so it reads
+     premium next to the ivory canvas. Charcoal text keeps contrast. */
+  .liquid-gold {
+    --liquid-shadow: rgba(178, 134, 44, 0.34);
+    background: linear-gradient(150deg, rgba(226, 191, 122, 0.94), rgba(196, 148, 60, 0.9));
+    color: #3a2f14;
+  }
+  /* Burgundy glass ("violet" slot) — white text on deep translucent plum. */
+  .liquid-violet {
+    --liquid-shadow: rgba(115, 32, 58, 0.36);
+    background: linear-gradient(150deg, rgba(157, 61, 89, 0.9), rgba(126, 36, 61, 0.92));
+    color: #fff6f3;
+  }
+  .liquid-emerald {
+    --liquid-shadow: rgba(37, 106, 88, 0.34);
+    background: linear-gradient(150deg, rgba(62, 143, 120, 0.9), rgba(40, 104, 86, 0.92));
+    color: #f0faf6;
+  }
+  .liquid-rose {
+    --liquid-shadow: rgba(168, 88, 98, 0.34);
+    background: linear-gradient(150deg, rgba(198, 121, 132, 0.9), rgba(167, 87, 97, 0.92));
+    color: #fff7f7;
   }
 
-  /* ── Gold gradient helpers ─────────────────────────────────────────── */
+  /* ── Accent helpers (ASTRA: solid, never gradients) ────────────────────
+     Class names kept so existing components keep working — every one now
+     resolves to a FLAT colour. Gold = champagne for surfaces/CTAs, antique
+     for text-on-light. Text helpers are plain colours (no background-clip). */
   .gold-grad {
-    background: linear-gradient(135deg, #c9a227 0%, #e8c568 100%);
+    background: #d5a045;
   }
   .text-gold-grad {
-    background: linear-gradient(135deg, #b08a1e 0%, #e8c568 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: #b98a22;
   }
 
-  /* ── Extended accent gradients (semantic: emerald = growth, violet = intuition, rose = harmony) ── */
   .emerald-grad {
-    background: linear-gradient(135deg, #2e7057 0%, #5aa887 100%);
+    background: #2e806c;
   }
   .violet-grad {
-    background: linear-gradient(135deg, #593a82 0%, #8f6cc0 100%);
+    background: #8b2945;
   }
   .rose-grad {
-    background: linear-gradient(135deg, #a33347 0%, #d9708a 100%);
+    background: #c06f79;
   }
   .text-emerald-grad {
-    background: linear-gradient(135deg, #2e7057 0%, #6cb595 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: #256a58;
   }
   .text-violet-grad {
-    background: linear-gradient(135deg, #593a82 0%, #a98cd1 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: #73203a;
+  }
+  .burgundy-grad {
+    background: #8b2945;
+  }
+  .text-rose-grad {
+    color: #a85862;
+  }
+  .text-burgundy-grad {
+    color: #8b2945;
   }
 
   /* ── Chakra loader (the ONLY moving chakra; decorative chakras are still) ── */
@@ -286,7 +318,7 @@
   }
   /* ── Motion ────────────────────────────────────────────────────────── */
   .stagger-in {
-    animation: fade-rise 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: fade-rise 0.42s cubic-bezier(0.32, 0.72, 0, 1) both;
   }
   .screen-leave {
     animation: fade-in 0.25s ease-in both reverse;
@@ -319,17 +351,17 @@
   }
   .sky-fade-l {
     left: -2px;
-    background: linear-gradient(to right, #faf7f0, rgba(250, 247, 240, 0));
+    background: linear-gradient(to right, #fffdf7, rgba(255, 253, 247, 0));
   }
   .sky-fade-r {
     right: -2px;
-    background: linear-gradient(to left, #faf7f0, rgba(250, 247, 240, 0));
+    background: linear-gradient(to left, #fffdf7, rgba(255, 253, 247, 0));
   }
 
   /* ── Slim scrollbar ────────────────────────────────────────────────── */
   .scroll-slim {
     scrollbar-width: thin;
-    scrollbar-color: rgba(201, 162, 39, 0.45) transparent;
+    scrollbar-color: rgba(213, 160, 69, 0.45) transparent;
   }
   .scroll-slim::-webkit-scrollbar {
     width: 6px;
@@ -339,7 +371,7 @@
     background: transparent;
   }
   .scroll-slim::-webkit-scrollbar-thumb {
-    background: rgba(201, 162, 39, 0.45);
+    background: rgba(213, 160, 69, 0.45);
     border-radius: 999px;
   }
 
@@ -353,7 +385,7 @@
   .shimmer {
     position: relative;
     overflow: hidden;
-    background: rgba(201, 162, 39, 0.1);
+    background: rgba(213, 160, 69, 0.1);
     border-radius: 12px;
   }
   .shimmer::after {
@@ -370,39 +402,14 @@
     }
   }
 
-  /* ── Ink card gold aura (top-right radial) ─────────────────────────── */
-  .glass-ink::after {
-    content: "";
-    position: absolute;
-    top: -60px;
-    right: -60px;
-    width: 190px;
-    height: 190px;
-    background: radial-gradient(circle, rgba(255, 236, 170, 0.22), transparent 65%);
-    pointer-events: none;
-  }
+  /* -- Ink card aura - RETIRED (ASTRA: flat ink, no glows) -- */
 
-  /* ── Ink card sheen sweep (slow diagonal light band) ───────────────── */
+  /* -- Sheen sweep - RETIRED (animated light band read as a cheap trick) -- */
   .sheen-sweep {
     position: relative;
   }
   .sheen-sweep::before {
-    content: "";
-    position: absolute;
-    inset: -40% -20%;
-    background: linear-gradient(115deg, transparent 42%, rgba(255, 240, 200, 0.09) 50%, transparent 58%);
-    transform: translateX(-120%);
-    animation: sheen 6.5s ease-in-out 1.5s 3;
-    pointer-events: none;
-    z-index: 1;
-  }
-  @keyframes sheen {
-    0%, 55% {
-      transform: translateX(-120%);
-    }
-    75%, 100% {
-      transform: translateX(120%);
-    }
+    content: none;
   }
 
   /* ── Streak flame heartbeat ────────────────────────────────────────── */
@@ -468,7 +475,7 @@
 
   /* ── Gold focus ring for keyboard users ────────────────────────────── */
   :where(button, [role="tab"], a, input, textarea, [tabindex]):focus-visible {
-    outline: 2px solid rgba(201, 162, 39, 0.75);
+    outline: 2px solid rgba(213, 160, 69, 0.75);
     outline-offset: 2px;
     border-radius: 10px;
   }
@@ -481,10 +488,7 @@
     float: left;
     padding-right: 0.12em;
     padding-top: 0.05em;
-    background: linear-gradient(135deg, #c9a227, #e8c568);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: #b98a22;
   }
 
   /* ── Section ornament divider ──────────────────────────────────────── */
@@ -492,7 +496,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    color: rgba(201, 162, 39, 0.5);
+    color: rgba(213, 160, 69, 0.5);
     font-size: 10px;
     letter-spacing: 4px;
   }
@@ -501,12 +505,12 @@
     content: "";
     flex: 1;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(201, 162, 39, 0.4), transparent);
+    background: linear-gradient(90deg, transparent, rgba(213, 160, 69, 0.4), transparent);
   }
 
   /* ── Long-form text stays on solid cream for readability ───────────── */
   .prose-cream {
-    background: #faf7f0;
+    background: #fffdf7;
     color: #1a1a1a;
     line-height: 1.65;
   }
@@ -529,7 +533,7 @@
     border-radius: inherit;
     background-image:
       var(--ss-grain),
-      linear-gradient(90deg, transparent 4%, rgba(201, 162, 39, 0.3) 50%, transparent 96%);
+      linear-gradient(90deg, transparent 4%, rgba(213, 160, 69, 0.3) 50%, transparent 96%);
     background-size: 160px 160px, 100% 1px;
     background-position: 0 0, 0 0;
     background-repeat: repeat, no-repeat;
@@ -588,70 +592,105 @@
     transition: transform 0.5s ease-out, opacity 0.7s ease-out;
   }
 
-  /* ── Accent tint gradients for chips / badges / soft cards ─────────── */
-  .burgundy-grad {
-    background: linear-gradient(135deg, #4d1420 0%, #7a2a3c 100%);
+  /* ── Card essence (liquid-glass atmosphere inside cards) ───────────────
+     A whisper of the tab's tone living INSIDE the card: one soft radial
+     wash anchored at the top edge + one corner bloom. Never a fill, never
+     a border — the card stays glass; the tone just breathes through it.
+     Drop <span aria-hidden className="essence essence-{tone}" /> as the
+     FIRST child of any rounded, overflow-hidden container. */
+  .essence {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    overflow: hidden;
   }
-  .text-rose-grad {
-    background: linear-gradient(135deg, #a33347 0%, #d9708a 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+  .essence::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(130% 46% at 50% 0%, var(--essence-top, transparent), transparent 64%);
   }
-  .text-burgundy-grad {
-    background: linear-gradient(135deg, #4d1420 0%, #8a3a4e 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+  .essence::after {
+    content: "";
+    position: absolute;
+    width: 62%;
+    aspect-ratio: 1 / 1;
+    right: -16%;
+    top: -30%;
+    background: radial-gradient(closest-side, var(--essence-bloom, transparent), transparent 72%);
+  }
+  .essence-gold     { --essence-top: rgba(213, 160, 69, 0.14);  --essence-bloom: rgba(227, 185, 104, 0.12); }
+  .essence-violet   { --essence-top: rgba(139, 41, 69, 0.11);   --essence-bloom: rgba(157, 61, 89, 0.10); }
+  .essence-burgundy { --essence-top: rgba(139, 41, 69, 0.11);   --essence-bloom: rgba(157, 61, 89, 0.10); }
+  .essence-rose     { --essence-top: rgba(192, 111, 121, 0.12); --essence-bloom: rgba(198, 121, 132, 0.11); }
+  .essence-emerald  { --essence-top: rgba(46, 128, 108, 0.12);  --essence-bloom: rgba(62, 143, 120, 0.10); }
+
+  /* ── Soft edge ("blurry border") — frosted hairline + ambient shadow ──
+     For cards that sit ON glass (ladder rows, chips, inner tiles): the
+     border is a fading tone gradient that dissolves before it closes —
+     reads as a blurred light line, never a hard box outline. */
+  .edge-soft {
+    position: relative;
+    border: 1px solid transparent;
+    background:
+      linear-gradient(rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.58)) padding-box,
+      linear-gradient(168deg, rgba(139, 41, 69, 0.16), rgba(139, 41, 69, 0.03) 42%, rgba(255, 255, 255, 0.6) 90%) border-box;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.65),
+      0 10px 24px -14px rgba(42, 36, 32, 0.26),
+      0 2px 10px -6px rgba(139, 41, 69, 0.12);
+  }
+  .edge-soft-gold {
+    background:
+      linear-gradient(rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.58)) padding-box,
+      linear-gradient(168deg, rgba(213, 160, 69, 0.2), rgba(213, 160, 69, 0.04) 42%, rgba(255, 255, 255, 0.6) 90%) border-box;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.65),
+      0 10px 24px -14px rgba(42, 36, 32, 0.24),
+      0 2px 10px -6px rgba(178, 134, 44, 0.14);
+  }
+  .edge-soft-emerald {
+    background:
+      linear-gradient(rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.58)) padding-box,
+      linear-gradient(168deg, rgba(46, 128, 108, 0.18), rgba(46, 128, 108, 0.03) 42%, rgba(255, 255, 255, 0.6) 90%) border-box;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.65),
+      0 10px 24px -14px rgba(42, 36, 32, 0.24),
+      0 2px 10px -6px rgba(37, 106, 88, 0.12);
   }
 
-  /* ── Tinted glass panels (atmospheric colour per screen domain) ─────────
-     Compose over .glass: a soft diagonal tint gradient (light sheen at the
-     top-left deepening toward the tint at the bottom-right) + matching
-     hairline border. The .glass::before top sheen still shows through.
-     Gold stays the sole CTA colour — these are secondary, calm surfaces. */
+  /* ── Accent tint panels (semantic: flat, barely-there colour) ──────────
+     Former diagonal colour-wash gradients; now a single flat tint over the
+     standard card. Gold stays OFF surfaces per ASTRA — the gold tint is now
+     simply the soft cream surface colour. */
   .glass-tint-gold {
-    background: linear-gradient(155deg, rgba(255, 252, 240, 0.86) 0%, rgba(246, 232, 196, 0.74) 52%, rgba(232, 208, 140, 0.72) 100%);
+    background: #fdf8ec;
   }
   .glass-tint-emerald {
-    background: linear-gradient(155deg, rgba(238, 249, 243, 0.86) 0%, rgba(214, 236, 226, 0.76) 52%, rgba(176, 216, 198, 0.74) 100%);
+    background: #f2f8f4;
   }
   .glass-tint-violet {
-    background: linear-gradient(155deg, rgba(245, 240, 252, 0.86) 0%, rgba(232, 222, 246, 0.76) 52%, rgba(205, 188, 236, 0.74) 100%);
+    background: #faf3f5;
   }
   .glass-tint-rose {
-    background: linear-gradient(155deg, rgba(253, 241, 244, 0.86) 0%, rgba(248, 224, 230, 0.76) 52%, rgba(240, 190, 203, 0.72) 100%);
+    background: #fbf3f3;
   }
   .glass-tint-burgundy {
-    background: linear-gradient(155deg, rgba(251, 238, 241, 0.86) 0%, rgba(240, 218, 223, 0.76) 52%, rgba(225, 186, 196, 0.72) 100%);
+    background: #faf2f4;
   }
 
   /* ── Screen washes — REMOVED: per-screen colour now lives in the fixed
      full-viewport <ScreenGradient> (chakra.tsx) so every tab owns its own
      atmosphere instead of a boxed overlay on a shared background. */
 
-  /* ── Liquid glass feature tile ─────────────────────────────────────────
-     A step above .glass for the Home feature grid: crisper specular edge
-     along the top/left (light catching a bevel), deeper float shadow, and
-     more refraction so the screen gradient glows THROUGH the tile. Pairs
-     with .glass-tint-* for the per-domain colour wash. */
+  /* ── Feature tile — retired bevel/refraction variant. Kept as an alias:
+     tiles are plain .glass cards now (ASTRA: no bevels, no specular edges). */
   .glass-liquid {
-    box-shadow:
-      0 12px 26px -14px rgba(42, 36, 32, 0.22),
-      0 3px 10px -4px rgba(42, 36, 32, 0.08),
-      inset 0 1px 0 rgba(255, 255, 255, 0.95),
-      inset 1px 0 0 rgba(255, 255, 255, 0.55),
-      inset 0 -1px 0 rgba(201, 162, 39, 0.1);
+    box-shadow: 0 4px 16px -6px rgba(57, 53, 47, 0.07);
   }
   .glass-liquid::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    background:
-      radial-gradient(120% 60% at 8% 0%, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 55%),
-      linear-gradient(160deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 38%);
+    content: none;
   }
 
   /* ── Scroll-strip edge fades (mask-based, background-agnostic) ─────────
@@ -677,12 +716,9 @@
     );
   }
 
-  /* ── Elevation (hero cards that should read a step above plain glass) ── */
+  /* ── Elevation — retired; same single soft shadow as .glass. */
   .glass-elev {
-    box-shadow:
-      0 12px 28px -14px rgba(42, 36, 32, 0.18),
-      0 2px 8px rgba(42, 36, 32, 0.06),
-      inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    box-shadow: 0 4px 16px -6px rgba(57, 53, 47, 0.07);
   }
 }
 
@@ -758,7 +794,7 @@
   content: "";
   position: absolute;
   inset: 5px;
-  border: 1px solid rgba(201, 162, 39, 0.45);
+  border: 1px solid rgba(213, 160, 69, 0.45);
   border-right-color: rgba(46, 112, 87, 0.18);
   border-radius: 999px;
 }
@@ -769,7 +805,7 @@
   width: 5px;
   height: 5px;
   border-radius: 999px;
-  background: #c9a227;
+  background: #d5a045;
   box-shadow: 0 0 0 2px rgba(201,162,39,0.12);
 }
 .astro-chat-orbit-sm {
@@ -787,12 +823,12 @@
   overscroll-behavior: contain;
   line-height: 1.45;
   scrollbar-width: thin;
-  scrollbar-color: rgba(201, 162, 39, 0.35) transparent;
+  scrollbar-color: rgba(213, 160, 69, 0.35) transparent;
 }
 .astro-ai-textarea::-webkit-scrollbar { width: 4px; }
 .astro-ai-textarea::-webkit-scrollbar-thumb {
   border-radius: 999px;
-  background: rgba(201, 162, 39, 0.35);
+  background: rgba(213, 160, 69, 0.35);
 }
 
 /* Full-screen Acharya views sit above the app shell; hide navigation behind them. */
@@ -823,7 +859,10 @@ body.high-contrast {
   background: #ffffff;
 }
 .high-contrast .glass,
-.high-contrast [class*="glass-tint-"] {
+.high-contrast [class*="glass-tint-"],
+.high-contrast .edge-soft,
+.high-contrast .edge-soft-gold,
+.high-contrast .edge-soft-emerald {
   background: #fffdf6 !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
@@ -832,7 +871,8 @@ body.high-contrast {
 }
 .high-contrast .glass::before,
 .high-contrast .glass::after,
-.high-contrast .bar-texture::after {
+.high-contrast .bar-texture::after,
+.high-contrast .essence {
   display: none !important;
 }
 .high-contrast .glass-ink {
@@ -890,18 +930,18 @@ body.high-contrast {
 /* ── Check-in card focus flash (navigated from bell / reminder toast) ──── */
 @keyframes focus-flash {
   0% {
-    box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.55);
+    box-shadow: 0 0 0 0 rgba(213, 160, 69, 0.55);
   }
   60% {
-    box-shadow: 0 0 0 7px rgba(201, 162, 39, 0);
+    box-shadow: 0 0 0 7px rgba(213, 160, 69, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(201, 162, 39, 0);
+    box-shadow: 0 0 0 0 rgba(213, 160, 69, 0);
   }
 }
 .focus-flash {
   animation: focus-flash 0.9s ease-out 2;
-  border-color: rgba(201, 162, 39, 0.75) !important;
+  border-color: rgba(213, 160, 69, 0.75) !important;
 }
 
 /* ── Print view: the weekly letter as a keepsake page ──────────────────── */
@@ -948,7 +988,7 @@ body.high-contrast {
   }
   .lp-rule {
     height: 0;
-    border-top: 1.5pt solid #c9a227;
+    border-top: 1.5pt solid #d5a045;
     width: 38mm;
     margin: 7mm auto 9mm;
   }
@@ -1003,7 +1043,7 @@ body.high-contrast {
   color: #f0e4c3;
   font-size: 12px;
   padding: 6px 10px;
-  border: 1px solid rgba(201, 162, 39, 0.35);
+  border: 1px solid rgba(213, 160, 69, 0.35);
   box-shadow: 0 10px 24px rgba(42, 36, 32, 0.28);
   opacity: 0;
   transition: opacity 200ms ease, transform 200ms ease;

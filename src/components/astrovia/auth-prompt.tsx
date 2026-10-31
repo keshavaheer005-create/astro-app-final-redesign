@@ -72,7 +72,7 @@ export function AuthPromptProvider({ children }: { children: React.ReactNode }) 
     <PromptCtx.Provider value={value}>
       {children}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="glass glass-blur max-h-[88vh] max-w-md overflow-y-auto scroll-slim border-gold/30 p-6">
+        <DialogContent className="glass glass-blur max-h-[88vh] max-w-md overflow-y-auto scroll-slim p-6">
           <DialogHeader className="text-center sm:text-center">
             <DialogTitle className="font-serif text-t20 text-charcoal">{t(`authPrompt.${reason}.title`)}</DialogTitle>
             <DialogDescription className="text-t14 leading-relaxed text-muted-foreground">

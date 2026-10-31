@@ -18,7 +18,6 @@
  *     profiles cannot show another person's conversation.
  */
 import { deleteByPrefix, deleteKey, keysOf, readEnvelope, writeEnvelope } from './idb';
-import { stripMarkdownPreview } from '@/lib/utils';
 
 export type ChatRole = 'user' | 'assistant';
 
@@ -151,8 +150,8 @@ export async function readCachedChatSummaries(userId: string, chartId: string): 
       : new Date(envelope.savedAt).toISOString();
     return {
       id: conversationId ?? 'legacy',
-      title: stripMarkdownPreview(firstUser?.content ?? '').slice(0, 72) || 'Astrovia AI chat',
-      preview: stripMarkdownPreview(last.content).slice(0, 72),
+      title: firstUser?.content.replace(/\s+/g, ' ').trim().slice(0, 72) || 'Astrovia AI chat',
+      preview: last.content.replace(/\s+/g, ' ').trim().slice(0, 72),
       updatedAt: time,
       messageCount: messages.length,
       savedAt: envelope.savedAt,

@@ -67,7 +67,7 @@ export function HoroscopeScreen() {
   return (
     <div className="space-y-5">
       <header>
-        <h1 className="font-serif text-t28 font-bold text-violet-grad">{t('horoscope.' + period)}</h1>
+        <h1 className="font-serif text-t28 font-semibold text-charcoal">{t('horoscope.' + period)}</h1>
         <p className="text-t12 text-muted-foreground mt-0.5">{t('horoscope.disclaimer')}</p>
       </header>
 
@@ -88,23 +88,23 @@ export function HoroscopeScreen() {
       {data && (
         <>
           <GlassCard className="p-5 sm:p-6" ink>
-            <p className="text-t12 uppercase tracking-wider text-gold font-semibold">
+            <p className="text-t12 tracking-wide text-gold font-semibold">
               {t('horoscope.basedOn', { sign: chart.moonSign.name, dasha: data.dashaNote || '—' })}
             </p>
-            <h2 className="font-serif text-t28 font-bold mt-2 text-[#f0e4c3]">{t('horoscope.' + data.headlineKey)}</h2>
+            <h2 className="font-serif text-t28 font-semibold mt-2 text-[#f0e4c3]">{t('horoscope.' + data.headlineKey)}</h2>
             <div className="mt-4 flex items-center gap-3">
               <span className="text-t12 text-[#cdb98e] shrink-0">{t('horoscope.score')}</span>
               <ProgressBar value={data.score} className="flex-1 bg-white/10" />
-              <span className="text-t14 font-bold text-gold-light shrink-0">{data.score}%</span>
+              <span className="text-t14 font-semibold text-gold-light shrink-0">{data.score}%</span>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               {data.highlights.map((p) => (
-                <span key={p} className="inline-flex items-center gap-1.5 rounded-full bg-gold/15 border border-gold/30 px-3 py-1 text-t12 text-gold-light">
+                <span key={p} className="inline-flex items-center gap-1.5 rounded-full bg-gold/15 px-3 py-1 text-t12 text-gold-light shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]">
                   <Icon name="sparkle" size={12} /> {t(`planet.${p}`)} · {t('horoscope.favorable')}
                 </span>
               ))}
               {data.cautions.map((p) => (
-                <span key={p} className="inline-flex items-center gap-1.5 rounded-full bg-burgundy/30 border border-burgundy/55 px-3 py-1 text-t12 text-[#ecd0d6]">
+                <span key={p} className="inline-flex items-center gap-1.5 rounded-full bg-burgundy/30 px-3 py-1 text-t12 text-[#ecd0d6] shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]">
                   <Icon name="warning" size={12} /> {t(`planet.${p}`)} · {t('horoscope.pressures')}
                 </span>
               ))}
@@ -116,23 +116,23 @@ export function HoroscopeScreen() {
             />
           </GlassCard>
 
-          <GlassCard className="p-4 sm:p-5">
+          <GlassCard tone="violet" className="p-4 sm:p-5">
             <SectionHeader title={language === 'hi' ? 'गोचर विवरण' : 'Transit detail'} icon="planet" />
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-96 overflow-y-auto scroll-slim pr-1">
               {data.transits.map((tr) => (
                 <div
                   key={tr.key}
-                  className={`rounded-xl px-3 py-2.5 border transition-colors duration-200 ${
+                  className={`rounded-xl px-3 py-2.5 transition-colors duration-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] ${
                     tr.note === 'support'
-                      ? 'bg-emerald-faint border-emerald/25'
+                      ? 'bg-emerald-faint'
                       : tr.note === 'pressure'
-                        ? 'bg-burgundy-soft/80 border-burgundy/25'
-                        : 'bg-white/50 border-gold/15'
+                        ? 'bg-burgundy-soft/80'
+                        : 'bg-white/50'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-t14 font-semibold text-charcoal">{t(`planet.${tr.key}`)}</span>
-                    <span className={`text-t12 font-bold ${tr.benefic ? 'text-emerald-deep' : 'text-burgundy'}`}>
+                    <span className={`text-t12 font-semibold ${tr.benefic ? 'text-emerald-deep' : 'text-burgundy'}`}>
                       {tr.houseFromMoon}
                       <sup>th</sup>
                     </span>

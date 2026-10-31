@@ -24,9 +24,9 @@ export interface PersonalPayload {
 }
 
 const QUALITY_STYLE: Record<Quality, string> = {
-  good: 'bg-gold-faint border-gold/40 text-[#7a8b6f]',
-  medium: 'bg-white/55 border-gold/20 text-muted-foreground',
-  bad: 'bg-burgundy-soft/80 border-burgundy/25 text-burgundy',
+  good: 'bg-gold-faint text-[#7a8b6f] shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]',
+  medium: 'bg-white/55 text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]',
+  bad: 'bg-burgundy-soft/80 text-burgundy shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]',
 };
 
 interface Fmt {
@@ -59,13 +59,13 @@ export function PanchangMuhurtaCards({
         <GlassCard className="p-4 sm:p-5">
           <SectionHeader title={t('personal.title')} icon="user" />
           <div className="grid grid-cols-2 gap-3">
-            <div className={cn('rounded-xl border px-3 py-2.5', QUALITY_STYLE[personal.tara.quality])}>
-              <p className="text-t12 font-semibold uppercase tracking-wide">{t('personal.tara')}</p>
+            <div className={cn('rounded-xl px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]', QUALITY_STYLE[personal.tara.quality])}>
+              <p className="text-t12 font-semibold tracking-wide">{t('personal.tara')}</p>
               <p className="mt-0.5 font-serif text-t16 text-charcoal">{personal.tara.name}</p>
               <p className="mt-0.5 text-t12 leading-snug">{t(`personal.taraNote.${personal.tara.quality}`)}</p>
             </div>
-            <div className={cn('rounded-xl border px-3 py-2.5', QUALITY_STYLE[personal.chandra.quality])}>
-              <p className="text-t12 font-semibold uppercase tracking-wide">{t('personal.chandra')}</p>
+            <div className={cn('rounded-xl px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]', QUALITY_STYLE[personal.chandra.quality])}>
+              <p className="text-t12 font-semibold tracking-wide">{t('personal.chandra')}</p>
               <p className="mt-0.5 font-serif text-t16 text-charcoal">{t('personal.chandraHouse', { house: personal.chandra.house })}</p>
               <p className="mt-0.5 text-t12 leading-snug">{t(`personal.chandraNote.${personal.chandra.quality}`)}</p>
             </div>
@@ -103,11 +103,11 @@ export function PanchangMuhurtaCards({
                 className={cn(
                   'rounded-lg border px-1.5 py-2 text-center transition-all duration-200',
                   QUALITY_STYLE[s.quality],
-                  isNow && 'scale-[1.03] shadow-[0_2px_10px_rgba(201,162,39,0.3)] ring-2 ring-gold',
+                  isNow && 'ring-2 ring-gold',
                 )}
               >
                 <p className="text-t12 font-semibold">{t(`hora.planet.${s.planet}`)}</p>
-                <p className="mt-0.5 text-[11px] leading-tight opacity-90">
+                <p className="mt-0.5 text-t12 leading-tight opacity-90">
                   {fmt.time(s.startISO)}
                   <br />
                   {fmt.time(s.endISO)}
@@ -117,7 +117,7 @@ export function PanchangMuhurtaCards({
           })}
         </div>
         {current && (
-          <p className="mt-3 rounded-xl bg-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] px-3 py-2 text-t12 leading-relaxed text-charcoal/85">
+          <p className="mt-3 rounded-xl border border-gold/20 bg-white/50 px-3 py-2 text-t12 leading-relaxed text-charcoal/85">
             <span className="font-semibold text-charcoal">{t('hora.now', { planet: t(`hora.planet.${current.planet}`) })}</span>{' '}
             {t(`hora.suits.${current.planet}`)}
           </p>

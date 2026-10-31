@@ -1,0 +1,250 @@
+     1→# Self Sage — Worklog
+     2→
+     3→## Project
+     4→"Self Sage" — premium Vedic astrology + self-improvement app. AI persona: **Acharya Abhishek Sharma**.
+     5→Platform adaptation (mandated by environment): Next.js 16 App Router + TypeScript (single `/` route, SPA-style views) instead of Vite/Express; API routes under `src/app/api/*` (equivalent of the Express endpoints); Prisma + SQLite as built-in DB; sweph (Swiss Ephemeris native WASM/NAPI bindings) for calculations; react-i18next for i18n (en + hi); Tailwind 4 + shadcn/ui.
+     6→
+     7→## Palette / Design tokens
+     8→- cream `#FAF7F0`, gold `#C9A227`→`#E8C568`, charcoal `#1A1A1A`, maroon `#6B2737`, ink `#2A2420`
+     9→- Glass cards: blur(20px) rgba(255,255,255,0.6), 1px gold border, @supports fallback
+    10→- Mandala line-art backdrop at low opacity; Playfair Display headings / Inter body; type scale 12/14/16/20/28; 4px spacing; 16px mobile / 24-32px desktop margins
+    11→- Floating pill bottom nav (mobile) / left sidebar (≥1024px) with sliding gold active pill
+    12→
+    13→## Task assignments
+    14→- Task 0/1: foundation, deps, schema, design tokens — lead
+    15→- Task 2-r (subagent, general-purpose): research + encode Ashtakavarga BAV tables & matching Yoni/Vashya tables with strict validation
+    16→- Task 1-s (subagent, frontend-styling-expert): custom SVG icon set (1.5px gold stroke), logo, Acharya avatar, mandala backdrop, shell (nav + glass primitives + wheel/calendar pickers)
+    17→- Task 2 (lead): Swiss Ephemeris engine + validation + all API routes
+    18→- Task 3-a..3-d (subagents): screens (Onboarding+Profile / Kundli-Panchang-Horoscope / Matching+Reports / Journal+Acharya)
+    19→- Task 4-6 (lead): integration, lint, agent-browser QA, cron
+    20→
+    21→## Work Log
+    22→
+    23→---
+    24→Task ID: 0
+    25→Agent: lead
+    26→Task: Inspect scaffold, verify stack, plan build
+    27→
+    28→Work Log:
+    29→- Inspected project: Next 16 + Tailwind 4 + shadcn/ui (full set in src/components/ui), Prisma SQLite present, framer-motion/zustand/i18n deps to add
+    30→- Installed: sweph@2.10.3 (Swiss Ephemeris, native prebuilds), i18next, react-i18next, astronomy-engine (cross-validation)
+    31→- Validated sweph under bun: JD calc, calc_ut (Sun J2000 tropical 280.369° ✓), Lahiri ayanamsa 23.857° ✓, houses (Sun≈MC at London noon ✓), rise_trans (Delhi sunrise 07:13 IST ✓). API shapes: calc_ut→{flag,error,data:[lon,lat,dist,lonSpd,...]}, houses→{data:{houses,points[8]}}, rise_trans(jd,ipl,'',epheflag,rsmi,geopos,atpress,attemp). Constants under `swe.constants.*` (SE_SIDM_LAHIRI etc.)
+    32→
+    33→Stage Summary:
+    34→- Engine path confirmed: sweph + SEFLG_MOSEPH (no ephemeris files needed), Lahiri sidereal. Proceeding to schema + engine + design system.
+    35→
+    36→---
+    37→Task ID: 2
+    38→Agent: lead
+    39→Task: Swiss Ephemeris engine + all API routes
+    40→
+    41→Work Log:
+    42→- Built src/lib/astro/*: constants, ephemeris (sweph wrapper), chart builder, dasha (Vimshottari), varga (D1-D60), panchang (tithi/nakshatra/yoga/karana/rise-set/rahu-kaal), ashtakavarga (research-verified tables: totals 48/49/39/54/56/52/39=337 ✓), matching (8 kootas), doshas (Mangal+ Sade Sati), horoscope/gochara
+    43→- Fixed findIngress bug in sade sati; fixed ashtakavarga offset-row application
+    44→- Validation: planets cross-checked vs astronomy-engine (max err 0.0022°), asc vs spherical-trig formula (≤0.002°), sunrises within 2min, Vimshottari 120y ✓, ayanamsa ranges ✓
+    45→- API routes live & smoke-tested via dev server: /api/chart (computed+saved), /api/panchang (Jan 15 2024 Delhi: Shukla Panchami, P.Bhadrapada, Sun Capricorn ✓), /api/geocode (live Open-Meteo ✓ + 60-city offline fallback), /api/match (20.5/36 breakdown ✓), /api/auth (guest session cookie, scrypt upgrade), /api/charts, /api/checkins (+PATCH insights), /api/ask-acharya (LLM grounded in chart+journal), /api/weekly-reflection (lazy weekly gen), /api/decision-timing (real factors + 14-day window scan), /api/reminders, /api/horoscope (gochara structure)
+    46→- next.config: serverExternalPackages ["sweph"]
+    47→
+    48→Stage Summary:
+    49→- Stage 1+2 COMPLETE with real data verified. Design tokens/globals.css + icons + primitives + pickers + shell + i18n base + store also landed (lead-built after agent infra timeouts). Next: all screens.
+    50→
+    51→---
+    52→Task ID: 3-4-5
+    53→Agent: lead (all screens built lead-side after subagent infra timeouts)
+    54→Task: Frontend screens, integration, E2E QA
+    55→
+    56→Work Log:
+    57→- Built i18n (en+hi, ~230 keys), session-context (8s hard bootstrap timeout + retry), app shell (floating pill bottom nav mobile / glass sidebar desktop, 250ms sliding gold indicator), pickers (wheel time, animated calendar), screens:
+    58→  - Onboarding: name → birth (calendar grid, 3 wheel spinners, debounced geocode autocomplete + use-my-location + reverse geocode, live confirmation line) → computing → ready
+    59→  - Home: greeting header, today's-panchang hero + Acharya ink CTA, daily check-in (mood/energy sliders + note, streak, dismisses when done), weekly letter ink card w/ progress, feature grid under 3 section headers
+    60→  - Kundli tab: chart (North/South SVG diagrams, Vedic/Western/Both + agreement line, planets table), Panchang (4 limbs + rise/set + Rahu kaal), Horoscope (D/W/M/Y gochara, ink headline card, transit grid), Matching (2-person form, use-my-details, 36-point breakdown, Mangal cards), Reports (dasha timeline + antars, D1-D60 vargas, SAV bars + BAV, Mangal + Sade Sati cards)
+    61→  - Journal: mood timeline SVG with dasha bands, pattern insight (real aggregates; 14-day encouraging gate), correlation narrative via LLM, history, Decision Timing dialog
+    62→  - Acharya: persisted chat, grounded LLM answers (verified: cites Mercury 1st house Chitra, Venus 11th), typing indicator, suggestions
+    63→  - Profile: saved charts (activate/delete), instant EN↔HI switch (verified across 3+ screens incl. chart glyphs), reminders, display prefs (reduce motion, high contrast), auth upgrade, export, about
+    64→- page.tsx orchestrator: splash w/ 8s timeout + retry, top-level error boundary, view routing
+    65→
+    66→QA (agent-browser, mobile 375px + desktop 1440px):
+    67→- FIXED: i18n import path (500), dashaSnapshot import in checkins (500), sade-sati phase null, sunrise shown in viewer TZ (now chart TZ), LogoMark hydration float mismatch, matching place-input sync (render-adjust pattern)
+    68→- Verified flows: onboarding→chart compute→home; check-in save (streak 1→3); Acharya grounded answer; decision timing (verdict 57/100, real factors, Oct 2026 windows); weekly reflection auto-generated quoting user note verbatim; matching 20.5/36 Arjun×Diya; horoscope 27% transit support; dasha Ve/Ju highlighted; Hindi switch instant; console clean; lint 0 errors
+    69→
+    70→Stage Summary:
+    71→- ALL 8 build stages complete and verified with real data. App is production-quality. Worklog current.
+    72→
+    73→---
+    74→Task ID: review-1 (cron webDevReview round 1)
+    75→Agent: lead
+    76→Task: QA sweep + new features (Choghadiya/muhurtas, notification center, TTS letter playback) + styling detail pass
+    77→
+    78→Work Log:
+    79→- QA: full tab sweep at 375px + 1280px via agent-browser — console clean, page 200, all prior flows stable
+    80→- FEATURE 1 — Muhurtas & Choghadiya (Panchang screen): classical 7-cycle day/night choghadiya (8 slots each from sunrise→sunset→next sunrise), quality coloring (Amrit/Shubh/Labh favorable · Char moderate · Udveg/Kaal/Rog caution), live "Now" slot ring-highlight (verified: 14:36 UTC correctly inside Amrit slot); Abhijit muhurta (8th of 15 day parts) + Brahma muhurta (96→48min before sunrise) cards
+    81→- FEATURE 2 — Notification center: bell now opens a glass popover with dynamic items (check-in due + reminder time, letter ready, streak milestone ≥3d, or all-quiet empty state)
+    82→- FEATURE 3 — TTS letter playback ("Listen" button on weekly letter): POST /api/reflection-audio → z-ai TTS (voice tongtong, speed 0.95), sentence-chunked <1024 chars, WAV PCM extraction + single RIFF header rewrite for smooth chunk merge, cached as data URI in WeeklyReflection.audioUrl (62s audio, 16s gen). FIXED: SDK named-import crash (default import), API rejects mp3 → wav
+    83→- BUG FIX: Journal empty-state button was a no-op → now navigates Home (onNavigate prop wired through page.tsx)
+    84→- STYLING: parametric MoonPhaseGlyph in hero (verified shows "Full moon" on Purnima ✓), gold drop-cap on letter body (.letter-body), shimmer skeletons replace pulse blocks, ascendant house highlighted in N/S charts (glow + ASC tag / gold cell), ink-card gold aura (radial ::after), ornament dividers between Home sections, planet tooltips on chart tags
+    85→- i18n: +26 keys (phases, choghadiya, muhurtas, notifications, listen/stop) en+hi
+    86→
+    87→Stage Summary:
+    88→- Round 1 complete. Lint 0 errors. All new features browser-verified with real data.
+    89→- Known variance: choghadiya weekday START offsets differ between panchang software; ours matches the Sunday anchor (Udveg) + Mon/Sat/Thu anchors from AstroSage-style tables; cycle+qualities are Wikipedia-verified. Revisit if authoritative source found.
+    90→- Next suggestions: Acharya streaming responses, moonrise/moonset on Home, push-notification scheduling, matching result save/share, D-chart navamsa planetary detail table.
+    91→
+    92→---
+    93→Task ID: review-2 (cron webDevReview round 2)
+    94→Agent: lead
+    95→Task: Status assessment + agent-browser QA + bug fixes + new features (streaming Acharya, moon data, D9 table, match history) + styling detail pass
+    96→
+    97→Work Log:
+    98→- QA sweep (agent-browser, 375px + 1440px, all 5 tabs + sub-tabs): app stable, console clean, prior features intact
+    99→- BUG 1 (high): tapping "Dasha & Reports" panned the WHOLE page horizontally (body.scrollWidth 545 vs 375; scrollingElement.scrollLeft 164). Root cause: SlidingPillTabs rendered a non-wrapping flex row with no overflow container. FIX: strip is now its own scroll container (`overflow-x-auto no-scrollbar`), active tab auto-centers via scrollIntoView(inline:center, block:nearest); html/body get `overflow-x: clip` guard; added `.no-scrollbar` utility to globals.css
+   100→- BUG 2: React "cannot update a component while rendering another" (Providers→PanchangScreen/AppInner). Root cause: initI18n() called during Providers render. FIX: i18next init moved to module scope (zustand persist rehydrates synchronously so persisted language still applies pre-render); verified warnings gone after fresh reload
+   101→- Cleanup: Next.js devIndicators disabled (N badge overlapped mobile bottom nav); Chip gained `compact` prop (was silently ignored); removed invalid xmlns on div inside foreignObject; eslint fully clean (0 errors 0 warnings, incl. removing 3 stale unused-disable directives, one re-scoped with justification)
+   102→- FEATURE — Acharya streaming: SDK chat.completions supports stream:true (returns ReadableStream). ai.ts: acharyaSystem extracted; new acharyaStreamReply() parses upstream SSE tolerantly (delta.content/message.content/bare-text), re-emits `data: {"v":chunk}` wire SSE, returns {stream, done}; route persists user turn immediately + assistant turn when done resolves; client renders token-by-token with gold pulse cursor, thinking dots hide on first delta, falls back to non-stream JSON endpoint if SSE fails/empty. VERIFIED: mid-stream capture at t+1.5s with cursor visible; grounded answer (Mercury 1st Chitra, Saturn 9th Rohini, quoted journal Sept 24/25); message persisted after reload
+   103→- FEATURE — Moonrise/Moonset on Home hero: two new custom 1.5px gold icons (moonrise/moonset), i18n en+hi (चंद्रोदय/चंद्रास्त); hero now shows Sunrise · Moonrise · Moonset row. Verified both languages
+   104→- FEATURE — Varga planet detail table (Reports): for the selected divisional (D1–D60), a striped table lists planet | sign | house-in-varga; D9 adds a Vargottama badge column (D1 sign == D9 sign) + explanatory hint. Verified: D9 asc Virgo, Sun Sagittarius = house 4 ✓; i18n en+hi
+   105→- FEATURE — Matching history: last 6 matches in localStorage (`ss-match-history-v1`); RECENT MATCHES card under Match button shows names × / date / gold score pill; click restores both persons + full result instantly; Clear button. VERIFIED: computed Arjun×Diya 22.5/36, history survived reload, restore refills form + result
+   106→- STYLING: Kundli summary tiles — labels no longer truncate ("Ascendant" fully visible); Journal mood timeline — dasha band shows lord name (≥18% width) + "Dasha periods during these days" caption (was an unexplained gold bar)
+   107→
+   108→Stage Summary:
+   109→- Round 2 complete: 1 UX bug + 1 React warning fixed, 4 features added, lint 0/0, tsc src-clean, all verified in browser at 375px & 1440px with real data (i18n parity 348 keys en+hi).
+   110→- Next candidates: TTS for Acharya replies, matching result share/export (Web Share API + PNG), Sade Sati personal timeline card, Panchang month-view tithi chips, per-checkin Acharya micro-note on Pattern dashboard.
+   111→
+   112→---
+   113→Task ID: review-3 (cron webDevReview round 3)
+   114→Agent: lead
+   115→Task: Status assessment + agent-browser QA + bug fixes + new features (Acharya TTS per-message, Monthly Panchang, check-in micro-notes, match share) + styling detail pass
+   116→
+   117→Work Log:
+   118→- QA sweep (agent-browser 375px + 1440px, all 5 tabs): app stable, console clean, all prior features intact
+   119→- BUG 1 (high): /api/reflection-audio had a syntax error — `Buffer.concat(eader, pcm])` (corrupted identifier) → route 500s on any uncached letter. FIX: extracted shared TTS engine to src/lib/tts.ts (chunkForTts ≤950-char sentence chunks, extractWavPcm, buildWav, synthesizeWav/DataUri) and rewrote the route on top of it. Verified: letter "Listen" plays, cached call 137ms
+   120→- FEATURE — Acharya reply TTS: new /api/acharya-audio (POST {messageId}) synthesizes+caches per-message WAV in ChatMessage.audioUrl (schema migrated); client adds a small Listen/Stop pill under every substantial assistant bubble, one-at-a-time playback, preparing-state; client temp id reconciled to the persisted DB id after streaming (content match against GET history) so fresh replies are listenable. VERIFIED: first gen 23.2s, cached replay 57ms, trusted-click plays (button → "Stop"); NOTE: eval-injected clicks are untrusted gestures so headless Chrome blocks audio autoplay — test with real agent-browser clicks
+   121→- FEATURE — Monthly Panchang: panchangFor lib gains lightweight daySummaryFor (tithi/nakshatra/sunrise only, no moonrise/choghadiya/crossings) + DaySummary type with special markers (purnima/amavasya/ekadashi); /api/panchang accepts {month:"YYYY-MM"} → 30-day scan (verified Sept 2026: Amavasya 9/10, Ekadashi 9/7+9/22, Purnima 9/26 = matches live home panchang); Panchang screen gets Day/Month segmented toggle (glass pill, gold active) + MonthGrid (7-col chips colored by paksha, gold purnima / maroon amavasya / sage ekadashi dots + glow, today ring, click-through to day view, prev/next month nav, legend). Fully localized en+hi. VERIFIED mobile 375px + desktop 1440px, Hindi labels (सितंबर 2026, रवि…शनि, पूर्णिमा)
+   122→- FEATURE — Per-check-in Acharya micro-note: DailyCheckIn.microNote (schema migrated); /api/checkins/micro-note (POST {id,language}) generates 1-2 sentence reflection via new ai.ts checkinMicroNote (grounded ONLY in that day's dasha snapshot + mood/energy/note, deterministic fallback), cached in DB; GET /api/checkins now returns microNote (was the reason notes didn't rehydrate — fixed); Journal history rows get "Acharya note" chip → shimmer skeleton → gold-bordered italic note. VERIFIED E2E: "With Jupiter in your antardasha bringing expansive energy to Venus's maha dasha, your Cancer moon found its rhythm in deep focus…" — cites real MD/AD, real moon sign, quotes the logged evening; survives reload (chip disappears, note persists)
+   123→- FEATURE — Matching share: custom 1.5px-stroke `share` icon added to icon set; result card gets "Share result" → Web Share API with clipboard fallback ("Copied ✓" feedback, 2.4s). Text summary: names, X/36, verdict, per-koota lines, "Swiss Ephemeris (Lahiri)" footer. VERIFIED: clipboard fallback fired in headless (Copied ✓ state)
+   124→- STYLING: ink-card sheen-sweep (slow 6.5s diagonal gold light band, transform-only) on Talk-to-Acharya CTA + weekly letter; flame-pulse heartbeat (2.4s, subtle rotate+scale) on all streak flames; gold focus-visible ring (:where(button,[role=tab],a,input…) — keyboard a11y); mood timeline gradient area fill under the line (gold fade); matching history rows + journal rows hover-border lifts; month chips active:scale-90 press feel
+   125→- i18n: +25 keys en+hi (acharya.listen/stopAudio/preparingAudio, panchang.mode.day|month/modeAria/purnima/amavasya/ekadashi/monthHint, common.previousMonth/nextMonth, weekdaysShort.0-6, journal.askNote/noteBy, match.share/shareCopied/shareTitle/shareFooter) — parity 373=373
+   126→- INFRA: dev-server restarts in this sandbox are killed at tool-call boundaries (session cgroup reaping) → QA batched per-call (restart + test in same call); final clean rebuild (rm -rf .next) done; a stale Turbopack parse-error after mid-edit hot reloads was resolved by touch+recompile (fresh builds from clean .next are clean)
+   127→
+   128→Stage Summary:
+   129→- Round 3 complete: 1 real route-breaking bug fixed (TTS), 4 user-facing features shipped (per-message Acharya TTS, monthly panchang with classical day markers, grounded per-day micro-notes, match share), styling depth pass (sheen, flame heartbeat, focus rings, gradient fill, press states), i18n parity maintained. Lint 0/0, tsc src-clean, all verified in browser with real data at 375px + 1440px in both languages.
+   130→- Known risks: (a) per-call process reaping — if the preview shows the app down, the platform boot flow restarts `bun run dev` (start.sh); (b) TTS generation takes ~20s+ for long answers on first listen (cached afterwards); (c) eval-driven clicks can't autoplay audio in headless Chrome (not a product bug).
+   131→- Next candidates: Panchang month chips → festival/parva layer (Vinayaka Chaturthi etc. via tithi+nakshatra rules), Acharya voice replies (STT mic input) for hands-free journaling, Dasha-transition alert cards on Home ("Mercury dasha ends in 34 days"), export week letter as PDF/image, push-reminder scheduling via cron service, per-planet Ashtakavarga detail popovers.
+   132→
+   133→---
+   134→Task ID: review-4 (cron webDevReview round 4)
+   135→Agent: lead
+   136→Task: Status assessment + agent-browser QA + bug fixes (hydration) + new features (festival/parva layer, dasha countdown, Acharya voice input) + styling detail pass
+   137→
+   138→Work Log:
+   139→- STATUS: app was stable (3 prior rounds, lint 0/0, dev.log healthy). QA sweep at 375px + 1440px found one live issue: Next.js dev overlay badge showed "1 Issue"
+   140→- BUG 1 (high, fixed): React hydration mismatch — server rendered the splash motto in EN while the client's module-scope i18next initialized with the persisted language (hi) → text mismatch on every reload in non-EN sessions (kundli-panchang.tsx:226 was only the owner-stack artifact). FIX: page.tsx now gates the i18n-aware tree behind hydration via useSyncExternalStore(subscribeNoop, () => true, () => false); pre-hydration renders a language-neutral StaticSplash (LogoMark + title + dots, zero i18n/time-dependent output). Verified: overlay badge data-error=false, "-10 Issues" cleared, fresh loads clean in both languages. (setState-in-effect lint rule → useSyncExternalStore instead.)
+   141→- BUG 2 (minor, fixed): corrupted identifier `EKADASHI_NAMESKey]?.[` in src/lib/astro/festivals.ts (tsc TS2538) → restored `EKADASHI_NAMES[mKey]?.[` + null guard; housekeeping: deleted stale scratch-render.tsx at repo root
+   142→- FEATURE 1 — Festivals & Parvas on Monthly Panchang (verified vs published calendars, ~35 dates across two seasons):
+   143→  * New engine src/lib/astro/festivals.ts: amanta lunar months named by the SANKRANTI each span contains (classical parihara rule — Mesha→Chaitra … Meena→Phalguna), spans built from raw elongation new-moon crossings (immune to noon-skipped tithis, e.g. Oct 2025 purnima idx0 13→15), purnimanta month of day D = amanta name of the span containing the next purnima ≥ D; adhika (leap) months repeat previous name; same-name dedupe across consecutive days (long amavasya)
+   144→  * 30-entry festival rule table (Yugadi, Rama Navami, Hanuman/Buddha/Guru Purnima, Nag Panchami, Raksha Bandhan, Janmashtami, Ganesh Chaturthi, Anant Chaturdashi, Navratri, Dussehra, Sharad Purnima, Mahalaya, Karva Chauth, Narak Chaturdashi, Diwali, Govardhan, Bhai Dooj, Dev Deepavali, Vasant Panchami, Mauni Amavasya, Maha Shivaratri, Holi…), 24 named ekadashis by purnimanta month, 12 sankranti names
+   145→  * VERIFIED 2026: Ganesh Chaturthi 9/14 ✓, Kanya Sankranti 9/17 ✓, Parivartini 9/22 ✓, Anant 9/25 ✓, Rama Ekadashi 10/6 ✓, Mahalaya 10/10 ✓, Navratri 10/11 ✓, Papankusha 10/22 ✓, Sharad Purnima 10/25 ✓, Karva Chauth 10/29 ✓, Utpanna 11/4 ✓, Narak 11/7 ✓, Diwali 11/8 ✓, Govardhan 11/10 ✓, Bhai Dooj 11/11 ✓, Devutthana 11/20 ✓, Dev Deepavali 11/24 ✓, Saphala 12/4 ✓, Mokshada 12/20 ✓. VERIFIED 2025: Dussehra 10/2 ✓, Papankusha 10/3 ✓, Karva Chauth 10/10 ✓, Narak 10/20 ✓, Devutthana 11/1 ✓ (exactly once), Dev Deepavali 11/5 ✓, Papamochani 2/13 ✓, Holi 3/3 ✓
+   146→  * API: /api/panchang month mode now returns lunarMonth + festivals per day (padded scan 35d before / 52d after, ~100 cheap ephemeris reads); day mode returns `observance` for the selected date
+   147→  * UI: month-grid festival days show gold-bordered chip with the festival name replacing tithi text; "Festivals this month" card (date bubble · name · kind badge Parva/Ekadashi/Sankranti, rows clickable → day view, max-h scroll); day view shows observance chips (gold=parva, faint-gold=ekadashi, sage=sankranti) + "Lunar month: X" line. Fully localized en+hi
+   148→- FEATURE 2 — Dasha transition countdown card on Home: new GET /api/dasha-now (real Vimshottari recompute; antar percent elapsed, next antar/maha lord + daysLeft); Home shows an ink card between hero and check-in: "Venus Mahadasha · Jupiter Antardasha / Transitions to Saturn in 125 days · Jan 29" with a thin gold progress bar (87%) and "View dasha report" link → reports. VERIFIED real data en+hi, mobile + desktop
+   149→- FEATURE 3 — Acharya voice input: new POST /api/asr (z-ai-web-dev-sdk audio.asr, base64, size caps); custom 1.5px mic/mic-off icons; composer gains a mic button → MediaRecorder (audio/webm, 60s cap) → pulsing maroon ring + "Listening…" state → /api/asr → transcribed text appended to the input for review before sending; graceful states: denied→maroon "Microphone unavailable", empty blob→idle, unsupported browser→button hidden, tracks released on unmount. VERIFIED: mic click → error state in headless (no cam/mic device); /api/asr E2E with a real TTS-generated wav returned perfect transcript "What does my career look like this year?" (~1.5s)
+   150→- STYLING: festival chips with kind-based coloring + hover lift; ink dasha card w/ gold progress; mic recording ring animation (mic-ring box-shadow pulse) + mic-pulse icon heartbeat; month grid festival cells border-gold/70
+   151→- i18n: +17 keys (panchang.lunarMonth/festivalsThisMonth/festKind.*, panchang.observationNote, dasha.*, acharya.mic*/listening/transcribing/voiceHint) — parity 390=390 en+hi
+   152→- INFRA note: tsc --noEmit is only clean for src/ (examples/websocket has pre-existing missing deps; not part of the build)
+   153→
+   154→Stage Summary:
+   155→- Round 4 complete: 1 user-facing bug fixed (hydration mismatch — the only live overlay issue), 3 features shipped (classical festival calendar layer verified against two seasons of published dates, dasha countdown card on Home, voice-input Acharya), styling depth pass, i18n parity maintained. Lint 0/0, src tsc clean, all verified in browser at 375px + 1440px in both languages with real data.
+   156→- Known variances (documented in code): (a) festival dates sampled at local noon — fast tithis can shift ±1 day vs sunrise/madhyahna/pradosh-based drik calendars (Diwali 2025 10/21 vs drik 10/20; Shivaratri 2026 2/16 vs 2/15; Vijayadashami 2026 10/21 vs 10/20); (b) adhika months repeat the previous month's name without an explicit "adhik" label yet; (c) headless Chrome can't grant mic permission — voice input needs a real browser to test E2E; (d) TTS first-generation latency ~20s+ (cached afterwards).
+   157→- Next candidates: adhika-maasa explicit label, festival detail popovers (vrat katha / significance via Acharya), Ashtakavarga per-planet popovers, weekly letter PDF/image export, push-reminder scheduling via cron mini-service, matching result save-as-chart, Panchang "now" strip with live-updating choghadiya timer.
+   158→
+   159→---
+   160→Task ID: review-5 (cron webDevReview round 5)
+   161→Agent: lead
+   162→Task: Status assessment + agent-browser QA + new features (Home live Now-strip, Acharya festival-significance dialog, adhika-maasa label, Ashtakavarga contribution expanders) + styling detail pass
+   163→
+   164→Work Log:
+   165→- STATUS: app healthy at round start (dev.log clean, HTTP 200, lint 0/0). Full QA sweep via agent-browser at 375px + 1440px, all 5 tabs + sub-tabs, console clean, no horizontal overflow, all prior features intact. Two truncation nits found (Kundli summary tiles, Profile birth line) — both fixed this round.
+   166→- FEATURE 1 — Home "Live Now" strip: hero panchang payload now keeps choghadiya+rahuKaal (API already returned them); new self-ticking LiveNowStrip under the sunrise/moonrise rows shows current Choghadiya slot (pulsing gold dot + localized name + quality chip + "ends in Xm Ys" countdown + thin gold progress bar advancing in real time) and a maroon "Rahu Kaal in effect until HH:MM" pill while active. Ticks 1s in an isolated component (no parent re-render). VERIFIED: "अभी | काल | सावधानी | 26m 00s में समाप्त" ticking live (T+3s → 25m 41s ✓), English "NOW | Kaal | Caution | ends in 21m 59s" ✓
+   167→- FEATURE 2 — Festival/parva significance dialog (Acharya): new POST /api/festival-detail (z-ai LLM, in-process cache per kind|name|language, deterministic fallback); new ai.ts festivalSignificance() with kind-specific prompts (festival katha / 24-ekadashi tradition / sankranti ingress) AND a CLASSICAL TIMING anchor rule — the client passes the engine-verified anchor ("Bhadrapada, Krishna 11") with "never contradict", fixing a first-generation LLM slip (Indira Ekadashi had wrong lunar month before anchor grounding; after: correct "waning moon of Bhadrapada" + real Indrasena/Narada story). UI: day-view observance chips are now tappable buttons (chevron affordance), month-view festival rows get an info icon button (row click still navigates to day), both open a glass Dialog (kind badge + localized date + serif title + ink Acharya card + shimmer loading + error state); localStorage cache `ss-fest-{lang}-{kind}-{name}` (verified instant reopen). Day-view also shows an "Adhika · leap month" chip when the purnimanta lunar month is adhika
+   168→- FEATURE 3 — Adhika maasa (engine correctness): EnrichedDay.lunarMonth now carries adhika boolean (purnimanta mapping reads the enclosing amanta span's adhika flag); API passes through. VERIFIED: July 2023 → {('Ashadha', False), ('Ashadha', True)} = the historical 2023 Adhika Ashadha ✓; Sep 2026 → adhika False ✓
+   169→- FEATURE 4 — Ashtakavarga per-planet contributions (Reports): SAV sign rows are now expandable buttons (aria-expanded + chevron rotate + gold highlight); expanded panel lists each of the 7 planets' bindus in that sign as colored chips (≥4 gold / ≤1 maroon / mid neutral). VERIFIED real data: Simha 28 → Su 6 + Mo 4 + Ma 3 + Me 6 + Ju 4 + Ve 3 + Sa 2 = 28 exact ✓; tap hint line added
+   170→- STYLING: SummaryTile value+sub now line-clamp-2 with title attrs ("Uttara Phal…" → "Uttara Phalguni" fully visible, verified); Profile birth line line-clamp-2; Choghadiya names localized (new choghName helper in lib/utils, 7 classical names en+hi — Panchang grid + Home strip share it); festival chips get active:scale-95 press feel
+   171→- i18n: +16 keys en+hi (choghadiya.n.* 7 names, home.live*, panchang.festDetailHint/adhika/festLoading/festBy, reports.savTapHint/savContribution) — parity 406=406
+   172→- INFRA: fixed a self-inflicted bad edit that briefly clobbered HomeScreen's header (restored checkin state + hooks intact); final lint 0 errors 0 warnings, tsc src clean, dev.log clean
+   173→
+   174→Stage Summary:
+   175→- Round 5 complete: 2 styling truncation bugs fixed, 4 features shipped (live ticking Choghadiya/Rahu strip on Home, Acharya festival-significance dialog with verified-anchor grounding + 2-level caching, adhika-maasa correctness verified against 2023 Adhika Ashadha, Ashtakavarga per-planet contribution expanders), all browser-verified at 375px + 1440px in EN and HI with real data.
+   176→- Known notes: (a) festival significance texts are LLM-generated classics — anchor grounding minimizes but does not eliminate doctrinal variance; in-process + localStorage caches mean a bad first generation persists until cache clear (keyed per language, cheap to invalidate); (b) Rahu-Kaal pill only renders while currently inside the window (Saturday 09:17–10:47 IST — not active during the QA window, logic verified by code + slot math); (c) pre-existing tsc errors remain in scripts/ + skills/ (outside the Next build).
+   177→- Next candidates: TTS "listen" button inside the festival dialog; Rahu-Kaal/choghadiya chip on Panchang month cells (mini quality dots); weekly letter export (PDF/image via print stylesheet); per-checkin Acharya note follow-up thread in Acharya chat ("discuss this note" deep-link); match result save-as-chart; Panchang now-timer strip duplicated on Kundli tab; adhika label in month-grid header (not just day view).
+   178→
+   179→---
+   180→Task ID: review-6 (cron webDevReview round 6)
+   181→Agent: lead
+   182→Task: Status assessment + agent-browser QA + bug fix (weekly letter language/orphaned generation) + new features (festival dialog TTS listen, Journal→Acharya discuss deep-link, month-grid lunar/adhika strip) + styling detail pass (tab fades, letter seal/letterhead/ornament, TTS retry)
+   183→
+   184→Work Log:
+   185→- STATUS: app healthy at round start (dev.log clean, HTTP 200, lint 0/0, tsc src-clean). Full QA sweep via agent-browser at 375px + 1440px, all 5 tabs, EN + HI, console clean on fresh loads (stale HMR parse errors only appear in long-lived sessions after mid-edit reloads — new browser session + fresh reload is the clean signal).
+   186→- QA findings: (a) Weekly letter salutation "Dear Arjun" rendered inside the Hindi UI; (b) deeper: /api/weekly-reflection GET had NO caller anywhere in the UI — letter generation was orphaned (letters only ever read from DB by /api/checkins), so no new letter would ever generate; (c) route hardcoded language:'en'.
+   187→- BUG FIX (high) — Weekly letter per-language + wired generation:
+   188→  * Schema: WeeklyReflection + `language String @default("en")`; unique → @@unique([userId, weekStartDate, language]); db:push (existing en row preserved).
+   189→  * /api/weekly-reflection GET now takes ?lang= (validated en|hi), keys cache+create by language, generates in that language.
+   190→  * /api/checkins GET takes ?lang=; returns the letter for that language with EN fallback (pre-migration weeks); response now carries reflection.language.
+   191→  * home.tsx: loadCheckin passes language (refetch on language switch); NEW lazy warm-up effect — when weekEntryCount ≥ 3 and no letter in the active language, requests /api/weekly-reflection?lang=X once (letterTriedRef guard) then reloads. This restores the designed "lazy scheduled job" flow that had silently broken.
+   192→  * /api/reflection-audio POST accepts {language} and picks the matching letter (audio matches what is displayed).
+   193→  * VERIFIED: switched to Hindi → /api/weekly-reflection?lang=hi generated in 7.6s → letter card now shows "प्रिय अर्जुन,…" with grounded Hindi content quoting real journal notes + dasha; EN still shows cached "Dear Arjun". Both letters coexist (one per week per language). NOTE: after schema push, the running dev server held a stale Prisma client → /api/checkins?lang=hi 500s until server restart (fresh client works; restart in same tool-call).
+   194→- FEATURE 1 — Festival/parva significance Listen (TTS): new POST /api/festival-audio {kind,name,language,text} → synthesizeDataUri; in-process LRU cache (cap 40, key = language|kind|name|text-hash, recency refresh) so identical text never re-synthesizes. Dialog gains a Listen/Stop pill under the Acharya card: idle → "Preparing…" (disabled) → Stop while playing; localStorage cache `ss-fest-audio-{lang}-{kind}-{name}` (quota-guarded try/catch); dialog remounts per detail via key (state resets cleanly, audio stops on unmount). VERIFIED EN: Listen → Preparing… → Stop (audio playing) with the grounded Indira Ekadashi story; 4.5s generation when warm.
+   195→- FEATURE 2 — Journal → Acharya "discuss this note" deep-link: app-store gains one-shot `acharyaDraft` (pushAcharyaDraft/consumeAcharyaDraft via get(), NOT persisted); Journal history rows with an Acharya note get an "Ask Acharya about this" pill (chat icon) that builds a localized, fully-grounded composer draft (date, mood/energy, the user's note, the Acharya micro-note, closing question) and navigates to Acharya; AcharyaScreen consumes the draft on mount into the composer + autofocus. VERIFIED E2E in Hindi: draft "मेरी 2026-09-26 की चेक-इन के बारे में (मूड 3/5 · ऊर्जा 3/5), मैंने लिखा था: 'Deep work session…'। आपकी उस दिन की टिप्पणी: '…'। कृपया समझाइए…" → sent → grounded Hindi reply citing Venus MD/Jupiter AD + the day's note.
+   196→- FEATURE 3 — Panchang month-grid lunar strip: API RichDay type now carries lunarMonth.adhika (runtime already passed it); MonthGrid computes the DOMINANT purnimanta lunar month across displayed days (any adhika day wins the flag) and renders a "Lunar month: X" chip + "Adhika · leap month" gold chip in the header. VERIFIED: Sept 2026 → "चंद्र मास: भाद्रपद" / "Lunar month: Bhadrapada" (was previously only in day view); July 2023 API → {Ashadha:3, Ashadha+adhika:28} = historical Adhika Ashadha ✓.
+   197→- STYLING: (1) SlidingPillTabs — buttons min-w-fit + whitespace-nowrap (labels never squeezed to "Matchi…" ellipsis again), strip scrolls; conditional edge fades (cream gradient, left/right, only while overflowing) signal swipeability; updated on scroll events. VERIFIED at 375px EN (longest labels) both directions + desktop (no fades when fits). (2) Weekly letter ink card: localized letterhead "Week of 21 Sept – 27 Sept" under the preview line; gold diamond wax-seal ornament (rotated gradient square with glow) + chevron column; gold ✦ ornament-divider after the letter body (ink-tinted) before the Listen pill; drop-cap intact. (3) Festival listen pill matches Journal ask-note pill language.
+   198→- RELIABILITY: tts.ts synthesizeWav now retries each chunk up to 3 attempts (900/1800ms backoff) — absorbs the upstream's transient "网络错误/请稍后重试" network errors (hit twice during QA; retries stretched the call to 28.7s instead of failing on attempt 1; upstream fully recovered afterwards).
+   199→- i18n: +4 keys en+hi (home.weekOf, journal.discuss, journal.discussDraft, panchang.festListen) — parity 410=410.
+   200→- QA methodology note: agent-browser cookie/session — closing the browser loses the session; restore by opening with `--state /tmp/ss-state.json` (Playwright storage-state JSON {cookies:[{name,value,domain,path,expires,httpOnly,secure,sameSite}],origins:[]}) containing the signed selfsage_sid cookie (value = `${userId}.${hmac_sha256(userId,secret).slice(0,32)}`); document.cookie/cookies-set CLI cannot overwrite the httpOnly cookie.
+   201→
+   202→Stage Summary:
+   203→- Round 6 complete: 1 significant product bug fixed (weekly letters were never generated + always English → now lazy per-language generation, verified in both languages with real grounded letters), 3 features shipped (festival dialog TTS listen, Journal→Acharya grounded discuss deep-link, month-grid lunar/adhika strip), TTS hardened with chunk retries, styling depth pass (tab fades, letter seal/letterhead/ornament), i18n parity 410=410. Lint 0/0, tsc src-clean, browser console clean; verified at 375px + 1440px in EN and HI.
+   204→- Known notes: (a) TTS upstream occasionally has full outages (transient network errors) — retries absorb blips but a real outage fails listen buttons until it recovers (all audio is cached after first success, so previously generated audio keeps playing); (b) the HI letter falls back to showing the EN letter for the same week until the hi warm-up finishes generating (~8s LLM call, once per week per language); (c) festival-audio server cache is per-process (resets on restart, first listen re-synthesizes ~5-20s).
+   205→- Next candidates: restore mobile-bottom-nav scroll-aware hide/show for extra immersion; Acharya "discuss note" reply threading (link back to the journal entry); export weekly letter as PDF/image; per-planet Dasha progress tooltips; reminders cron mini-service (actual notifications at reminderTime); Festival detail popover for month-grid cells (vrat katha on tap of the festival chip itself).
+   206→
+   207→---
+   208→Task ID: review-7 (cron webDevReview round 7)
+   209→Agent: lead
+   210→Task: Status assessment + agent-browser QA + new features (reminder scheduler + notification center, weekly letter PDF export, dasha per-planet progress tooltips) + styling detail pass (scroll-aware nav, bell stagger/wiggle, check-in focus flash)
+   211→
+   212→Work Log:
+   213→- STATUS: app healthy at round start (HTTP 200, lint 0/0, tsc src-clean, dev.log clean). Full agent-browser sweep at 375px + 1440px across Home/Kundli/Journal/Acharya/Profile — all render correctly, console clean on fresh loads. Session QA notes: agent-browser `--viewport`/`--state` flags on `open` are misparsed (treated as URL); correct flow = `open` first, then `set viewport W H` + `cookies set <name> <value> --url <url> --httpOnly --expires <ts>` (flags AFTER value; flags before positionals get eaten as cookie name). /tmp/ss-state.json refreshed with working cookie for future rounds.
+   214→- INTEGRITY NOTE: a Read/sed rendering artifact made home.tsx line 141 look like `const ood, setMood]` — verified via node charcode dump that the file is intact (`const [mood, setMood]`); 0 parse diagnostics. Do not "fix" such ghost artifacts without byte-level verification.
+   215→- FEATURE 1 — Real reminder firing (ReminderScheduler + notification center):
+   216→  * New src/components/selfsage/reminder-scheduler.tsx mounted in Providers: ticks every 15s + once on mount; when local HH:MM === persisted reminderTime and not already fired today (localStorage `ss-remind-fired-YYYY-MM-DD`), fetches /api/checkins — if not checked in, dispatches `ss:reminder-fired` AND raises a shadcn toast with a "Check in now" action (15s duration).
+   217→  * Store: added one-shot `pendingFocus` handoff (not persisted). Toast action pushes 'checkin' + dispatches `ss:navigate` {tab:'home'}; page.tsx AppInner listens for ss:navigate (global navigation events); HomeScreen consumes pendingFocus → scrollIntoView(center) + gold `focus-flash` ring on the check-in card (1.8s).
+   218→  * Bell upgrades: dot now also driven by reminderAlert (`ss:reminder-fired` listener, cleared once checkedInToday); bell gets a 2-shake `bell-wiggle` animation when the reminder lands; popover items stagger in (fade+slide, 40ms steps); NEW dasha-transition item when dashaNow.next.daysLeft <= 7 (button → Kundli/Reports); check-in-due item now scrolls+pulses the card instead of doing nothing.
+   219→  * VERIFIED E2E with real clock: backed up + deleted today's checkin row, armed reminderTime = next minute via localStorage, toast fired on the 15s tick ("Time for your daily check-in / Your 18:05 reminder…" + Check in now), clicked the action inside the 15s window via poll-loop → navigated home, scrolled to the check-in card, gold flash visible. Row + prefs restored afterwards (backup at /tmp/ss-checkin-backup.json).
+   220→- FEATURE 2 — Weekly letter export: "Save as PDF" pill next to Listen in the expanded letter card → window.print(). New print-only `#letter-print` letterhead view (hidden attr on screen; @media print reveals ONLY it via visibility technique): centered Playfair brand, italic byline ("A weekly letter from Acharya Abhishek Sharma"), localized week range, gold rule, letter body with print drop-cap, right-aligned signature, footer rule with brand + date; @page margin 16mm. VERIFIED: 12 print rules parsed in page CSS; screen layout unaffected (display:none).
+   221→- FEATURE 3 — Dasha per-planet progress (Reports): new DashaProgress component — current MD card gets a thin gold bar (aria progressbar) + pure-CSS hover/focus tooltip ("4563 days in · 2742 days remaining"); future MD cards get gold italic "Begins in N days"; active antardasha chip gets a mini charcoal bar + all 9 antar chips have title tooltips ("87% complete" matches Home). CAUTION: Tailwind 4 did NOT generate `group/tip`-named hover utilities in this build (0 rules in stylesheet) — replaced with hand-written `.dasha-tip-host`/`.dasha-tip` CSS; if you need named groups again, verify rule generation first.
+   222→- STYLING: (1) Scroll-aware floating pill nav — useHideOnScroll in app-shell (rAF-throttled, passive): scrolls down past 140px → slides out (translate-y-[160%] + opacity-0, 300ms, transform/opacity only); any scroll up or near top → returns; focus-within forces visible; aria-hidden while hidden. VERIFIED: translate 0px→160%→0px on real scrolls. (2) Bell popover stagger + wiggle + focus-flash keyframes added to globals (transform/box-shadow only).
+   223→- FIXES during round: print block initially rendered visible on screen (missing `hidden` attr) — caught and fixed pre-verification; store/app.ts mangled by overlapping MultiEdit — rewritten cleanly.
+   224→- i18n: +12 keys en+hi (notifications.reminderToastTitle/Body/Action, notifications.dashaAhead/dashaMahaAhead/dashaAheadBody, letter.export/printByline/printSignature, dasha.tipNow/beginsIn/pct) — parity 422=422. VERIFIED Hindi: "2742 दिनों में शुरू", tooltip "4563 दिन बीते · 2742 दिन शेष", "PDF सहेजें", bell popover + toast strings.
+   225→- Dasha math cross-checked: Venus MD 2014-03-30→2034-03-30 at 62% (4563d in/2742d left) = matches Home's antardasha countdown (Venus-Saturn AD in 125d — antar transition, not maha). Reports chain and Home card are consistent.
+   226→
+   227→Stage Summary:
+   228→- Round 7 complete: reminders now actually fire (scheduler + toast + focus handoff, E2E-verified against the real clock), notification center grounded (dasha-ahead item, stagger, wiggle), weekly letter exports as a keepsake print page, dasha report gained per-planet progress bars + tooltips, floating nav hides/shows with scroll. EN + HI verified at 375px and 1440px; lint 0/0; tsc src-clean; console clean; dev data restored after destructive QA steps.
+   229→- Known notes: (a) reminder fires only while the app is open (client-side scheduler; no push service in sandbox) — dedupe flag is per-day, one fire per day; (b) toast auto-dismisses after 15s — action click tested via poll loop inside the window; (c) dasha-ahead bell item needs daysLeft ≤ 7 (currently 125d for the demo chart — verified logic by code review + gating math, item hidden as expected); (d) Tailwind named-group utilities silently produce no CSS here — use plain CSS classes for hover tooltips.
+   230→- Next candidates: in-app notification when the weekly letter generates (reuse ss:reminder-fired pattern); Acharya reply threading back to the journal entry; Festival detail popover on month-grid cells; reminders mini-service with OS notifications if a push channel becomes available; D90 navamsa dignity chips; per-checkin micro-note prompt suggestions from dasha context.
+   231→
+   232→---
+   233→Task ID: review-8 (cron webDevReview round 8)
+   234→Agent: lead
+   235→Task: Status assessment + agent-browser QA + 4 new features (letter-generation notification, Acharya↔Journal reply threading, month-grid festival badges, dasha-grounded check-in prompts) + styling detail pass
+   236→
+   237→Work Log:
+   238→- STATUS: app healthy at round start (HTTP 200, dev.log clean, lint 0/0, tsc src-clean — only pre-existing errors outside src/). Full QA sweep via agent-browser at 375px + 1440px across all 5 tabs: no console errors on fresh sessions, no horizontal overflow, screenshots in download/r8-*.png. No blocking bugs found → proceeded to features.
+   239→- FEATURE 1 — Weekly-letter generation notification (in-app): Home's lazy warm-up now celebrates a genuinely NEW letter exactly once per mount (hadLetterRef guard): rich toast "A letter from Acharya" with a "Read the letter" action (12s), bell dot, and a pulsing gold "NEW" chip on the ink letter card. The action dispatches ss:navigate home + pendingFocus 'letter'; Home consumes it → scrollIntoView + auto-expand + 1.8s focus-flash; opening the letter by any route clears the dot. Bell popover letter item upgraded (highlight when fresh, "Acharya wrote to you" + body, focusLetter handoff). VERIFIED E2E with real LLM generation: deleted week rows → reload → toast fired, bellDot true, NEW chip visible (r8-letter-new.png / r8-letter-newchip.png) → action click → letter in view + expanded.
+   240→- FEATURE 2 — Acharya ↔ Journal reply threading: store draft handoff extended to pushAcharyaDraft(text, journalDate) (acharyaDraftDate one-shot, not persisted). Journal "discuss this note" passes the entry's date; Acharya keeps it and threads the NEXT exchange (journalRef on user + assistant messages, all fallback paths); the reply renders a "View journal entry · 26 Sept" gold pill → pushPendingFocus('journal:<date>') + navigate Journal → Journal consumes pendingFocus (data-aware effect, 350ms settle), scrolls the entry row (id=entry-<date>) into view + focus-flash. Threaded user bubbles get a subtle ring. VERIFIED E2E in EN: discuss → send → streamed reply → pill → click → correct entry in view (r8-thread-journal.png). NOTE: journalRef is session-only (not in DB history) — pill disappears after reload by design.
+   241→- FEATURE 3 — Festival tap-badges on Panchang month-grid cells: festival cells get an absolute gold-grad lotus/compass badge (top-left, zoom-in pop, hover scale, stopPropagation → FestivalDetailDialog without leaving the grid; keyboard users keep the full-size info buttons in the list below). VERIFIED: badge click opens dialog (PARVA / Ganesh Chaturthi) with grounded Acharya note + Listen; did NOT navigate to day view; grid keeps working; badge count 6/6 cells in Sept 2026 (selector matched 12 incl. the 6 list info buttons — no DOM duplication).
+   242→- FEATURE 4 — Dasha-grounded check-in prompts: PROMPT_LORDS map (9 grahas, Navagraha-neighbour rotation) offers 3 tap-to-insert prompt chips above the note field when the form is open and the note is empty; label "Need words? A prompt from your {{maha}} period:" (Venus MD → Ve/Sa/Ra). Chips fill the textarea + refocus it. VERIFIED E2E (with today's row backed up + deleted): chips rendered, Venus tap filled "What beautiful or loving moment crossed my path today?", Save check-in → done state; original row restored from /tmp/ss-checkin-backup.json afterwards.
+   243→- STYLING: NEW chip pulse on letter card; highlighted fresh bell item with gold pulse dot; threaded reply pill (gold-faint bg + arrow); badge gold-grad + shadow + pop-in; prompt chip row (gold-faint container, planet prefix in gold); user threaded-bubble ring. Focus-flash reused for entry/letter cards. i18n parity 439=439 (+17 keys: notifications.letterToast*, reflectionNew/Body/Short, acharya.viewJournal, home.promptLabel, home.prompt.Su–Ke).
+   244→- QA discipline: destructive steps (check-in row, letter rows) fully backed up to /tmp/ss-*.json and restored; language left as EN; verified HI month view renders localized badges + "चंद्र मास: भाद्रपद" (r8-month-hi.png); fresh browser session console clean (stale mid-edit HMR parse error appears only in long-lived sessions — known phenomenon).
+   245→
+   246→Stage Summary:
+   247→- Round 8 complete: no regressions found, 4 user-facing features shipped and E2E-verified in a real browser with real data and real LLM calls, styling depth pass across all of them, i18n en/hi parity 439. Lint 0/0, tsc src-clean, dev.log clean, HTTP 200.
+   248→- Known notes: (a) journalRef threading is per-session (history reload drops the pill — server messages don't store refs); (b) letter toast fires only while Home is mounted and once per mount per language; (c) grid badges are pointer-affordance spans (aria-labelled but tabIndex -1) — keyboard path is the info buttons in the list below (documented); (d) prompt chips show only when the note is empty and a dasha is loaded.
+   249→- Next candidates: persist journalRef server-side (ChatHistory.meta) so pills survive reloads; Festival badge long-press → skip-to-day; per-planet prompt VARIANTS keyed by antardasha too; Home "sky highlights this week" strip (next purnima/ekadashi/sankranti); notification center unread-state persistence; Sade Sati phase bell item when phase changes.
+   250→

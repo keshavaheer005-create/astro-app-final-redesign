@@ -104,7 +104,7 @@ export function KundliTab({
             fades signal more tabs); from sm up pills share the width equally.
             The glass shell stays put; only the transparent track scrolls, so
             the mask fades labels without dissolving the bar itself. */}
-        <div className="rounded-full border border-white/60 bg-white/45 shadow-[0_10px_30px_-14px_rgba(42,36,32,0.25),inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur-xl">
+        <div className="rounded-full border border-white/60 bg-white/45 shadow-[0_4px_16px_-6px_rgba(42,36,32,0.10)] backdrop-blur-xl">
           <div
             ref={scrollRef}
             onScroll={updateFade}
@@ -116,12 +116,12 @@ export function KundliTab({
           >
             <span
               aria-hidden="true"
-              className="absolute left-0 top-1.5 bottom-1.5 rounded-full violet-grad shadow-[0_2px_10px_rgba(110,74,158,0.4)]"
+              className="absolute left-0 top-1.5 bottom-1.5 rounded-full liquid liquid-violet"
               style={{
                 transform: `translateX(${pill.x}px)`,
                 width: pill.w,
                 opacity: pill.ready ? 1 : 0,
-                transition: 'transform 260ms ease, width 260ms ease, opacity 200ms ease',
+                transition: 'transform 300ms cubic-bezier(0.32,0.72,0,1), width 300ms cubic-bezier(0.32,0.72,0,1), opacity 200ms ease',
               }}
             />
             {tabs.map((tab, i) => (

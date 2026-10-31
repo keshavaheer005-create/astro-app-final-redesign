@@ -75,21 +75,3 @@ export function inWindow(start: string, end: string, iso: string): boolean {
 export function periodYears(iso: string): string {
   return iso.slice(0, 4);
 }
-
-/**
- * Compact human birth-date label for chips/cards: "20 Oct 2001".
- * Locale-aware, deterministic UTC parsing (ISO birth dates carry no zone).
- * Falls back to the raw string when the value is not a valid ISO date.
- */
-export function birthDateLabel(iso: string, locale: string = 'en'): string {
-  if (!isIsoDate(iso)) return String(iso ?? '');
-  const d = new Date(`${iso}T12:00:00Z`);
-  if (Number.isNaN(d.getTime())) return iso;
-  try {
-    return new Intl.DateTimeFormat(locale === 'hi' ? 'hi-IN' : 'en-IN', {
-      day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC',
-    }).format(d);
-  } catch {
-    return iso;
-  }
-}

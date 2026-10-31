@@ -110,8 +110,8 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
               <div className="relative mx-auto mb-6 flex h-[84px] w-[84px] items-center justify-center">
                 <LogoMark size={84} className="relative" />
               </div>
-              <h1 className="font-serif text-t28 font-bold text-gold-grad">{t('onboarding.welcome')}</h1>
-              <p className="mt-2 text-gold-grad font-serif text-t16 italic">{t('splash.motto')}</p>
+              <h1 className="font-serif text-t28 font-semibold text-charcoal">{t('onboarding.welcome')}</h1>
+              <p className="mt-2 text-gold-deep font-serif text-t16 italic">{t('splash.motto')}</p>
               <p className="mt-5 text-t14 text-muted-foreground leading-relaxed">{t('onboarding.welcomeBody')}</p>
               <div className="mt-8">
                 <GoldButton onClick={() => setStep('name')}>
@@ -129,9 +129,9 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
               exit={{ opacity: 0, y: -14 }}
               transition={{ duration: 0.32, ease: 'easeOut' }}
             >
-              <GlassCard className="p-6">
+              <GlassCard tone="gold" className="p-6">
                 <StepDots step={1} />
-                <h2 className="font-serif text-t20 font-semibold text-violet-grad">{t('onboarding.step.name')}</h2>
+                <h2 className="font-serif text-t20 font-semibold text-charcoal">{t('onboarding.step.name')}</h2>
                 <input
                   autoFocus
                   value={name}
@@ -162,11 +162,11 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
               transition={{ duration: 0.32, ease: 'easeOut' }}
               className="space-y-4"
             >
-              <GlassCard className="p-6">
+              <GlassCard tone="gold" className="p-6">
                 <StepDots step={2} />
-                <h2 className="font-serif text-t20 font-semibold text-violet-grad mb-4">{t('onboarding.step.birth')}</h2>
+                <h2 className="font-serif text-t20 font-semibold text-charcoal mb-4">{t('onboarding.step.birth')}</h2>
 
-                <label className="text-t12 font-medium text-muted-foreground uppercase tracking-wide">{t('onboarding.namePlaceholder')}</label>
+                <label className="text-t12 font-medium text-muted-foreground tracking-wide">{t('onboarding.namePlaceholder')}</label>
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -175,17 +175,17 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
                   maxLength={40}
                 />
 
-                <label className="text-t12 font-medium text-muted-foreground uppercase tracking-wide">{t('onboarding.dobLabel')}</label>
+                <label className="text-t12 font-medium text-muted-foreground tracking-wide">{t('onboarding.dobLabel')}</label>
                 <div className="mt-1.5 mb-4">
                   <GlassDatePicker value={dob} onChange={setDob} ariaLabel={t('onboarding.dobLabel')} />
                 </div>
 
-                <label className="text-t12 font-medium text-muted-foreground uppercase tracking-wide">{t('onboarding.tobLabel')}</label>
-                <div className="mt-1.5 mb-4 rounded-xl border border-gold/25 bg-white/55 p-2">
+                <label className="text-t12 font-medium text-muted-foreground tracking-wide">{t('onboarding.tobLabel')}</label>
+                <div className="mt-1.5 mb-4 rounded-xl bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] p-2">
                   <TimeWheel value={tob} onChange={setTob} />
                 </div>
 
-                <label className="text-t12 font-medium text-muted-foreground uppercase tracking-wide">{t('onboarding.placeLabel')}</label>
+                <label className="text-t12 font-medium text-muted-foreground tracking-wide">{t('onboarding.placeLabel')}</label>
                 <LocationCombobox
                   className="mt-1.5"
                   value={selectedPlace?.name ?? ''}
@@ -196,7 +196,7 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
               </GlassCard>
 
               {confirmLine && (
-                <GlassCard className="px-5 py-4 border-emerald/30 bg-emerald-soft/70">
+                <GlassCard className="px-5 py-4 bg-emerald-soft/70">
                   <p className="flex flex-wrap items-center justify-center gap-x-1.5 font-serif text-t16 text-emerald-deep text-center">
                     <Icon name="check" size={15} strokeWidth={2.5} className="shrink-0" aria-hidden="true" />
                     <span>{confirmLine}</span>
@@ -206,7 +206,7 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
               )}
 
               {computeError && (
-                <GlassCard className="px-5 py-4 border-burgundy/30 bg-burgundy-soft/70">
+                <GlassCard className="px-5 py-4 bg-burgundy-soft/70">
                   <p className="text-t14 text-burgundy">{computeError}</p>
                 </GlassCard>
               )}
@@ -237,11 +237,11 @@ export function OnboardingScreen({ onComplete }: { onComplete?: () => void }) {
               transition={{ duration: 0.35, ease: 'easeOut' }}
               className="text-center"
             >
-              <GlassCard className="p-8">
-                <div className="mx-auto w-16 h-16 rounded-full gold-grad flex items-center justify-center mb-5 shadow-[0_6px_24px_rgba(201,162,39,0.4)]">
+              <GlassCard tone="gold" className="p-8">
+                <div className="mx-auto w-16 h-16 rounded-full gold-grad flex items-center justify-center mb-5">
                   <Icon name="check" size={30} strokeWidth={2} />
                 </div>
-                <h2 className="font-serif text-t28 font-bold text-gold-grad">{t('onboarding.ready')}</h2>
+                <h2 className="font-serif text-t28 font-semibold text-charcoal">{t('onboarding.ready')}</h2>
                 <p className="mt-3 text-t14 text-muted-foreground leading-relaxed">{t('onboarding.readyBody')}</p>
                 {/* A quiet Om seal — the birth chart is received, not just built */}
                 <div className="mt-4 flex justify-center text-violet/70">

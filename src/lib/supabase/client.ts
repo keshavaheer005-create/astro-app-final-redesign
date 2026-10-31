@@ -19,6 +19,7 @@
 
 import type { SessionUser } from '@/components/astrovia/session-context';
 import { apiUrl } from '@/lib/api';
+import { clearSessionToken, saveSessionToken } from '@/lib/session-storage';
 import { createClient, type AuthError, type SupabaseClient } from '@supabase/supabase-js';
 import { Capacitor } from '@capacitor/core';
 import { isSupabaseConfigured, SUPABASE_ANON_KEY, SUPABASE_URL } from './config';
@@ -80,7 +81,13 @@ async function postAuth(body: Record<string, unknown>) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  const json = (await res.json().catch(() => ({}))) as { user?: SessionUser; error?: string };
+  const json = (await res.json().catch(() => ({}))) as {
+    user?: SessionUser;
+    error?: string;
+    /** Signed session token — kept on-device so the session survives cookie-less previews. */
+    sessionToken?: string;
+  };
+  if (json.sessionToken) saveSessionToken(json.sessionToken);
   return { ok: res.ok, json };
 }
 
@@ -252,6 +259,7 @@ export const authGateway = {
     const sb = getSupabaseClient();
     if (sb) await sb.auth.signOut().catch(() => undefined);
     await postAuth({ action: 'logout' });
+    clearSessionToken();
   },
   /** Guest sessions stay available as the "continue without sign-up" escape. */
   continueAsGuest: () => localAuth({ action: 'guest' }),

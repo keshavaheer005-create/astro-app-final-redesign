@@ -49,12 +49,12 @@ export function ReportsScreen() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="font-serif text-t28 font-bold text-violet-grad">{t('reports.title')}</h1>
+        <h1 className="font-serif text-t28 font-semibold text-charcoal">{t('reports.title')}</h1>
         <p className="text-t14 text-muted-foreground">{chart.input.name}</p>
       </header>
 
       {/* ── Current dasha (the full explorer lives in the Timeline tab) ── */}
-      <GlassCard className="p-4 sm:p-5">
+      <GlassCard tone="violet" className="p-4 sm:p-5">
         <SectionHeader title={t('reports.dasha')} icon="timeline" />
         {ds ? (
           <>
@@ -103,7 +103,7 @@ export function ReportsScreen() {
       </GlassCard>
 
       {/* ── Divisional charts ── */}
-      <GlassCard className="p-4 sm:p-5">
+      <GlassCard tone="violet" className="p-4 sm:p-5">
         <SectionHeader title={t('reports.divisional')} icon="grid" />
         <p className="text-t12 text-muted-foreground mb-3">{t('reports.divisionalHint')}</p>
         <div className="flex gap-2 overflow-x-auto scroll-slim pb-2 -mx-1 px-1">
@@ -132,7 +132,7 @@ export function ReportsScreen() {
                   Asc: {hi ? SIGNS_HI[vc.ascSign] : SIGNS[vc.ascSign]}
                 </p>
               </div>
-              <div className="max-h-[420px] overflow-y-auto scroll-slim rounded-xl bg-gold-faint/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] p-3">
+              <div className="max-h-[420px] overflow-y-auto scroll-slim rounded-xl bg-gold-faint/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] p-3">
                 <div className="scale-[0.92] origin-top">
                   <NorthChart ascSign={vc.ascSign} planets={vargaEntries.map(([k, sign]) => ({ key: k as PlanetKey, sign: sign as number }))} />
                 </div>
@@ -140,8 +140,8 @@ export function ReportsScreen() {
 
               {/* Planet detail table for this varga */}
               <div className="mt-4">
-                <p className="text-t12 uppercase tracking-wide font-semibold text-gold mb-2">{t('reports.vargaPlanets')}</p>
-                <div className="rounded-xl border border-gold/15 overflow-hidden">
+                <p className="text-t12 tracking-wide font-semibold text-gold mb-2">{t('reports.vargaPlanets')}</p>
+                <div className="rounded-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.5)] overflow-hidden">
                   <table className="w-full text-t14">
                     <thead>
                       <tr className="bg-gold-soft/60 text-t12 text-muted-foreground">
@@ -177,7 +177,7 @@ export function ReportsScreen() {
                             {isD9 && (
                               <td className="px-3 py-2 text-center">
                                 {vargottama && (
-                                  <span className="inline-flex items-center rounded-full bg-gold-soft border border-gold/40 px-2 py-0.5 text-t12 text-[#8a6d10] font-semibold">
+                                  <span className="inline-flex items-center rounded-full bg-gold-soft shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] px-2 py-0.5 text-t12 text-[#8a6d10] font-semibold">
                                     <Icon name="star" size={11} className="mr-1" />
                                     {t('reports.vargottama')}
                                   </span>
@@ -200,16 +200,16 @@ export function ReportsScreen() {
       </GlassCard>
 
       {/* ── Ashtakavarga ── */}
-      <GlassCard className="p-4 sm:p-5">
+      <GlassCard tone="violet" className="p-4 sm:p-5">
         <SectionHeader title={t('reports.ashtakavarga')} icon="chart" />
         <p className="text-t12 text-muted-foreground mb-3">{t('reports.savHint')}</p>
-        <p className="text-t12 uppercase tracking-wide font-semibold text-gold mb-2">{t('reports.sav')}</p>
+        <p className="text-t12 tracking-wide font-semibold text-gold mb-2">{t('reports.sav')}</p>
         <p className="text-t12 text-muted-foreground mb-2 -mt-1">{t('reports.savTapHint')}</p>
         <div className="space-y-1.5 max-h-96 overflow-y-auto scroll-slim pr-1">
           {chart.ashtakavarga.sav.map((v, i) => {
             const open = savOpen === i;
             return (
-              <div key={i} className={cn('rounded-xl transition-colors duration-200', open && 'bg-gold-faint/60 border border-gold/25')}>
+              <div key={i} className={cn('rounded-xl transition-colors duration-200', open && 'bg-gold-faint/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]')}>
                 <button
                   type="button"
                   onClick={() => setSavOpen(open ? null : i)}
@@ -218,7 +218,7 @@ export function ReportsScreen() {
                 >
                   <span className="w-20 text-t12 text-muted-foreground truncate">{hi ? SIGNS_HI[i] : SIGNS[i]}</span>
                   <ProgressBar value={(v / savMax) * 100} className={cn('flex-1', v >= 28 ? '' : 'opacity-70')} />
-                  <span className={cn('w-8 text-right text-t14 font-bold', v >= 28 ? 'text-[#8a6d10]' : v < 25 ? 'text-burgundy' : 'text-charcoal')}>{v}</span>
+                  <span className={cn('w-8 text-right text-t14 font-semibold', v >= 28 ? 'text-[#8a6d10]' : v < 25 ? 'text-burgundy' : 'text-charcoal')}>{v}</span>
                   <Icon name={open ? 'chevron-down' : 'chevron-right'} size={13} className="text-gold/70 shrink-0" />
                 </button>
                 {open && (
@@ -231,17 +231,17 @@ export function ReportsScreen() {
                           <span
                             key={k}
                             className={cn(
-                              'inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-t12',
+                              'inline-flex items-center gap-1 rounded-lg px-2 py-1 text-t12 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]',
                               bindu >= 4
-                                ? 'bg-gold-soft/70 border-gold/50 text-[#7a5c10] font-semibold'
+                                ? 'bg-gold-soft/70 text-[#7a5c10] font-semibold'
                                 : bindu <= 1
-                                  ? 'bg-burgundy-soft/70 border-burgundy/25 text-burgundy/80'
-                                  : 'bg-white/60 border-gold/15 text-charcoal/75',
+                                  ? 'bg-burgundy-soft/70 text-burgundy/80'
+                                  : 'bg-white/60 text-charcoal/75',
                             )}
                             title={t(`planet.${k}`)}
                           >
                             <span className="opacity-70">{t(`planet.${k}`)}</span>
-                            <span className="font-bold">{bindu}</span>
+                            <span className="font-semibold">{bindu}</span>
                           </span>
                         );
                       })}
@@ -254,7 +254,7 @@ export function ReportsScreen() {
         </div>
 
         <div className="mt-5">
-          <p className="text-t12 uppercase tracking-wide font-semibold text-gold mb-2">
+          <p className="text-t12 tracking-wide font-semibold text-gold mb-2">
             {t('reports.bav', { planet: t(`planet.${bavPlanet}`) })}
           </p>
           <div className="flex gap-1.5 flex-wrap mb-3">
@@ -269,7 +269,7 @@ export function ReportsScreen() {
               {chart.ashtakavarga.bav[bavPlanet].map((bindu: number, si: number) => (
                 <div key={si} className="rounded-lg border border-gold/20 bg-white/50 px-1 py-2 text-center">
                   <p className="text-t12 text-muted-foreground truncate">{hi ? SIGNS_HI[si].slice(0, 3) : SIGNS[si].slice(0, 3)}</p>
-                  <p className={cn('text-t16 font-bold mt-0.5', bindu >= 4 ? 'text-[#8a6d10]' : bindu <= 1 ? 'text-burgundy/70' : 'text-charcoal')}>
+                  <p className={cn('text-t16 font-semibold mt-0.5', bindu >= 4 ? 'text-[#8a6d10]' : bindu <= 1 ? 'text-burgundy/70' : 'text-charcoal')}>
                     {bindu}
                   </p>
                 </div>
@@ -281,9 +281,9 @@ export function ReportsScreen() {
 
       {/* ── Doshas ── */}
       <div className="grid md:grid-cols-2 gap-4">
-        <GlassCard className={cn('p-4 sm:p-5', chart.mangalDosha.severity !== 'none' && !chart.mangalDosha.mitigated && 'border-burgundy/35 border-l-4 border-l-burgundy/60')}>
+        <GlassCard tone="burgundy" className="p-4 sm:p-5">
           <SectionHeader title={t('reports.mangal')} icon="shield" />
-          <p className={cn('inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-t14 font-semibold', chart.mangalDosha.severity === 'none' ? 'bg-emerald-soft text-emerald-deep border border-emerald/30' : 'burgundy-grad text-white shadow-[0_2px_10px_rgba(92,26,40,0.35)]')}>
+          <p className={cn('inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-t14 font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]', chart.mangalDosha.severity === 'none' ? 'bg-emerald-soft text-emerald-deep' : 'liquid liquid-violet')}>
             <Icon name={chart.mangalDosha.severity === 'none' ? 'check' : 'warning'} size={15} />
             {t(`reports.severity.${chart.mangalDosha.severity}`)}
           </p>
@@ -296,9 +296,9 @@ export function ReportsScreen() {
           </ul>
         </GlassCard>
 
-        <GlassCard className={cn('p-4 sm:p-5', chart.sadeSati.active && 'border-burgundy/35 border-l-4 border-l-burgundy/60')}>
+        <GlassCard tone="burgundy" className="p-4 sm:p-5">
           <SectionHeader title={t('reports.sadeSati')} icon="planet" />
-          <p className={cn('inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-t14 font-semibold border', chart.sadeSati.active ? 'bg-burgundy-soft text-burgundy border-burgundy/30' : 'bg-emerald-soft text-emerald-deep border-emerald/30')}>
+          <p className={cn('inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-t14 font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]', chart.sadeSati.active ? 'bg-burgundy-soft text-burgundy' : 'bg-emerald-soft text-emerald-deep')}>
             <Icon name={chart.sadeSati.active ? 'warning' : 'check'} size={15} />
             {chart.sadeSati.active ? t('reports.sadeSati.active', { phase: t(`reports.phase.${chart.sadeSati.phase}`) }) : t('reports.sadeSati.inactive')}
           </p>

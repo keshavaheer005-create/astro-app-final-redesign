@@ -52,12 +52,12 @@ export function useSlidingIndicator(activeIndex: number, vertical: boolean) {
 
 /** Chip styling per classical dignity tier (emerald = strength, burgundy = strain). */
 const DIGNITY_STYLE: Record<Dignity, string> = {
-  exalted: 'emerald-grad border-emerald-deep/60 text-white font-semibold',
-  own: 'bg-emerald-soft border-emerald/45 text-emerald-deep font-semibold',
-  friendly: 'bg-gold-faint/70 border-gold/25 text-charcoal/80',
-  neutral: 'bg-white/50 border-charcoal/10 text-charcoal/60',
-  enemy: 'bg-burgundy/8 border-burgundy/25 text-burgundy',
-  debilitated: 'bg-burgundy/12 border-burgundy/40 text-burgundy font-semibold',
+  exalted: 'liquid liquid-emerald font-semibold',
+  own: 'bg-emerald-soft text-emerald-deep font-semibold',
+  friendly: 'bg-gold-faint/80 text-charcoal/80',
+  neutral: 'bg-white/60 text-charcoal/60',
+  enemy: 'bg-burgundy-soft/80 text-burgundy',
+  debilitated: 'liquid liquid-violet font-semibold',
 };
 
 export function DignityChip({ dignity, className }: { dignity: Dignity; className?: string }) {
@@ -65,7 +65,7 @@ export function DignityChip({ dignity, className }: { dignity: Dignity; classNam
   return (
     <span
       title={t('reports.dignityHint')}
-      className={cn('inline-flex items-center rounded-full border px-2 py-0.5 text-t12 whitespace-nowrap align-middle', DIGNITY_STYLE[dignity], className)}
+      className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-t12 whitespace-nowrap align-middle shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]', DIGNITY_STYLE[dignity], className)}
     >
       {t(`reports.dignity.${dignity}`)}
     </span>
@@ -77,12 +77,16 @@ export function DignityChip({ dignity, className }: { dignity: Dignity; classNam
 export function GlassCard({
   className,
   ink,
+  tone,
   children,
   onClick,
   id,
 }: {
   className?: string;
   ink?: boolean;
+  /** Tone essence — a soft radial wash of the tab's colour breathing through
+      the glass (never a fill, never a border). Rendered behind content. */
+  tone?: 'gold' | 'emerald' | 'violet' | 'rose' | 'burgundy';
   children: React.ReactNode;
   onClick?: () => void;
   id?: string;
@@ -92,12 +96,14 @@ export function GlassCard({
       id={id}
       onClick={onClick}
       className={cn(
+        'relative',
         ink ? 'glass-ink' : 'glass',
-        // Clickable cards get Android-style press feedback (scale-in on touch)
-        onClick && 'cursor-pointer tap transition-transform duration-300 ease-out hover:-translate-y-0.5 active:scale-[0.98]',
+        // Clickable cards: subtle press compress only — no hover lift (ASTRA).
+        onClick && 'cursor-pointer tap active:scale-[0.98]',
         className,
       )}
     >
+      {tone && <span aria-hidden="true" className={cn('essence', `essence-${tone}`)} />}
       {children}
     </div>
   );
@@ -129,10 +135,10 @@ export function SectionHeader({
       <div className="flex items-center gap-2.5 min-w-0">
         {icon && (
           <span className={cn(t.icon, 'inline-flex shrink-0')}>
-            <Icon name={icon} size={18} />
+            <Icon name={icon} size={19} />
           </span>
         )}
-        <h2 className="font-serif text-t20 font-semibold text-charcoal truncate">{title}</h2>
+        <h2 className="font-serif text-t20 font-bold tracking-[-0.01em] text-charcoal truncate">{title}</h2>
       </div>
       {action}
       <div className={cn('hidden sm:block flex-1 h-px bg-gradient-to-r to-transparent', t.rule)} />
@@ -162,8 +168,8 @@ export function GoldButton({
       disabled={disabled}
       className={cn(
         'gold-grad ripple inline-flex items-center justify-center gap-2 rounded-full px-6 h-11 text-t14 font-semibold text-charcoal',
-        'shadow-[0_4px_16px_rgba(201,162,39,0.35)] transition-all duration-250 ease-out',
-        'hover:-translate-y-px hover:shadow-[0_6px_22px_rgba(201,162,39,0.45)] active:scale-[0.98]',
+        'shadow-[inset_0_1px_0_rgba(255,255,255,0.45),0_4px_14px_-4px_rgba(178,134,44,0.45)] transition-all duration-200 ease-out',
+        'hover:brightness-[0.98] active:scale-[0.98]',
         'disabled:opacity-45 disabled:pointer-events-none',
         className,
       )}
@@ -191,8 +197,9 @@ export function GhostButton({
       disabled={disabled}
       className={cn(
         'tap inline-flex items-center justify-center gap-2 rounded-full px-5 h-10 text-t14 font-medium text-charcoal',
-        'border border-gold/30 bg-white/40 transition-all duration-250 ease-out',
-        'hover:border-gold/60 hover:bg-white/70 active:scale-[0.98] disabled:opacity-45 disabled:pointer-events-none',
+        'bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_2px_10px_-4px_rgba(42,36,32,0.14)] backdrop-blur-sm',
+        'transition-all duration-250 ease-out',
+        'hover:bg-white/80 active:scale-[0.98] disabled:opacity-45 disabled:pointer-events-none',
         className,
       )}
     >
@@ -222,8 +229,8 @@ export function Chip({
         'rounded-full text-t12 font-medium transition-all duration-250 ease-out active:scale-95 whitespace-nowrap',
         compact ? 'px-3 h-7' : 'px-4 h-8',
         active
-          ? 'gold-grad text-charcoal shadow-[0_2px_10px_rgba(201,162,39,0.35)]'
-          : 'border border-gold/30 bg-white/45 text-muted-foreground hover:border-gold/55 hover:text-charcoal',
+          ? 'liquid liquid-gold'
+          : 'bg-white/50 text-muted-foreground hover:bg-white/75 hover:text-charcoal',
         className,
       )}
     >
@@ -233,8 +240,11 @@ export function Chip({
 }
 
 /**
- * Labelled segmented control — pill container with gold active segment.
- * Keeps option rows from wrapping into loose chips (chart style / zodiac).
+ * Labelled segmented control — pill container with a true SLIDING liquid
+ * indicator. The active glass pill is ONE absolutely-positioned element that
+ * transforms between measured offsets (300ms Apple ease), so switching never
+ * pops, flickers or jumps height (the old class-swap pill did both).
+ * Fixed row height + nowrap labels keep the track perfectly stable.
  */
 export function Segmented({
   label,
@@ -249,26 +259,37 @@ export function Segmented({
   onChange: (id: string) => void;
   className?: string;
 }) {
+  const activeIndex = Math.max(0, options.findIndex((o) => o.id === active));
+  const { bind, style } = useSlidingIndicator(activeIndex, false);
+
   return (
     <div className={className}>
-      <p className="text-t12 uppercase tracking-wide font-semibold text-muted-foreground mb-1.5">{label}</p>
-      <div className="inline-flex w-full rounded-full bg-gold-faint/60 border border-gold/25 p-1 gap-1" role="radiogroup" aria-label={label}>
-        {options.map((o) => {
+      <p className="text-t12 tracking-wide font-semibold text-muted-foreground mb-1.5">{label}</p>
+      <div
+        className="relative inline-flex w-full rounded-full bg-white/50 border border-white/60 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-sm"
+        role="radiogroup"
+        aria-label={label}
+      >
+        <span
+          aria-hidden="true"
+          className="absolute top-1 bottom-1 left-0 rounded-full liquid liquid-gold"
+          style={{ width: style.width, transform: style.transform, opacity: style.opacity, left: 0 }}
+        />
+        {options.map((o, i) => {
           const isActive = o.id === active;
           return (
             <button
               key={o.id}
+              ref={bind(i)}
               type="button"
               role="radio"
               aria-checked={isActive}
               onClick={() => onChange(o.id)}
               className={cn(
-                'flex-1 min-w-0 min-h-[36px] px-2 sm:px-3 rounded-full text-t12 sm:text-t14 font-medium leading-tight',
-                'whitespace-normal sm:whitespace-nowrap transition-all duration-250 ease-out',
+                'relative z-10 flex-1 min-w-0 h-9 px-1.5 sm:px-3 rounded-full whitespace-nowrap text-center',
+                'text-[11.5px] sm:text-t14 leading-none tracking-tight transition-colors duration-250 ease-out',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/60',
-                isActive
-                  ? 'gold-grad text-charcoal shadow-[0_2px_10px_-4px_rgba(201,162,39,0.6)]'
-                  : 'text-charcoal/70 hover:bg-white/60 hover:text-charcoal active:scale-[0.97]',
+                isActive ? 'font-semibold text-charcoal' : 'font-medium text-charcoal/70 hover:text-charcoal active:scale-[0.97]',
               )}
             >
               {o.label}
@@ -360,7 +381,7 @@ export function SlidingPillTabs<T extends string>({
     <div className={cn('relative', className)}>
       {/* Glass shell stays static; the transparent track scrolls and gets the
           background-agnostic mask fade (never a hard colour-matched gradient). */}
-      <div className="rounded-full bg-white/55 border border-gold/25 p-1 backdrop-blur-md shadow-[0_8px_24px_-12px_rgba(42,36,32,0.2),inset_0_1px_0_rgba(255,255,255,0.8)]">
+      <div className="rounded-full bg-white/50 border border-white/60 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_2px_12px_-4px_rgba(42,36,32,0.12)] backdrop-blur-sm">
         <div
           ref={scrollRef}
           onScroll={updateFade}
@@ -371,12 +392,12 @@ export function SlidingPillTabs<T extends string>({
           }}
         >
           <span
-            className="absolute left-0 top-0 bottom-0 rounded-full gold-grad shadow-[0_2px_10px_rgba(201,162,39,0.4)]"
+            className="absolute left-0 top-0 bottom-0 rounded-full liquid liquid-gold"
             style={{
               transform: `translateX(${pill.left}px)`,
               width: pill.width,
               opacity: pill.ready ? 1 : 0,
-              transition: 'transform 250ms ease, width 250ms ease',
+              transition: 'transform 300ms cubic-bezier(0.32,0.72,0,1), width 300ms cubic-bezier(0.32,0.72,0,1)',
             }}
           />
           {tabs.map((t, i) => (

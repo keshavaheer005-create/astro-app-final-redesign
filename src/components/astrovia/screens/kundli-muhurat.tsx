@@ -38,9 +38,9 @@ interface Result {
 }
 
 const VERDICT_STYLE = {
-  excellent: 'bg-gold-faint border-gold/50 text-[#7a6a1f]',
-  good: 'bg-emerald-soft/70 border-emerald/30 text-emerald-deep',
-  fair: 'bg-white/60 border-gold/25 text-muted-foreground',
+  excellent: 'bg-gold-faint text-[#7a6a1f]',
+  good: 'bg-emerald-soft/80 text-emerald-deep',
+  fair: 'bg-white/70 text-muted-foreground',
 } as const;
 
 const todayLocal = (tz: string) => {
@@ -102,11 +102,11 @@ export function MuhuratFinder({ onOpenDay }: { onOpenDay: (date: string) => void
 
   return (
     <div className="space-y-4">
-      <GlassCard className="p-4 sm:p-5">
+      <GlassCard tone="gold" className="p-4 sm:p-5">
         <SectionHeader title={t('muhurat.title')} icon="clock" />
         <p className="mb-3 text-t12 leading-relaxed text-muted-foreground">{t('muhurat.subtitle')}</p>
 
-        <p className="mb-2 text-t12 font-semibold uppercase tracking-wider text-gold">{t('muhurat.activityLabel')}</p>
+        <p className="mb-2 text-t12 font-semibold tracking-wide text-gold">{t('muhurat.activityLabel')}</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" role="radiogroup" aria-label={t('muhurat.activityLabel')}>
           {ACTIVITIES.map((a) => (
             <button
@@ -116,10 +116,10 @@ export function MuhuratFinder({ onOpenDay }: { onOpenDay: (date: string) => void
               aria-checked={activity === a.id}
               onClick={() => setActivity(a.id)}
               className={cn(
-                'tap-sm flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-t14 transition-colors duration-200',
+                'tap-sm flex items-center gap-2 rounded-xl px-3 py-2.5 text-left text-t14 transition-all duration-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]',
                 activity === a.id
-                  ? 'border-gold/60 bg-gold-faint text-charcoal shadow-[0_2px_10px_rgba(201,162,39,0.22)]'
-                  : 'border-gold/20 bg-white/55 text-muted-foreground hover:text-charcoal',
+                  ? 'liquid liquid-gold'
+                  : 'bg-white/55 text-muted-foreground hover:text-charcoal hover:bg-white/75',
               )}
             >
               <Icon name={a.icon} size={15} className={activity === a.id ? 'text-gold' : ''} />
@@ -128,8 +128,8 @@ export function MuhuratFinder({ onOpenDay }: { onOpenDay: (date: string) => void
           ))}
         </div>
 
-        <p className="mb-2 mt-4 text-t12 font-semibold uppercase tracking-wider text-gold">{t('muhurat.range')}</p>
-        <div className="inline-flex rounded-full border border-gold/25 bg-white/55 p-1" role="radiogroup" aria-label={t('muhurat.range')}>
+        <p className="mb-2 mt-4 text-t12 font-semibold tracking-wide text-gold">{t('muhurat.range')}</p>
+        <div className="inline-flex rounded-full bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] p-1" role="radiogroup" aria-label={t('muhurat.range')}>
           {[30, 60, 90].map((d) => (
             <button
               key={d}
@@ -139,7 +139,7 @@ export function MuhuratFinder({ onOpenDay }: { onOpenDay: (date: string) => void
               onClick={() => setDays(d)}
               className={cn(
                 'tap-sm rounded-full px-4 py-1.5 text-t14 transition-colors duration-200',
-                days === d ? 'bg-gold-faint font-medium text-charcoal' : 'text-muted-foreground hover:text-charcoal',
+                days === d ? 'liquid liquid-gold font-medium' : 'text-muted-foreground hover:text-charcoal',
               )}
             >
               {t('muhurat.daysN', { n: d })}
@@ -183,7 +183,7 @@ export function MuhuratFinder({ onOpenDay }: { onOpenDay: (date: string) => void
             <GlassCard className="p-4 text-t14 text-muted-foreground">{t('muhurat.none')}</GlassCard>
           )}
           {results.map((r) => (
-            <GlassCard key={r.date} className="p-4">
+            <GlassCard tone="gold" key={r.date} className="p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-serif text-t16 font-semibold text-charcoal">{fmtDate(r.date)}</p>
@@ -201,10 +201,10 @@ export function MuhuratFinder({ onOpenDay }: { onOpenDay: (date: string) => void
                 <ProgressBar value={Math.min(100, r.score)} tone={r.verdict === 'fair' ? 'gold' : 'emerald'} />
               </div>
 
-              <p className="mb-1.5 mt-3 text-t12 font-semibold uppercase tracking-wider text-gold">{t('muhurat.bestTime')}</p>
+              <p className="mb-1.5 mt-3 text-t12 font-semibold tracking-wide text-gold">{t('muhurat.bestTime')}</p>
               <div className="flex flex-wrap gap-1.5">
                 {r.windows.map((w) => (
-                  <span key={w.startISO} className="inline-flex items-center gap-1 rounded-full border border-emerald/25 bg-emerald-soft/60 px-2.5 py-1 text-t12 font-medium text-emerald-deep">
+                  <span key={w.startISO} className="inline-flex items-center gap-1 rounded-full bg-emerald-soft/70 px-2.5 py-1 text-t12 font-medium text-emerald-deep shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]">
                     <Icon name="clock" size={12} />
                     {fmtTime(w.startISO)} – {fmtTime(w.endISO)}
                   </span>

@@ -147,7 +147,8 @@ export function OmEmblem({
 function ChakraBackdropImpl() {
   const corner = { width: '48vmin', height: '48vmin' } as const;
   const side = { width: '36vmin', height: '36vmin' } as const;
-  const art = 'absolute opacity-[0.62]';
+  // ASTRA: mandalas quiet down to a paper-watermark whisper (was 0.62).
+  const art = 'absolute opacity-[0.34]';
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
       {/* corners — centre sits 2vmin inside each corner */}
@@ -165,51 +166,36 @@ function ChakraBackdropImpl() {
 export const ChakraBackdrop = React.memo(ChakraBackdropImpl);
 
 /**
- * ScreenGradient — the app's atmosphere engine. A fixed, full-viewport stack
- * of five rich gradient fields (gold / emerald / violet / rose / burgundy)
- * that cross-fades as tabs change, so every tab OWNS its own background
- * instead of sitting on one shared cream plane. Paints above the ChakraBackdrop
- * (z-0) and below all content (z-10); pointer-events stay off; opacity-only
- * transitions (700ms) respect the global reduced-motion opt-out.
+ * ScreenGradient — the app's atmosphere, liquid-glass edition.
+ *
+ * Every tab owns its own accent atmosphere anchored at the TOP of the
+ * viewport with a faint echo pool at the bottom, so the tone visibly wraps
+ * the screen without ever becoming a wall. All five tone layers stay
+ * mounted and cross-fade via opacity (800ms, Apple ease) so switching tabs
+ * melts one atmosphere into the next — gold · emerald · rose · burgundy —
+ * instead of hard-cutting. Kept light: an essence, not a fill.
  */
-const TONE_GRADS: Record<string, string> = {
-  gold:
-    'radial-gradient(90% 65% at 10% -10%, rgba(212,175,55,0.36), transparent 60%),' +
-    'radial-gradient(85% 60% at 95% 2%, rgba(232,197,104,0.28), transparent 58%),' +
-    'radial-gradient(130% 75% at 50% 115%, rgba(201,162,39,0.20), transparent 64%),' +
-    'linear-gradient(172deg, rgba(233,196,106,0.24) 0%, rgba(233,196,106,0.09) 34%, transparent 62%)',
-  emerald:
-    'radial-gradient(90% 65% at 8% -8%, rgba(62,142,110,0.34), transparent 60%),' +
-    'radial-gradient(80% 55% at 96% 4%, rgba(127,191,164,0.26), transparent 58%),' +
-    'radial-gradient(130% 75% at 50% 115%, rgba(62,142,110,0.19), transparent 64%),' +
-    'linear-gradient(172deg, rgba(62,142,110,0.22) 0%, rgba(62,142,110,0.08) 34%, transparent 62%)',
-  violet:
-    'radial-gradient(90% 65% at 10% -10%, rgba(110,74,158,0.33), transparent 60%),' +
-    'radial-gradient(85% 58% at 94% 4%, rgba(143,108,192,0.26), transparent 58%),' +
-    'radial-gradient(130% 75% at 50% 115%, rgba(110,74,158,0.18), transparent 64%),' +
-    'linear-gradient(172deg, rgba(110,74,158,0.21) 0%, rgba(110,74,158,0.075) 34%, transparent 62%)',
-  rose:
-    'radial-gradient(90% 65% at 10% -10%, rgba(194,69,90,0.31), transparent 60%),' +
-    'radial-gradient(85% 58% at 94% 4%, rgba(217,112,138,0.26), transparent 58%),' +
-    'radial-gradient(130% 75% at 50% 115%, rgba(194,69,90,0.17), transparent 64%),' +
-    'linear-gradient(172deg, rgba(194,69,90,0.20) 0%, rgba(194,69,90,0.07) 34%, transparent 62%)',
-  burgundy:
-    'radial-gradient(90% 65% at 10% -10%, rgba(92,26,40,0.29), transparent 60%),' +
-    'radial-gradient(85% 58% at 94% 4%, rgba(163,51,71,0.24), transparent 58%),' +
-    'radial-gradient(130% 75% at 50% 115%, rgba(92,26,40,0.17), transparent 64%),' +
-    'linear-gradient(172deg, rgba(92,26,40,0.19) 0%, rgba(92,26,40,0.07) 34%, transparent 62%)',
+const TONE_GLOW: Record<string, string> = {
+  gold: 'rgba(213, 160, 69, 0.17)',
+  emerald: 'rgba(46, 128, 108, 0.15)',
+  violet: 'rgba(139, 41, 69, 0.15)',
+  rose: 'rgba(192, 111, 121, 0.15)',
+  burgundy: 'rgba(139, 41, 69, 0.15)',
 };
-
-const TONE_KEYS = ['gold', 'emerald', 'violet', 'rose', 'burgundy'] as const;
 
 export function ScreenGradient({ tone }: { tone: string }) {
   return (
     <div className="pointer-events-none fixed inset-0 z-[1] overflow-hidden" aria-hidden="true">
-      {TONE_KEYS.map((k) => (
+      {(Object.keys(TONE_GLOW) as (keyof typeof TONE_GLOW)[]).map((key) => (
         <div
-          key={k}
-          className="absolute inset-0 transition-opacity duration-700 ease-out will-change-[opacity]"
-          style={{ background: TONE_GRADS[k], opacity: k === tone ? 1 : 0 }}
+          key={key}
+          className="absolute inset-0 transition-opacity duration-[800ms] ease-[cubic-bezier(0.32,0.72,0,1)]"
+          style={{
+            opacity: tone === key ? 1 : 0,
+            background:
+              `radial-gradient(120% 46% at 50% 0%, ${TONE_GLOW[key]}, transparent 68%),` +
+              `radial-gradient(140% 30% at 50% 100%, ${TONE_GLOW[key].replace(/0\.\d+\)$/, '0.06)')}, transparent 70%)`,
+          }}
         />
       ))}
     </div>

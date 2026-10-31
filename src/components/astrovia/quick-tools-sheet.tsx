@@ -65,14 +65,14 @@ export function QuickToolsSheet({ open, onOpenChange }: { open: boolean; onOpenC
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="glass max-h-[88dvh] rounded-t-3xl border-gold/25 px-4 pb-6">
+      <SheetContent side="bottom" className="glass max-h-[88dvh] rounded-t-3xl px-4 pb-6">
         <SheetHeader className="pb-2">
           <SheetTitle className="font-serif text-t20 text-charcoal">{t('home.quickTools.title')}</SheetTitle>
           <SheetDescription className="text-t12 leading-relaxed">{t('home.quickTools.hint')}</SheetDescription>
         </SheetHeader>
 
         <div className="mt-1 max-h-[62dvh] overflow-y-auto scroll-slim pr-1">
-          <p className="mb-2 text-t12 font-semibold uppercase tracking-wide text-gold">
+          <p className="mb-2 text-t12 font-semibold tracking-wide text-gold">
             {t('home.quickTools.yourTools', { n: ids.length, max: MAX_TOOLS })}
           </p>
 
@@ -95,7 +95,7 @@ export function QuickToolsSheet({ open, onOpenChange }: { open: boolean; onOpenC
             </SortableContext>
           </DndContext>
 
-          <p className="mb-2 mt-5 text-t12 font-semibold uppercase tracking-wide text-gold">
+          <p className="mb-2 mt-5 text-t12 font-semibold tracking-wide text-gold">
             {t('home.quickTools.add')}
           </p>
           {available.length === 0 ? (
@@ -111,8 +111,8 @@ export function QuickToolsSheet({ open, onOpenChange }: { open: boolean; onOpenC
                       disabled={atLimit}
                       onClick={() => setQuickTools(toggleTool(ids, tool.id))}
                       className={cn(
-                        'flex w-full items-center gap-3 rounded-xl border border-gold/20 bg-white/55 px-3 py-2.5 text-left transition-colors duration-200',
-                        atLimit ? 'opacity-45' : 'hover:border-violet/35 hover:bg-white/75 active:scale-[0.99]',
+                        'flex w-full items-center gap-3 rounded-xl bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] px-3 py-2.5 text-left transition-all duration-200 backdrop-blur-sm',
+                        atLimit ? 'opacity-45' : 'hover:bg-white/80 active:scale-[0.99]',
                       )}
                     >
                       <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gold-faint text-gold">
@@ -163,7 +163,7 @@ function SortableRow({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        'flex items-center gap-2 rounded-xl border border-gold/20 bg-white/70 px-2 py-2',
+        'flex items-center gap-2 rounded-xl bg-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)] px-2 py-2',
         isDragging && 'opacity-80 shadow-lg',
       )}
     >

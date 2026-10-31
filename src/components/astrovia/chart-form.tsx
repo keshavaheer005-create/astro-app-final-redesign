@@ -104,7 +104,7 @@ export function ChartForm({
         {t(mode === 'add' ? 'profile.chartForm.add' : 'profile.chartForm.edit')}
       </h2>
 
-      <label className="text-t12 font-medium text-muted-foreground uppercase tracking-wide">{t('onboarding.namePlaceholder')}</label>
+      <label className="text-t12 font-medium text-muted-foreground tracking-wide">{t('onboarding.namePlaceholder')}</label>
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -113,17 +113,17 @@ export function ChartForm({
         maxLength={40}
       />
 
-      <label className="text-t12 font-medium text-muted-foreground uppercase tracking-wide">{t('onboarding.dobLabel')}</label>
+      <label className="text-t12 font-medium text-muted-foreground tracking-wide">{t('onboarding.dobLabel')}</label>
       <div className="mt-1.5 mb-4">
         <GlassDatePicker value={dob} onChange={setDob} minYear={1900} ariaLabel={t('onboarding.dobLabel')} />
       </div>
 
-      <label className="text-t12 font-medium text-muted-foreground uppercase tracking-wide">{t('onboarding.tobLabel')}</label>
-      <div className="mt-1.5 mb-4 rounded-xl border border-gold/25 bg-white/55 p-2">
+      <label className="text-t12 font-medium text-muted-foreground tracking-wide">{t('onboarding.tobLabel')}</label>
+      <div className="mt-1.5 mb-4 rounded-xl bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] p-2">
         <TimeWheel value={tob} onChange={setTob} />
       </div>
 
-      <label className="text-t12 font-medium text-muted-foreground uppercase tracking-wide">{t('onboarding.placeLabel')}</label>
+      <label className="text-t12 font-medium text-muted-foreground tracking-wide">{t('onboarding.placeLabel')}</label>
       <LocationCombobox
         className="mt-1.5"
         value={place?.name ?? ''}
@@ -133,7 +133,7 @@ export function ChartForm({
       />
 
       {error && (
-        <p className="mt-3 rounded-xl border border-burgundy/30 bg-burgundy-soft/70 px-3 py-2 text-t12 text-burgundy">{error}</p>
+        <p className="mt-3 rounded-xl bg-burgundy-soft/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] px-3 py-2 text-t12 text-burgundy">{error}</p>
       )}
 
       <div className="mt-5 flex items-center justify-between">

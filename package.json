@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test": "bun test tests/unit",
     "check": "bun run typecheck && bun run test && bun run lint",
-    "db:push": "prisma db push --accept-data-loss",
+    "db:push": "bun scripts/db-push.ts",
     "db:pg": "bun scripts/dev-postgres.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",

@@ -220,7 +220,7 @@ export function LocationCombobox({
           ref={listRef}
           role="listbox"
           aria-label={ariaLabel ?? t('common.place')}
-          className="glass glass-blur absolute z-40 mt-2 w-full rounded-xl border-gold/25 bg-white/95 max-h-60 overflow-y-auto scroll-slim"
+          className="glass glass-blur absolute z-40 mt-2 w-full rounded-xl max-h-60 overflow-y-auto scroll-slim"
         >
           {results.map((p, i) => (
             <button
@@ -263,7 +263,7 @@ export function LocationCombobox({
             type="button"
             onClick={useMyLocation}
             disabled={locating}
-            className="rounded-full border border-gold/30 bg-white/45 px-3 h-7 text-t12 font-medium text-muted-foreground hover:border-gold/55 hover:text-charcoal transition-all duration-250 active:scale-95 inline-flex items-center gap-1.5 disabled:opacity-45 disabled:pointer-events-none"
+            className="rounded-full bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] px-3 h-7 text-t12 font-medium text-muted-foreground hover:bg-white/80 hover:text-charcoal transition-all duration-250 active:scale-95 inline-flex items-center gap-1.5 disabled:opacity-45 disabled:pointer-events-none"
           >
             <Icon name="locate" size={14} className={locating ? 'animate-pulse' : undefined} />
             {locating ? t('onboarding.locating') : t('onboarding.useLocation')}
